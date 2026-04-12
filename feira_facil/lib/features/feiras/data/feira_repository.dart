@@ -1,0 +1,63 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/feira.dart';
+import '../../../core/providers/user_providers.dart';
+
+final feiraRepositoryProvider = Provider<FeiraRepository>((ref) {
+  return FeiraRepository(FirebaseFirestore.instance);
+});
+
+final groupFeirasProvider = StreamProvider<List<Feira>>((ref) {
+  final groupId = ref.watch(currentGroupIdProvider);
+  if (groupId == null) return Stream.value([]);
+  
+  final repository = ref.watch(feiraRepositoryProvider);
+  return repository.watchFeirasPorGrupo(groupId);
+});
+
+class FeiraRepository {
+  final FirebaseFirestore _firestore;
+
+  FeiraRepository(this._firestore);
+
+  CollectionReference<Map<String, dynamic>> get _feiras => _firestore.collection('feiras');
+
+  Stream<List<Feira>> watchFeirasPorGrupo(String groupId) {
+    return _feiras
+        .where('groupId', isEqualTo: groupId)
+        // .orderBy('date', descending: true) // Temporariamente removido para evitar erro de índice
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Feira.fromJson(doc.data())).toList();
+    });
+  }
+
+  Future<void> createFeira(Feira feira) async {
+    await _feiras.doc(feira.id).set(feira.toJson());
+  }
+
+  Future<void> updateFeiraStats({
+    required String feiraId,
+    required double totalSpent,
+    required double estimatedTotal,
+    required int itemsCount,
+    required int checkedItemsCount,
+  }) async {
+    await _feiras.doc(feiraId).update({
+      'totalSpent': totalSpent,
+      'estimatedTotal': estimatedTotal,
+      'itemsCount': itemsCount,
+      'checkedItemsCount': checkedItemsCount,
+    });
+  }
+
+  Future<void> updateFeiraStatus(String feiraId, FeiraStatus status) async {
+    await _feiras.doc(feiraId).update({
+      'status': status.name,
+    });
+  }
+
+  Future<void> deleteFeira(String feiraId) async {
+    await _feiras.doc(feiraId).delete();
+  }
+}

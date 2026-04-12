@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "638460786906",
+    "project_id": "feira-facil-a0037",
+    "storage_bucket": "feira-facil-a0037.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638460786906:android:f3ca06c74a74c7ddfc4de3",
+        "android_client_info": {
+          "package_name": "com.feirafacil.feira_facil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjAYDJuUyQ8fZ4JGCJNkR1nFm_IN7Vb9o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
