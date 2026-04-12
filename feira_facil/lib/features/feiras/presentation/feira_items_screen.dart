@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/utils/category_utils.dart';
+import '../data/feira_repository.dart';
 import '../data/feira_items_repository.dart';
 import '../domain/feira.dart';
 import '../domain/feira_item.dart';
@@ -189,71 +190,22 @@ class FeiraItemsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = feiraContext?.marketName ?? 'Detalhes da Feira';
     final itemsAsyncValue = ref.watch(feiraItemsStreamProvider(feiraId));
+    final feiraAsyncValue = ref.watch(feiraProvider(feiraId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: feiraAsyncValue.when(
+          data: (f) => Text(f?.marketName ?? 'Detalhes da Feira', style: const TextStyle(fontWeight: FontWeight.bold)),
+          loading: () => const Text('Carregando...'),
+          error: (_, __) => const Text('Erro'),
+        ),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      extendBodyBehindAppBar: false,
       body: Column(
         children: [
-          itemsAsyncValue.when(
-            data: (items) {
-              final totalCart = items.where((i) => i.isAdded).fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
-              final totalEstimated = items.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
-              
-              return Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green.shade600, Colors.green.shade400],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'NO CARRINHO',
-                            style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1.2),
-                          ),
-                          Text(
-                            'R\$ ${totalCart.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Estimado: R\$ ${totalEstimated.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white60, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.shopping_cart_checkout, color: Colors.white, size: 40),
-                  ],
-                ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
+          _BudgetOverview(feiraId: feiraId),
           Expanded(
             child: itemsAsyncValue.when(
               data: (items) {
@@ -394,6 +346,196 @@ class FeiraItemsScreen extends ConsumerWidget {
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
         elevation: 4,
+      ),
+    );
+  }
+}
+
+class _BudgetOverview extends ConsumerWidget {
+  final String feiraId;
+  const _BudgetOverview({required this.feiraId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feiraAsync = ref.watch(feiraProvider(feiraId));
+    final itemsAsync = ref.watch(feiraItemsStreamProvider(feiraId));
+
+    return feiraAsync.when(
+      data: (feira) {
+        if (feira == null) return const SizedBox.shrink();
+
+        return itemsAsync.when(
+          data: (items) {
+            final totalCart = items.where((i) => i.isAdded).fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
+            final totalEstimated = items.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
+            
+            final double budget = feira.budget;
+            final double progress = budget > 0 ? (totalCart / budget).clamp(0.0, 1.0) : 0.0;
+            final double percent = budget > 0 ? (totalCart / budget) * 100 : 0.0;
+
+            Color progressColor = Colors.green;
+            if (percent >= 90) {
+              progressColor = Colors.red;
+            } else if (percent >= 75) {
+              progressColor = Colors.orange;
+            }
+
+            return Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'NO CARRINHO',
+                            style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                          ),
+                          Text(
+                            'R\$ ${totalCart.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      _BudgetIndicator(
+                        budget: budget,
+                        onTap: () => _showBudgetDialog(context, ref, feiraId, budget),
+                      ),
+                    ],
+                  ),
+                  if (budget > 0) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Meta ${percent.toStringAsFixed(0)}%',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: progressColor),
+                        ),
+                        Text(
+                          'Restam R\$ ${(budget - totalCart).clamp(0.0, double.infinity).toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 8,
+                        backgroundColor: progressColor.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 14, color: Colors.grey.shade400),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Total estimado: R\$ ${totalEstimated.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _showBudgetDialog(BuildContext context, WidgetRef ref, String feiraId, double currentBudget) {
+    final controller = TextEditingController(text: currentBudget > 0 ? currentBudget.toStringAsFixed(2) : '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Definir Orçamento'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Valor Limite',
+            prefixText: 'R\$ ',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
+          ElevatedButton(
+            onPressed: () {
+              final newBudget = double.tryParse(controller.text) ?? 0.0;
+              ref.read(feiraItemsControllerProvider(feiraId).notifier).updateBudget(newBudget);
+              Navigator.pop(ctx);
+            },
+            child: const Text('SALVAR'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BudgetIndicator extends StatelessWidget {
+  final double budget;
+  final VoidCallback onTap;
+
+  const _BudgetIndicator({required this.budget, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasBudget = budget > 0;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: hasBudget ? Colors.blue.shade50 : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              hasBudget ? Icons.account_balance_wallet_outlined : Icons.add_circle_outline,
+              size: 16,
+              color: hasBudget ? Colors.blue : Colors.grey,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              hasBudget ? 'R\$ ${budget.toStringAsFixed(0)}' : 'Definir Meta',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: hasBudget ? Colors.blue : Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

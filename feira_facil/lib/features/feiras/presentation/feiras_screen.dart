@@ -12,18 +12,36 @@ class FeirasScreen extends ConsumerWidget {
 
   Future<void> _showCreateDialog(BuildContext context, WidgetRef ref) async {
     String marketName = '';
+    double budget = 0;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Nova Feira'),
-        content: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Nome do Mercado (ex: Atacadão)',
-            border: OutlineInputBorder(),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nome do Mercado',
+                  hintText: 'Ex: Atacadão, Assaí...',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (val) => marketName = val,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Orçamento Limite (Opcional)',
+                  hintText: 'Ex: 500',
+                  prefixText: 'R\$ ',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (val) => budget = double.tryParse(val) ?? 0,
+              ),
+            ],
           ),
-          onChanged: (val) => marketName = val,
-        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -39,6 +57,7 @@ class FeirasScreen extends ConsumerWidget {
                 groupId: groupId,
                 marketName: marketName,
                 date: DateTime.now(),
+                budget: budget,
               );
 
               await ref.read(feiraRepositoryProvider).createFeira(newFeira);
@@ -71,6 +90,11 @@ class FeirasScreen extends ConsumerWidget {
             ),
             actions: [
               IconButton(
+                icon: const Icon(Icons.storefront_outlined),
+                tooltip: 'Meus Mercados',
+                onPressed: () => context.push('/markets'),
+              ),
+              IconButton(
                 icon: const Icon(Icons.group_outlined),
                 tooltip: 'Gestão do Grupo',
                 onPressed: () => context.push('/group-management'),
@@ -78,7 +102,7 @@ class FeirasScreen extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.logout),
                 onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
-              )
+              ),
             ],
           ),
           feirasAsyncValue.when(
@@ -198,6 +222,46 @@ class FeirasScreen extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
+                                if (feira.budget > 0) ...[
+                                  const SizedBox(height: 16),
+                                  Builder(
+                                    builder: (context) {
+                                      final budgetProgress = (feira.totalSpent / feira.budget).clamp(0.0, 1.0);
+                                      final percent = (feira.totalSpent / feira.budget * 100);
+                                      Color budgetColor = Colors.blue;
+                                      if (percent >= 90) budgetColor = Colors.red;
+                                      else if (percent >= 75) budgetColor = Colors.orange;
+
+                                      return Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Meta: R\$ ${feira.budget.toStringAsFixed(0)}',
+                                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                '${percent.toStringAsFixed(0)}%',
+                                                style: TextStyle(fontSize: 11, color: budgetColor, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: LinearProgressIndicator(
+                                              value: budgetProgress,
+                                              minHeight: 4,
+                                              backgroundColor: budgetColor.withOpacity(0.1),
+                                              valueColor: AlwaysStoppedAnimation<Color>(budgetColor),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
                                 const SizedBox(height: 20),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

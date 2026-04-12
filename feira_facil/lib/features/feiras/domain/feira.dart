@@ -11,6 +11,7 @@ class Feira {
   final double estimatedTotal;
   final int itemsCount;
   final int checkedItemsCount;
+  final double budget;
   final FeiraStatus status;
 
   const Feira({
@@ -22,6 +23,7 @@ class Feira {
     this.estimatedTotal = 0.0,
     this.itemsCount = 0,
     this.checkedItemsCount = 0,
+    this.budget = 0.0,
     this.status = FeiraStatus.aberta,
   });
 
@@ -35,6 +37,7 @@ class Feira {
       estimatedTotal: (json['estimatedTotal'] as num?)?.toDouble() ?? 0.0,
       itemsCount: (json['itemsCount'] as num?)?.toInt() ?? 0,
       checkedItemsCount: (json['checkedItemsCount'] as num?)?.toInt() ?? 0,
+      budget: (json['budget'] as num?)?.toDouble() ?? 0.0,
       status: FeiraStatus.values.firstWhere(
         (e) => e.name == (json['status'] as String? ?? 'aberta'),
       ),
@@ -51,6 +54,7 @@ class Feira {
       'estimatedTotal': estimatedTotal,
       'itemsCount': itemsCount,
       'checkedItemsCount': checkedItemsCount,
+      'budget': budget,
       'status': status.name,
     };
   }

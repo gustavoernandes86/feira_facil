@@ -9,6 +9,7 @@ import '../../features/groups/presentation/group_management_screen.dart';
 import '../../features/feiras/presentation/feiras_screen.dart';
 import '../../features/feiras/presentation/feira_items_screen.dart';
 import '../../features/feiras/domain/feira.dart';
+import '../../features/markets/presentation/markets_screen.dart';
 import 'router_notifier.dart';
 
 // Constantes de rota
@@ -18,6 +19,7 @@ class RouteNames {
   static const groupManagement = 'groupManagement';
   static const feiras = 'feiras';
   static const feiraDetails = 'feiraDetails';
+  static const markets = 'markets';
 }
 
 class RoutePaths {
@@ -25,6 +27,7 @@ class RoutePaths {
   static const groupSetup = '/group-setup';
   static const groupManagement = '/group-management';
   static const feiras = '/feiras';
+  static const markets = '/markets';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -109,6 +112,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: RoutePaths.markets,
+        name: RouteNames.markets,
+        builder: (context, state) => const MarketsScreen(),
       ),
     ],
   );

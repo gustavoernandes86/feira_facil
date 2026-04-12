@@ -15,12 +15,24 @@ final groupFeirasProvider = StreamProvider<List<Feira>>((ref) {
   return repository.watchFeirasPorGrupo(groupId);
 });
 
+final feiraProvider = StreamProvider.family<Feira?, String>((ref, feiraId) {
+  final repository = ref.watch(feiraRepositoryProvider);
+  return repository.watchFeira(feiraId);
+});
+
 class FeiraRepository {
   final FirebaseFirestore _firestore;
 
   FeiraRepository(this._firestore);
 
   CollectionReference<Map<String, dynamic>> get _feiras => _firestore.collection('feiras');
+
+  Stream<Feira?> watchFeira(String feiraId) {
+    return _feiras.doc(feiraId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return Feira.fromJson(doc.data()!);
+    });
+  }
 
   Stream<List<Feira>> watchFeirasPorGrupo(String groupId) {
     return _feiras
@@ -54,6 +66,12 @@ class FeiraRepository {
   Future<void> updateFeiraStatus(String feiraId, FeiraStatus status) async {
     await _feiras.doc(feiraId).update({
       'status': status.name,
+    });
+  }
+
+  Future<void> updateBudget(String feiraId, double budget) async {
+    await _feiras.doc(feiraId).update({
+      'budget': budget,
     });
   }
 

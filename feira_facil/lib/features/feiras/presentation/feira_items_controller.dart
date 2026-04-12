@@ -36,6 +36,10 @@ class FeiraItemsController extends AsyncNotifier<void> {
     await _refreshTotal();
   }
 
+  Future<void> updateBudget(double budget) async {
+    await ref.read(feiraRepositoryProvider).updateBudget(_feiraId, budget);
+  }
+
   Future<void> _refreshTotal() async {
     final repo = ref.read(feiraItemsRepositoryProvider);
     final snapshot = await repo.getItemsOnce(_feiraId);
