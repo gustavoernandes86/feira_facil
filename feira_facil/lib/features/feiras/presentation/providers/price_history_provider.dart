@@ -2,34 +2,40 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/feira_item.dart';
 
-// Provedor que busca o histórico de preço de um item específico no grupo
-final priceHistoryProvider = FutureProvider.family<double?, ({String groupId, String itemName, String currentItemId})>((ref, arg) async {
-  if (arg.itemName.isEmpty) return null;
+// Modelo para um ponto histórico de preço
+class HistoricalPrice {
+  final double price;
+  final String marketName;
+  final DateTime date;
+
+  HistoricalPrice({required this.price, required this.marketName, required this.date});
+}
+
+// Provedor que busca o histórico de preços de um item no grupo
+final priceHistoryProvider = FutureProvider.family<List<HistoricalPrice>, ({String groupId, String itemName, String currentItemId})>((ref, arg) async {
+  if (arg.itemName.isEmpty) return [];
 
   final firestore = FirebaseFirestore.instance;
   
-  // Busca no histórico de todos os itens do grupo com o mesmo nome
-  // Ordenado pela data decrescente para pegar o mais recente
   final snapshot = await firestore
       .collectionGroup('items')
       .where('groupId', isEqualTo: arg.groupId)
       .where('name', isEqualTo: arg.itemName)
       .orderBy('date', descending: true)
-      .limit(5) // Pegamos alguns para garantir que não pegamos o próprio item atual
+      .limit(20) // Pegamos mais pontos para o gráfico
       .get();
 
-  if (snapshot.docs.isEmpty) return null;
+  if (snapshot.docs.isEmpty) return [];
 
-  // Filtra o item atual (para não comparar o preço dele com ele mesmo)
-  final previousItems = snapshot.docs
+  return snapshot.docs
       .map((doc) => FeiraItem.fromJson(doc.data()))
       .where((item) => item.id != arg.currentItemId)
+      .map((item) => HistoricalPrice(
+            price: item.unitPrice,
+            marketName: item.marketName ?? 'Mercado Desconhecido',
+            date: item.date ?? DateTime.now(),
+          ))
       .toList();
-
-  if (previousItems.isEmpty) return null;
-
-  // Retorna o preço do item mais recente encontrado
-  return previousItems.first.unitPrice;
 });
 
 // Modelo simples para o resultado da comparação
@@ -49,17 +55,47 @@ final priceTrendProvider = Provider.family<PriceTrend?, ({String groupId, String
   )));
 
   return historyAsync.when(
-    data: (lastPrice) {
-      if (lastPrice == null || lastPrice == 0 || arg.currentPrice == 0) return null;
+    data: (history) {
+      if (history.isEmpty || arg.currentPrice == 0) return null;
       
+      final lastPrice = history.first.price;
       final diff = arg.currentPrice - lastPrice;
-      if (diff.abs() < 0.01) return null; // Diferença insignificante
+      if (diff.abs() < 0.01) return null; 
 
       return PriceTrend(
         difference: diff.abs(),
         isCheaper: diff < 0,
         isVarying: true,
       );
+    },
+    loading: () => null,
+    error: (_, __) => null,
+  );
+});
+
+// Provedor que avisa se o preço atual está MUITO acima do melhor preço histórico recente
+final bestPriceAlertProvider = Provider.family<HistoricalPrice?, ({String groupId, String itemName, String currentItemId, double currentPrice})>((ref, arg) {
+  final historyAsync = ref.watch(priceHistoryProvider((
+    groupId: arg.groupId, 
+    itemName: arg.itemName, 
+    currentItemId: arg.currentItemId
+  )));
+
+  return historyAsync.when(
+    data: (history) {
+      if (history.isEmpty) return null;
+
+      // Encontrar o melhor preço nos últimos 30 dias
+      final bestDeal = history.fold<HistoricalPrice?>(null, (best, current) {
+        if (best == null || current.price < best.price) return current;
+        return best;
+      });
+
+      // Se o preço atual for > 15% mais caro que o melhor deal, exibir alerta
+      if (bestDeal != null && arg.currentPrice > bestDeal.price * 1.15) {
+        return bestDeal;
+      }
+      return null;
     },
     loading: () => null,
     error: (_, __) => null,

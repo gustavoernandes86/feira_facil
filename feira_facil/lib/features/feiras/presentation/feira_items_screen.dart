@@ -5,6 +5,8 @@ import '../../../core/utils/category_utils.dart';
 import '../data/feira_repository.dart';
 import '../data/feira_items_repository.dart';
 import '../domain/feira.dart';
+import 'package:feira_facil/features/feiras/presentation/widgets/item_comparison_sheet.dart';
+import '../domain/price_tier.dart';
 import '../domain/feira_item.dart';
 import 'feira_items_controller.dart';
 import 'providers/price_history_provider.dart';
@@ -210,6 +212,7 @@ class FeiraItemsScreen extends ConsumerWidget {
                       ),
                       onPressed: () {
                         if (itemName.trim().isEmpty) return;
+                        final feiraData = ref.read(feiraProvider(feiraId)).value;
                         final newItem = FeiraItem(
                           id: FirebaseFirestore.instance.collection('feiras').doc(feiraId).collection('items').doc().id,
                           name: itemName,
@@ -221,6 +224,7 @@ class FeiraItemsScreen extends ConsumerWidget {
                           groupId: feiraContext?.groupId,
                           date: feiraContext?.date,
                           tiers: itemTiers,
+                          marketName: feiraData?.marketName,
                         );
                         ref.read(feiraItemsControllerProvider(feiraId).notifier).addItem(newItem);
                         Navigator.pop(ctx);
@@ -335,82 +339,9 @@ class FeiraItemsScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        ...catItems.map((item) => Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: item.isAdded ? Colors.grey.shade50 : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: item.isAdded ? Colors.grey.shade200 : Colors.transparent),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            title: Text(
-                              item.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                decoration: item.isAdded ? TextDecoration.lineThrough : null,
-                                color: item.isAdded ? Colors.grey : Colors.black87,
-                              ),
-                            ),
-                            subtitle: Builder(
-                              builder: (context) {
-                                final effectivePrice = item.getEffectivePrice(item.quantity);
-                                final nextTier = item.getNextTierSuggestion(item.quantity);
-                                final isSpecial = effectivePrice < item.unitPrice;
-                                
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.quantity.toStringAsFixed(item.unit == "un" ? 0 : 2)} ${item.unit} x R\$ ${effectivePrice.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            color: item.isAdded ? Colors.grey.shade400 : Colors.black54, 
-                                            fontSize: 13,
-                                            fontWeight: isSpecial ? FontWeight.bold : FontWeight.normal,
-                                          ),
-                                        ),
-                                        if (isSpecial) ...[
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4)),
-                                            child: const Text('🏷️ Atacado', style: TextStyle(fontSize: 9, color: Colors.orange, fontWeight: FontWeight.bold)),
-                                          ),
-                                        ]
-                                      ],
-                                    ),
-                                    if (!item.isAdded && nextTier != null)
-                                       Padding(
-                                         padding: const EdgeInsets.only(top: 2),
-                                         child: Text(
-                                           'Dica: Leve ${nextTier.minQuantity.toStringAsFixed(0)} e pague R\$ ${nextTier.unitPrice.toStringAsFixed(2)} cada',
-                                           style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontStyle: FontStyle.italic),
-                                         ),
-                                       ),
-                                    _PriceTrendBadge(item: item),
-                                  ],
-                                );
-                              },
-                            ),
-                            leading: Checkbox(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                              activeColor: Colors.green,
-                              value: item.isAdded,
-                              onChanged: (bool? checked) {
-                                if (checked == null) return;
-                                ref.read(feiraItemsControllerProvider(feiraId).notifier).toggleItem(item, checked);
-                              },
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                              onPressed: () {
-                                ref.read(feiraItemsControllerProvider(feiraId).notifier).removeItem(item.id);
-                              },
-                            ),
-                          ),
-                        )),
+                        ...catItems.map((item) {
+                          return _FeiraItemTile(feiraId: feiraId, item: item);
+                        }),
                       ],
                     );
                   },
@@ -671,6 +602,141 @@ class _PriceTrendBadge extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeiraItemTile extends ConsumerWidget {
+  final String feiraId;
+  final FeiraItem item;
+
+  const _FeiraItemTile({required this.feiraId, required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final alert = ref.watch(bestPriceAlertProvider((
+      groupId: item.groupId ?? '',
+      itemName: item.name,
+      currentItemId: item.id,
+      currentPrice: item.getEffectivePrice(item.quantity),
+    )));
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: item.isAdded ? Colors.grey.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: item.isAdded ? Colors.grey.shade200 : Colors.transparent),
+      ),
+      child: InkWell(
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => ItemComparisonSheet(item: item),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Checkbox(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                activeColor: Colors.green,
+                value: item.isAdded,
+                onChanged: (bool? checked) {
+                  if (checked == null) return;
+                  ref.read(feiraItemsControllerProvider(feiraId).notifier).toggleItem(item, checked);
+                },
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: item.isAdded ? TextDecoration.lineThrough : null,
+                        color: item.isAdded ? Colors.grey : Colors.black87,
+                      ),
+                    ),
+                    Builder(
+                      builder: (context) {
+                        final effectivePrice = item.getEffectivePrice(item.quantity);
+                        final nextTier = item.getNextTierSuggestion(item.quantity);
+                        final isSpecial = effectivePrice < item.unitPrice;
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.quantity.toStringAsFixed(item.unit == "un" ? 0 : 2)} ${item.unit} x R\$ ${effectivePrice.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: item.isAdded ? Colors.grey.shade400 : Colors.black54, 
+                                    fontSize: 13,
+                                    fontWeight: isSpecial ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                                if (isSpecial) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4)),
+                                    child: const Text('🏷️ Atacado', style: TextStyle(fontSize: 9, color: Colors.orange, fontWeight: FontWeight.bold)),
+                                  ),
+                                ]
+                              ],
+                            ),
+                            if (!item.isAdded && alert != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.warning_amber_rounded, size: 10, color: Colors.red),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Ops! ${alert.marketName} vende por R\$ ${alert.price.toStringAsFixed(2)}',
+                                        style: const TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (!item.isAdded && nextTier != null)
+                               Padding(
+                                 padding: const EdgeInsets.only(top: 2),
+                                 child: Text(
+                                   'Dica: Leve ${nextTier.minQuantity.toStringAsFixed(0)} e pague R\$ ${nextTier.unitPrice.toStringAsFixed(2)} cada',
+                                   style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontStyle: FontStyle.italic),
+                                 ),
+                               ),
+                            _PriceTrendBadge(item: item),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                onPressed: () {
+                  ref.read(feiraItemsControllerProvider(feiraId).notifier).removeItem(item.id);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

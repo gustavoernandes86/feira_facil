@@ -13,6 +13,7 @@ class FeiraItem {
   final String? groupId;
   final DateTime? date;
   final List<PriceTier> tiers;
+  final String? marketName;
 
   const FeiraItem({
     required this.id,
@@ -26,6 +27,7 @@ class FeiraItem {
     this.groupId,
     this.date,
     this.tiers = const [],
+    this.marketName,
   });
 
   /// Retorna o preço unitário efetivo baseado na quantidade atual e nos tiers
@@ -76,6 +78,7 @@ class FeiraItem {
               ?.map((t) => PriceTier.fromJson(t as Map<String, dynamic>))
               .toList() ??
           const [],
+      marketName: json['marketName'] as String?,
     );
   }
 
@@ -90,6 +93,7 @@ class FeiraItem {
       'category': category,
       'isAdded': isAdded,
       'tiers': tiers.map((t) => t.toJson()).toList(),
+      if (marketName != null) 'marketName': marketName,
       if (groupId != null) 'groupId': groupId,
       if (date != null) 'date': Timestamp.fromDate(date!),
     };
@@ -107,6 +111,7 @@ class FeiraItem {
     String? groupId,
     DateTime? date,
     List<PriceTier>? tiers,
+    String? marketName,
   }) {
     return FeiraItem(
       id: id ?? this.id,
@@ -120,6 +125,7 @@ class FeiraItem {
       groupId: groupId ?? this.groupId,
       date: date ?? this.date,
       tiers: tiers ?? this.tiers,
+      marketName: marketName ?? this.marketName,
     );
   }
 }
