@@ -22,6 +22,7 @@ class FeiraItemsScreen extends ConsumerWidget {
     double itemQuantity = 1.0;
     String selectedCategory = 'Geral';
     String selectedUnit = 'un';
+    List<PriceTier> itemTiers = [];
 
     showModalBottomSheet(
       context: context,
@@ -139,7 +140,7 @@ class FeiraItemsScreen extends ConsumerWidget {
                           flex: 3,
                           child: TextField(
                             decoration: const InputDecoration(
-                              labelText: 'Preço Unt.',
+                              labelText: 'Preço Unt. Base',
                               prefixText: 'R\$ ',
                               border: OutlineInputBorder(),
                             ),
@@ -148,6 +149,56 @@ class FeiraItemsScreen extends ConsumerWidget {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Preços Progressivos (Atacado):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    ...itemTiers.asMap().entries.map((entry) {
+                      int idx = entry.key;
+                      PriceTier tier = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          children: [
+                            Text('${idx + 1}.', style: const TextStyle(color: Colors.grey)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 2,
+                              child: TextField(
+                                decoration: const InputDecoration(labelText: 'Qtd Min', border: OutlineInputBorder(), isDense: true),
+                                keyboardType: TextInputType.number,
+                                controller: TextEditingController(text: tier.minQuantity.toStringAsFixed(0))..selection = TextSelection.collapsed(offset: tier.minQuantity.toStringAsFixed(0).length),
+                                onChanged: (val) {
+                                  double? q = double.tryParse(val);
+                                  if (q != null) itemTiers[idx] = PriceTier(minQuantity: q, unitPrice: tier.unitPrice);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                decoration: const InputDecoration(labelText: 'Preço/Un', border: OutlineInputBorder(), isDense: true, prefixText: 'R\$ '),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                controller: TextEditingController(text: tier.unitPrice.toStringAsFixed(2))..selection = TextSelection.collapsed(offset: tier.unitPrice.toStringAsFixed(2).length),
+                                onChanged: (val) {
+                                  double? p = double.tryParse(val);
+                                  if (p != null) itemTiers[idx] = PriceTier(minQuantity: tier.minQuantity, unitPrice: p);
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline, color: Colors.grey),
+                              onPressed: () => setState(() => itemTiers.removeAt(idx)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    TextButton.icon(
+                      onPressed: () => setState(() => itemTiers.add(PriceTier(minQuantity: 1, unitPrice: itemPrice))),
+                      icon: const Icon(Icons.add_circle_outline, size: 18),
+                      label: const Text('Adicionar Faixa de Desconto'),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -169,6 +220,7 @@ class FeiraItemsScreen extends ConsumerWidget {
                           category: selectedCategory,
                           groupId: feiraContext?.groupId,
                           date: feiraContext?.date,
+                          tiers: itemTiers,
                         );
                         ref.read(feiraItemsControllerProvider(feiraId).notifier).addItem(newItem);
                         Navigator.pop(ctx);
@@ -300,15 +352,47 @@ class FeiraItemsScreen extends ConsumerWidget {
                                 color: item.isAdded ? Colors.grey : Colors.black87,
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.quantity.toStringAsFixed(item.unit == "un" ? 0 : 2)} ${item.unit} x R\$ ${item.unitPrice.toStringAsFixed(2)}',
-                                  style: TextStyle(color: item.isAdded ? Colors.grey.shade400 : Colors.black54, fontSize: 13),
-                                ),
-                                _PriceTrendBadge(item: item),
-                              ],
+                            subtitle: Builder(
+                              builder: (context) {
+                                final effectivePrice = item.getEffectivePrice(item.quantity);
+                                final nextTier = item.getNextTierSuggestion(item.quantity);
+                                final isSpecial = effectivePrice < item.unitPrice;
+                                
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.quantity.toStringAsFixed(item.unit == "un" ? 0 : 2)} ${item.unit} x R\$ ${effectivePrice.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            color: item.isAdded ? Colors.grey.shade400 : Colors.black54, 
+                                            fontSize: 13,
+                                            fontWeight: isSpecial ? FontWeight.bold : FontWeight.normal,
+                                          ),
+                                        ),
+                                        if (isSpecial) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4)),
+                                            child: const Text('🏷️ Atacado', style: TextStyle(fontSize: 9, color: Colors.orange, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ]
+                                      ],
+                                    ),
+                                    if (!item.isAdded && nextTier != null)
+                                       Padding(
+                                         padding: const EdgeInsets.only(top: 2),
+                                         child: Text(
+                                           'Dica: Leve ${nextTier.minQuantity.toStringAsFixed(0)} e pague R\$ ${nextTier.unitPrice.toStringAsFixed(2)} cada',
+                                           style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontStyle: FontStyle.italic),
+                                         ),
+                                       ),
+                                    _PriceTrendBadge(item: item),
+                                  ],
+                                );
+                              },
                             ),
                             leading: Checkbox(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -366,8 +450,8 @@ class _BudgetOverview extends ConsumerWidget {
 
         return itemsAsync.when(
           data: (items) {
-            final totalCart = items.where((i) => i.isAdded).fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
-            final totalEstimated = items.fold(0.0, (sum, i) => sum + (i.unitPrice * i.quantity));
+            final totalCart = items.where((i) => i.isAdded).fold(0.0, (sum, i) => sum + (i.getEffectivePrice(i.quantity) * i.quantity));
+            final totalEstimated = items.fold(0.0, (sum, i) => sum + (i.getEffectivePrice(i.quantity) * i.quantity));
             
             final double budget = feira.budget;
             final double progress = budget > 0 ? (totalCart / budget).clamp(0.0, 1.0) : 0.0;

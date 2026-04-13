@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'price_tier.dart';
 
 class FeiraItem {
   final String id;
@@ -9,8 +10,9 @@ class FeiraItem {
   final String unit;
   final String category;
   final bool isAdded;
-  final String? groupId; // Adicionado para facilitar consultas globais
-  final DateTime? date; // Adicionado para saber a data do preço
+  final String? groupId;
+  final DateTime? date;
+  final List<PriceTier> tiers;
 
   const FeiraItem({
     required this.id,
@@ -23,7 +25,40 @@ class FeiraItem {
     this.isAdded = false,
     this.groupId,
     this.date,
+    this.tiers = const [],
   });
+
+  /// Retorna o preço unitário efetivo baseado na quantidade atual e nos tiers
+  double getEffectivePrice(double currentQuantity) {
+    if (tiers.isEmpty) return unitPrice;
+    
+    // Filtra as faixas alcançadas e pega a que tem a maior quantidade mínima (mais desconto)
+    PriceTier? bestTier;
+    for (final tier in tiers) {
+      if (currentQuantity >= tier.minQuantity) {
+        if (bestTier == null || tier.minQuantity > bestTier.minQuantity) {
+          bestTier = tier;
+        }
+      }
+    }
+    
+    return bestTier?.unitPrice ?? unitPrice;
+  }
+
+  /// Retorna a próxima faixa disponível para sugerir economia
+  PriceTier? getNextTierSuggestion(double currentQuantity) {
+    if (tiers.isEmpty) return null;
+    
+    PriceTier? nextTier;
+    for (final tier in tiers) {
+      if (tier.minQuantity > currentQuantity) {
+        if (nextTier == null || tier.minQuantity < nextTier.minQuantity) {
+          nextTier = tier;
+        }
+      }
+    }
+    return nextTier;
+  }
 
   factory FeiraItem.fromJson(Map<String, dynamic> json) {
     return FeiraItem(
@@ -37,6 +72,10 @@ class FeiraItem {
       isAdded: json['isAdded'] as bool? ?? false,
       groupId: json['groupId'] as String?,
       date: json['date'] != null ? (json['date'] as Timestamp).toDate() : null,
+      tiers: (json['tiers'] as List?)
+              ?.map((t) => PriceTier.fromJson(t as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 
@@ -50,6 +89,7 @@ class FeiraItem {
       'unit': unit,
       'category': category,
       'isAdded': isAdded,
+      'tiers': tiers.map((t) => t.toJson()).toList(),
       if (groupId != null) 'groupId': groupId,
       if (date != null) 'date': Timestamp.fromDate(date!),
     };
@@ -66,6 +106,7 @@ class FeiraItem {
     bool? isAdded,
     String? groupId,
     DateTime? date,
+    List<PriceTier>? tiers,
   }) {
     return FeiraItem(
       id: id ?? this.id,
@@ -78,6 +119,7 @@ class FeiraItem {
       isAdded: isAdded ?? this.isAdded,
       groupId: groupId ?? this.groupId,
       date: date ?? this.date,
+      tiers: tiers ?? this.tiers,
     );
   }
 }
