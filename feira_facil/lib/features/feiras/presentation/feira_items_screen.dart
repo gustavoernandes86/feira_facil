@@ -1,30 +1,522 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+
 import '../../../core/utils/category_utils.dart';
-import '../data/feira_repository.dart';
+import '../../../core/theme/app_colors.dart';
 import '../data/feira_items_repository.dart';
+import '../data/feira_repository.dart';
 import '../domain/feira.dart';
-import 'package:feira_facil/features/feiras/presentation/widgets/item_comparison_sheet.dart';
-import '../domain/price_tier.dart';
 import '../domain/feira_item.dart';
 import 'feira_items_controller.dart';
-import 'providers/price_history_provider.dart';
 
-class FeiraItemsScreen extends ConsumerWidget {
+class FeiraItemsScreen extends ConsumerStatefulWidget {
   final String feiraId;
   final Feira? feiraContext;
 
   const FeiraItemsScreen({super.key, required this.feiraId, this.feiraContext});
+
+  @override
+  ConsumerState<FeiraItemsScreen> createState() => _FeiraItemsScreenState();
+}
+
+class _FeiraItemsScreenState extends ConsumerState<FeiraItemsScreen> {
+  String _searchQuery = '';
+  String _filterStatus = 'Tudo'; // Alles, Pendentes, Carrinho
+
+  @override
+  Widget build(BuildContext context) {
+    final itemsAsyncValue = ref.watch(feiraItemsStreamProvider(widget.feiraId));
+    final feiraAsyncValue = ref.watch(feiraProvider(widget.feiraId));
+
+    return Scaffold(
+      backgroundColor: AppColors.cream,
+      body: Column(
+        children: [
+          _buildHeader(context, feiraAsyncValue, itemsAsyncValue),
+
+          Expanded(
+            child: itemsAsyncValue.when(
+              data: (items) {
+                final filteredItems = _applyFilters(items);
+                if (items.isEmpty) return _buildEmptyState();
+
+                return Column(
+                  children: [
+                    _buildFilterChips(),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                        itemCount: filteredItems.length,
+                        itemBuilder: (context, index) {
+                          final item = filteredItems[index];
+                          return _buildItemCard(context, item);
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Erro: $err')),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddItemModal(context, ref),
+        label: const Text(
+          'Novo Item',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        icon: const Icon(Icons.add),
+        backgroundColor: AppColors.textBody,
+        foregroundColor: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    AsyncValue<Feira?> feiraAsync,
+    AsyncValue<List<FeiraItem>> itemsAsync,
+  ) {
+    final total =
+        itemsAsync.value
+            ?.where((i) => i.isAdded)
+            .fold(
+              0.0,
+              (acc, i) => acc + (i.getEffectivePrice(i.quantity) * i.quantity),
+            ) ??
+        0.0;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 10,
+        20,
+        24,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.green,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => context.pop(),
+              ),
+              Expanded(
+                child: Text(
+                  feiraAsync.value?.marketName ?? 'Lista de Compras',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fraunces(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white),
+                onSelected: (value) async {
+                  if (value == 'delete') {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Excluir Feira'),
+                        content: const Text(
+                            'Deseja excluir esta feira e todos os seus itens?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Excluir',
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true && context.mounted) {
+                      await ref
+                          .read(feiraRepositoryProvider)
+                          .deleteFeira(widget.feiraId);
+                      if (context.mounted) context.go('/feiras');
+                    }
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                        SizedBox(width: 8),
+                        Text('Excluir Feira',
+                            style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  const Text(
+                    'TOTAL ATUAL',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  Text(
+                    'R\$ ${total.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Search Input
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: TextField(
+              onChanged: (val) => setState(() => _searchQuery = val),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: 'Pesquisar item...',
+                hintStyle: TextStyle(color: Colors.white54),
+                icon: Icon(Icons.search, color: Colors.white54, size: 20),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      child: Row(
+        children: [
+          _filterChip('Tudo'),
+          const SizedBox(width: 8),
+          _filterChip('Pendentes'),
+          const SizedBox(width: 8),
+          _filterChip('Carrinho'),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip(String label) {
+    final isSelected = _filterStatus == label;
+    return InkWell(
+      onTap: () => setState(() => _filterStatus = label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.orange : AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.orange : AppColors.cream2,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemCard(BuildContext context, FeiraItem item) {
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(right: 20),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Excluir Item'),
+            content: Text('Deseja excluir "${item.name}" da lista?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        ref
+            .read(feiraItemsControllerProvider(widget.feiraId).notifier)
+            .removeItem(item.id);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [AppColors.shadow1],
+          border: Border.all(
+            color: item.isAdded ? AppColors.greenLight : AppColors.cream2,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Checkbox
+            GestureDetector(
+              onTap: () => ref
+                  .read(feiraItemsControllerProvider(widget.feiraId).notifier)
+                  .toggleItem(item, !item.isAdded),
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: item.isAdded ? AppColors.green : AppColors.cream,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: item.isAdded ? AppColors.green : AppColors.cream2,
+                  ),
+                ),
+                child: item.isAdded
+                    ? const Icon(Icons.check, color: Colors.white, size: 18)
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Item Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: item.isAdded
+                          ? AppColors.textTertiary
+                          : AppColors.textBody,
+                      decoration: item.isAdded
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  Text(
+                    '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.category}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'R\$ ${item.unitPrice.toStringAsFixed(2)} / ${item.unit}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: item.isAdded
+                          ? AppColors.textTertiary
+                          : AppColors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Quantity Controller
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  _qtyBtn(Icons.remove, () {
+                    if (item.quantity > 1) {
+                      _updateQty(item, item.quantity - 1);
+                    }
+                  }),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      item.quantity.toStringAsFixed(0),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  _qtyBtn(Icons.add, () => _updateQty(item, item.quantity + 1)),
+                ],
+              ),
+            ),
+            
+            // Delete Button
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Excluir Item'),
+                    content: Text('Deseja excluir "${item.name}" da lista?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  ref
+                      .read(feiraItemsControllerProvider(widget.feiraId).notifier)
+                      .removeItem(item.id);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, size: 16, color: AppColors.textSecondary),
+      ),
+    );
+  }
+
+  void _updateQty(FeiraItem item, double newQty) {
+    final updated = item.copyWith(quantity: newQty);
+    ref
+        .read(feiraItemsControllerProvider(widget.feiraId).notifier)
+        .updateItem(updated);
+  }
+
+  List<FeiraItem> _applyFilters(List<FeiraItem> items) {
+    var result = items;
+    if (_searchQuery.isNotEmpty) {
+      result = result
+          .where(
+            (i) => i.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
+          .toList();
+    }
+    if (_filterStatus == 'Pendentes') {
+      result = result.where((i) => !i.isAdded).toList();
+    } else if (_filterStatus == 'Carrinho') {
+      result = result.where((i) => i.isAdded).toList();
+    }
+    return result;
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('📝', style: TextStyle(fontSize: 60)),
+            const SizedBox(height: 24),
+            const Text(
+              'Lista vazia',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Text(
+              'Comece adicionando itens clicando no botão abaixo.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showAddItemModal(BuildContext context, WidgetRef ref) {
     String itemName = '';
     String itemBrand = '';
     double itemPrice = 0.0;
     double itemQuantity = 1.0;
-    String selectedCategory = 'Geral';
+    String selectedCategory = AppCategories.first.name;  // Default to first valid category
     String selectedUnit = 'un';
-    List<PriceTier> itemTiers = [];
 
     showModalBottomSheet(
       context: context,
@@ -33,712 +525,135 @@ class FeiraItemsScreen extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                  ),
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                    left: 24,
-                    right: 24,
-                    top: 24,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Novo Item',
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                    const SizedBox(height: 16),
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Novo Item',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     TextField(
                       decoration: const InputDecoration(
-                        labelText: 'Nome do Produto (ex: Arroz)',
-                        border: OutlineInputBorder(),
+                        labelText: 'Nome do Produto',
                       ),
-                      autofocus: true,
                       onChanged: (val) => itemName = val,
                     ),
                     const SizedBox(height: 12),
                     TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Marca (ex: Tio João)',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'Marca'),
                       onChanged: (val) => itemBrand = val,
                     ),
                     const SizedBox(height: 16),
-                    const Text('Categoria:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 50,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: AppCategories.length,
-                        itemBuilder: (context, index) {
-                          final cat = AppCategories[index];
-                          final isSelected = selectedCategory == cat.name;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              avatar: Icon(cat.icon, size: 16, color: isSelected ? Colors.white : cat.color),
-                              label: Text(cat.name),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                if (selected) setState(() => selectedCategory = cat.name);
-                              },
-                            ),
-                          );
-                        },
+                    // Categories Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(
+                        labelText: 'Categoria',
+                        prefixIcon: Icon(Icons.category_outlined),
                       ),
+                      items: AppCategories.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat.name,
+                          child: Row(
+                            children: [
+                              Icon(cat.icon, size: 20, color: cat.color),
+                              const SizedBox(width: 12),
+                              Text(cat.name),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => selectedCategory = val);
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
-                          flex: 2,
+                          child: TextField(
+                            decoration: const InputDecoration(labelText: 'Qtd'),
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) =>
+                                itemQuantity = double.tryParse(val) ?? 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
                           child: TextField(
                             decoration: const InputDecoration(
-                              labelText: 'Qtd',
-                              border: OutlineInputBorder(),
+                              labelText: 'Preço Unt.',
+                              prefixText: 'R\$ ',
                             ),
                             keyboardType: TextInputType.number,
-                            onChanged: (val) => itemQuantity = double.tryParse(val) ?? 1.0,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 2,
-                          child: DropdownButtonFormField<String>(
-                            value: selectedUnit,
-                            decoration: const InputDecoration(
-                              labelText: 'Unidade',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: ['un', 'kg', 'L', 'g', 'ml', 'cx', 'fardo']
-                                .map((unit) => DropdownMenuItem(value: unit, child: Text(unit)))
-                                .toList(),
-                            onChanged: (val) => setState(() => selectedUnit = val!),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 3,
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              labelText: 'Preço Unt. Base',
-                              prefixText: 'R\$ ',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            onChanged: (val) => itemPrice = double.tryParse(val) ?? 0.0,
+                            onChanged: (val) =>
+                                itemPrice = double.tryParse(val) ?? 0.0,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Preços Progressivos (Atacado):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    ...itemTiers.asMap().entries.map((entry) {
-                      int idx = entry.key;
-                      PriceTier tier = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Row(
-                          children: [
-                            Text('${idx + 1}.', style: const TextStyle(color: Colors.grey)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              flex: 2,
-                              child: TextField(
-                                decoration: const InputDecoration(labelText: 'Qtd Min', border: OutlineInputBorder(), isDense: true),
-                                keyboardType: TextInputType.number,
-                                controller: TextEditingController(text: tier.minQuantity.toStringAsFixed(0))..selection = TextSelection.collapsed(offset: tier.minQuantity.toStringAsFixed(0).length),
-                                onChanged: (val) {
-                                  double? q = double.tryParse(val);
-                                  if (q != null) itemTiers[idx] = PriceTier(minQuantity: q, unitPrice: tier.unitPrice);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              flex: 3,
-                              child: TextField(
-                                decoration: const InputDecoration(labelText: 'Preço/Un', border: OutlineInputBorder(), isDense: true, prefixText: 'R\$ '),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                controller: TextEditingController(text: tier.unitPrice.toStringAsFixed(2))..selection = TextSelection.collapsed(offset: tier.unitPrice.toStringAsFixed(2).length),
-                                onChanged: (val) {
-                                  double? p = double.tryParse(val);
-                                  if (p != null) itemTiers[idx] = PriceTier(minQuantity: tier.minQuantity, unitPrice: p);
-                                },
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline, color: Colors.grey),
-                              onPressed: () => setState(() => itemTiers.removeAt(idx)),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    TextButton.icon(
-                      onPressed: () => setState(() => itemTiers.add(PriceTier(minQuantity: 1, unitPrice: itemPrice))),
-                      icon: const Icon(Icons.add_circle_outline, size: 18),
-                      label: const Text('Adicionar Faixa de Desconto'),
-                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
                       onPressed: () {
                         if (itemName.trim().isEmpty) return;
-                        final feiraData = ref.read(feiraProvider(feiraId)).value;
+                        final feiraData = ref
+                            .read(feiraProvider(widget.feiraId))
+                            .value;
                         final newItem = FeiraItem(
-                          id: FirebaseFirestore.instance.collection('feiras').doc(feiraId).collection('items').doc().id,
+                          id: FirebaseFirestore.instance
+                              .collection('feiras')
+                              .doc(widget.feiraId)
+                              .collection('items')
+                              .doc()
+                              .id,
                           name: itemName,
                           brand: itemBrand,
                           unitPrice: itemPrice,
                           quantity: itemQuantity,
                           unit: selectedUnit,
                           category: selectedCategory,
-                          groupId: feiraContext?.groupId,
-                          date: feiraContext?.date,
-                          tiers: itemTiers,
+                          groupId: widget.feiraContext?.groupId,
+                          date: widget.feiraContext?.date,
+                          tiers: [],
                           marketName: feiraData?.marketName,
                         );
-                        ref.read(feiraItemsControllerProvider(feiraId).notifier).addItem(newItem);
+                        ref
+                            .read(
+                              feiraItemsControllerProvider(
+                                widget.feiraId,
+                              ).notifier,
+                            )
+                            .addItem(newItem);
                         Navigator.pop(ctx);
                       },
-                      child: const Text('ADICIONAR À LISTA', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text('Adicionar'),
                     ),
-                    const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ),
             );
           },
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final itemsAsyncValue = ref.watch(feiraItemsStreamProvider(feiraId));
-    final feiraAsyncValue = ref.watch(feiraProvider(feiraId));
-
-    return Scaffold(
-      appBar: AppBar(
-        title: feiraAsyncValue.when(
-          data: (f) => Text(f?.marketName ?? 'Detalhes da Feira', style: const TextStyle(fontWeight: FontWeight.bold)),
-          loading: () => const Text('Carregando...'),
-          error: (_, __) => const Text('Erro'),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: Column(
-        children: [
-          _BudgetOverview(feiraId: feiraId),
-          Expanded(
-            child: itemsAsyncValue.when(
-              data: (items) {
-                if (items.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(48.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_shopping_cart, size: 80, color: Colors.green.withOpacity(0.15)),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Hora de planejar!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Adicione os itens que você precisa clicando no botão + ali embaixo.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                // Group logical
-                final groupedItems = <String, List<FeiraItem>>{};
-                for (var item in items) {
-                  groupedItems.putIfAbsent(item.category, () => []).add(item);
-                }
-
-                // Sort keys based on AppCategories order
-                final sortedCategories = groupedItems.keys.toList()
-                  ..sort((a, b) {
-                    final idxA = AppCategories.indexWhere((c) => c.name == a);
-                    final idxB = AppCategories.indexWhere((c) => c.name == b);
-                    return idxA.compareTo(idxB);
-                  });
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  itemCount: sortedCategories.length,
-                  itemBuilder: (context, catIndex) {
-                    final catName = sortedCategories[catIndex];
-                    final catItems = groupedItems[catName]!;
-                    final catInfo = AppCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.last);
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                          child: Row(
-                            children: [
-                              Icon(catInfo.icon, size: 16, color: catInfo.color),
-                              const SizedBox(width: 8),
-                              Text(
-                                catName.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade600,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${catItems.length} Itens',
-                                style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ...catItems.map((item) {
-                          return _FeiraItemTile(feiraId: feiraId, item: item);
-                        }),
-                      ],
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Erro: $err')),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddItemModal(context, ref),
-        icon: const Icon(Icons.add, size: 20),
-        label: const Text('ADICIONAR ITEM', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
-        elevation: 4,
-      ),
-    );
-  }
-}
-
-class _BudgetOverview extends ConsumerWidget {
-  final String feiraId;
-  const _BudgetOverview({required this.feiraId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final feiraAsync = ref.watch(feiraProvider(feiraId));
-    final itemsAsync = ref.watch(feiraItemsStreamProvider(feiraId));
-
-    return feiraAsync.when(
-      data: (feira) {
-        if (feira == null) return const SizedBox.shrink();
-
-        return itemsAsync.when(
-          data: (items) {
-            final totalCart = items.where((i) => i.isAdded).fold(0.0, (sum, i) => sum + (i.getEffectivePrice(i.quantity) * i.quantity));
-            final totalEstimated = items.fold(0.0, (sum, i) => sum + (i.getEffectivePrice(i.quantity) * i.quantity));
-            
-            final double budget = feira.budget;
-            final double progress = budget > 0 ? (totalCart / budget).clamp(0.0, 1.0) : 0.0;
-            final double percent = budget > 0 ? (totalCart / budget) * 100 : 0.0;
-
-            Color progressColor = Colors.green;
-            if (percent >= 90) {
-              progressColor = Colors.red;
-            } else if (percent >= 75) {
-              progressColor = Colors.orange;
-            }
-
-            return Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'NO CARRINHO',
-                            style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-                          ),
-                          Text(
-                            'R\$ ${totalCart.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      _BudgetIndicator(
-                        budget: budget,
-                        onTap: () => _showBudgetDialog(context, ref, feiraId, budget),
-                      ),
-                    ],
-                  ),
-                  if (budget > 0) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Meta ${percent.toStringAsFixed(0)}%',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: progressColor),
-                        ),
-                        Text(
-                          'Restam R\$ ${(budget - totalCart).clamp(0.0, double.infinity).toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        backgroundColor: progressColor.withOpacity(0.1),
-                        valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 14, color: Colors.grey.shade400),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Total estimado: R\$ ${totalEstimated.toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  void _showBudgetDialog(BuildContext context, WidgetRef ref, String feiraId, double currentBudget) {
-    final controller = TextEditingController(text: currentBudget > 0 ? currentBudget.toStringAsFixed(2) : '');
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Definir Orçamento'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Valor Limite',
-            prefixText: 'R\$ ',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
-          ElevatedButton(
-            onPressed: () {
-              final newBudget = double.tryParse(controller.text) ?? 0.0;
-              ref.read(feiraItemsControllerProvider(feiraId).notifier).updateBudget(newBudget);
-              Navigator.pop(ctx);
-            },
-            child: const Text('SALVAR'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BudgetIndicator extends StatelessWidget {
-  final double budget;
-  final VoidCallback onTap;
-
-  const _BudgetIndicator({required this.budget, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final hasBudget = budget > 0;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: hasBudget ? Colors.blue.shade50 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              hasBudget ? Icons.account_balance_wallet_outlined : Icons.add_circle_outline,
-              size: 16,
-              color: hasBudget ? Colors.blue : Colors.grey,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              hasBudget ? 'R\$ ${budget.toStringAsFixed(0)}' : 'Definir Meta',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: hasBudget ? Colors.blue : Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PriceTrendBadge extends ConsumerWidget {
-  final FeiraItem item;
-  const _PriceTrendBadge({required this.item});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (item.groupId == null || item.unitPrice == 0) return const SizedBox.shrink();
-
-    final trend = ref.watch(priceTrendProvider((
-      groupId: item.groupId!,
-      itemName: item.name,
-      currentItemId: item.id,
-      currentPrice: item.unitPrice,
-    )));
-
-    if (trend == null) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: trend.isCheaper ? Colors.green.shade50 : Colors.red.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: trend.isCheaper ? Colors.green.shade100 : Colors.red.shade100),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              trend.isCheaper ? Icons.trending_down : Icons.trending_up,
-              size: 12,
-              color: trend.isCheaper ? Colors.green : Colors.red,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              trend.isCheaper 
-                ? 'MAIS BARATO (R\$ ${trend.difference.toStringAsFixed(2)})'
-                : 'MAIS CARO (R\$ ${trend.difference.toStringAsFixed(2)})',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                color: trend.isCheaper ? Colors.green.shade700 : Colors.red.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeiraItemTile extends ConsumerWidget {
-  final String feiraId;
-  final FeiraItem item;
-
-  const _FeiraItemTile({required this.feiraId, required this.item});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final alert = ref.watch(bestPriceAlertProvider((
-      groupId: item.groupId ?? '',
-      itemName: item.name,
-      currentItemId: item.id,
-      currentPrice: item.getEffectivePrice(item.quantity),
-    )));
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: item.isAdded ? Colors.grey.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: item.isAdded ? Colors.grey.shade200 : Colors.transparent),
-      ),
-      child: InkWell(
-        onTap: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => ItemComparisonSheet(item: item),
-          );
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Checkbox(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                activeColor: Colors.green,
-                value: item.isAdded,
-                onChanged: (bool? checked) {
-                  if (checked == null) return;
-                  ref.read(feiraItemsControllerProvider(feiraId).notifier).toggleItem(item, checked);
-                },
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        decoration: item.isAdded ? TextDecoration.lineThrough : null,
-                        color: item.isAdded ? Colors.grey : Colors.black87,
-                      ),
-                    ),
-                    Builder(
-                      builder: (context) {
-                        final effectivePrice = item.getEffectivePrice(item.quantity);
-                        final nextTier = item.getNextTierSuggestion(item.quantity);
-                        final isSpecial = effectivePrice < item.unitPrice;
-                        
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  '${item.brand.isNotEmpty ? "${item.brand} • " : ""}${item.quantity.toStringAsFixed(item.unit == "un" ? 0 : 2)} ${item.unit} x R\$ ${effectivePrice.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    color: item.isAdded ? Colors.grey.shade400 : Colors.black54, 
-                                    fontSize: 13,
-                                    fontWeight: isSpecial ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                                if (isSpecial) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4)),
-                                    child: const Text('🏷️ Atacado', style: TextStyle(fontSize: 9, color: Colors.orange, fontWeight: FontWeight.bold)),
-                                  ),
-                                ]
-                              ],
-                            ),
-                            if (!item.isAdded && alert != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.warning_amber_rounded, size: 10, color: Colors.red),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Ops! ${alert.marketName} vende por R\$ ${alert.price.toStringAsFixed(2)}',
-                                        style: const TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (!item.isAdded && nextTier != null)
-                               Padding(
-                                 padding: const EdgeInsets.only(top: 2),
-                                 child: Text(
-                                   'Dica: Leve ${nextTier.minQuantity.toStringAsFixed(0)} e pague R\$ ${nextTier.unitPrice.toStringAsFixed(2)} cada',
-                                   style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontStyle: FontStyle.italic),
-                                 ),
-                               ),
-                            _PriceTrendBadge(item: item),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                onPressed: () {
-                  ref.read(feiraItemsControllerProvider(feiraId).notifier).removeItem(item.id);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

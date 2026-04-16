@@ -1,69 +1,271 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:feira_facil/features/auth/presentation/auth_controller.dart';
-
-import '../../../core/providers/user_providers.dart';
-import '../../auth/domain/app_user.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'auth_controller.dart';
+import '../../../core/theme/app_colors.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(authControllerProvider, (previous, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao fazer login: ${next.error}'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    });
+
     final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Image.asset(
-                'assets/images/logo.png',
-                height: 120,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Feira Fácil',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+
+                  // Welcome message
+                  Text(
+                    'Bem-vindo ao',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Feira Fácil',
+                    style: GoogleFonts.fraunces(
+                      fontSize: 36,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.orange,
                     ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Organize, compare e economize na sua feira.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[600],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text(
+                    'Organize suas compras e compare preços\ncom sua família de forma inteligente',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textTertiary,
+                      height: 1.5,
                     ),
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  // Google Sign-In Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => ref
+                                .read(authControllerProvider.notifier)
+                                .signInWithGoogle(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.white,
+                        foregroundColor: AppColors.textBody,
+                        side: const BorderSide(
+                          color: AppColors.cream2,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                      label: Text(
+                        isLoading ? 'Conectando...' : 'Entrar com Google',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'Fazemos login apenas com sua conta Google\npara maior segurança e privacidade',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textTertiary,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Features preview
+                  _buildFeatureItem(
+                    icon: '🛒',
+                    title: 'Listas Inteligentes',
+                    description: 'Organize suas compras por categoria',
+                  ),
+                  const SizedBox(height: 20),
+                  _buildFeatureItem(
+                    icon: '💰',
+                    title: 'Compare Preços',
+                    description: 'Encontre as melhores ofertas',
+                  ),
+                  const SizedBox(height: 20),
+                  _buildFeatureItem(
+                    icon: '👨‍👩‍👧‍👦',
+                    title: 'Compartilhe',
+                    description: 'Sincronize com sua família',
+                  ),
+                ],
               ),
-              const SizedBox(height: 48),
-              if (authState.isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                ElevatedButton.icon(
-                  onPressed: () {
-                    ref.read(authControllerProvider.notifier).signInWithGoogle();
-                  },
-                  icon: const Icon(Icons.g_mobiledata, size: 32),
-                  label: const Text('Entrar com Google'),
-                ),
-              if (authState.hasError) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Erro ao acessar: ${authState.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ]
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: 28),
+      decoration: const BoxDecoration(
+        color: AppColors.green,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.06,
+              child: CustomPaint(painter: DotPainter(spacing: 22)),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: const Center(
+                      child: Text('🛒', style: TextStyle(fontSize: 24)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Feira Fácil',
+                        style: GoogleFonts.fraunces(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        'compra inteligente em família',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({
+    required String icon,
+    required String title,
+    required String description,
+  }) {
+    return Row(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 32)),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textBody,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DotPainter extends CustomPainter {
+  final double spacing;
+  DotPainter({this.spacing = 24.0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white;
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

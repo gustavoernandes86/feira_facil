@@ -1,0 +1,247 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/fair_list.dart';
+import '../domain/list_item.dart';
+import '../data/fair_lists_repository.dart';
+
+/// Stream de listas de um grupo
+final fairListsStreamProvider = StreamProvider.family<List<FairList>, String>((
+  ref,
+  groupId,
+) {
+  final repository = ref.watch(fairListsRepositoryProvider);
+  return repository.listsStream(groupId);
+});
+
+/// Obtém todos os itens de uma lista
+final listItemsStreamProvider =
+    StreamProvider.family<List<ListItem>, ({String groupId, String listId})>((
+      ref,
+      params,
+    ) {
+      final repository = ref.watch(fairListsRepositoryProvider);
+      return repository.listItemsStream(params.groupId, params.listId);
+    });
+
+/// Controller para gerenciar listas de compras
+final fairListsControllerProvider =
+    AsyncNotifierProvider<FairListsController, void>(
+      () => FairListsController(''),
+    );
+
+class FairListsController extends AsyncNotifier<void> {
+  final String groupId;
+
+  FairListsController(this.groupId);
+
+  @override
+  FutureOr<void> build() {
+    // No initial state
+  }
+
+  /// Cria uma nova lista de compras
+  Future<void> createList({
+    required String name,
+    required Color color,
+    double? budget,
+    required String userId,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.createList(
+        groupId: groupId,
+        name: name,
+        color: color,
+        budget: budget,
+        userId: userId,
+      );
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+
+  /// Adiciona um item à lista
+  Future<void> addItemToList({
+    required String listId,
+    required String itemId,
+    int quantity = 1,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.addItemToList(
+        groupId: groupId,
+        listId: listId,
+        itemId: itemId,
+        quantity: quantity,
+      );
+
+      ref.invalidate(
+        listItemsStreamProvider((groupId: groupId, listId: listId)),
+      );
+    });
+  }
+
+  /// Atualiza a quantidade de um item na lista
+  Future<void> updateItemQuantity({
+    required String listId,
+    required String listItemId,
+    required int newQuantity,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.updateListItemQuantity(
+        groupId: groupId,
+        listId: listId,
+        listItemId: listItemId,
+        quantity: newQuantity,
+      );
+
+      ref.invalidate(
+        listItemsStreamProvider((groupId: groupId, listId: listId)),
+      );
+    });
+  }
+
+  /// Marca um item como "Peguei!"
+  Future<void> toggleItemChecked({
+    required String listId,
+    required String listItemId,
+    required bool marked,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.toggleItemMarked(
+        groupId: groupId,
+        listId: listId,
+        listItemId: listItemId,
+        marked: marked,
+      );
+
+      ref.invalidate(
+        listItemsStreamProvider((groupId: groupId, listId: listId)),
+      );
+    });
+  }
+
+  /// Remove um item da lista
+  Future<void> removeItemFromList({
+    required String listId,
+    required String listItemId,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.removeItemFromList(
+        groupId: groupId,
+        listId: listId,
+        listItemId: listItemId,
+      );
+
+      ref.invalidate(
+        listItemsStreamProvider((groupId: groupId, listId: listId)),
+      );
+    });
+  }
+
+  /// Atualiza o orçamento da lista
+  Future<void> updateListBudget({
+    required String listId,
+    required double budget,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.updateListBudget(
+        groupId: groupId,
+        listId: listId,
+        budget: budget,
+      );
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+
+  /// Inicia o modo compra (seleciona um mercado)
+  Future<void> startShoppingMode({
+    required String listId,
+    required String marketId,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.updateListMarket(
+        groupId: groupId,
+        listId: listId,
+        marketId: marketId,
+      );
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+
+  /// Conclui a lista
+  Future<void> completeList(String listId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.updateListStatus(
+        groupId: groupId,
+        listId: listId,
+        status: 'concluida',
+      );
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+
+  /// Atualiza a quantidade no carrinho durante modo compra
+  Future<void> updateCartQuantity({
+    required String listId,
+    required String listItemId,
+    int? cartQuantity,
+    bool? marked,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+
+      if (cartQuantity != null) {
+        await repository.updateCartQuantity(
+          groupId: groupId,
+          listId: listId,
+          listItemId: listItemId,
+          cartQuantity: cartQuantity,
+        );
+      }
+
+      if (marked != null) {
+        await repository.toggleItemMarked(
+          groupId: groupId,
+          listId: listId,
+          listItemId: listItemId,
+          marked: marked,
+        );
+      }
+
+      ref.invalidate(
+        listItemsStreamProvider((groupId: groupId, listId: listId)),
+      );
+    });
+  }
+
+  /// Deleta uma lista
+  Future<void> deleteList(String listId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.deleteList(groupId: groupId, listId: listId);
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+}
