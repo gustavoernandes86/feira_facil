@@ -2,6 +2,9 @@ class Market {
   final String id;
   final String name;
   final String address;
+  final String? placeId;
+  final double? latitude;
+  final double? longitude;
   final String? observations;
   final double rating;
   final String groupId;
@@ -12,6 +15,9 @@ class Market {
     required this.id,
     required this.name,
     required this.address,
+    this.placeId,
+    this.latitude,
+    this.longitude,
     this.observations,
     this.rating = 0.0,
     required this.groupId,
@@ -24,6 +30,9 @@ class Market {
       id: json['id'] as String,
       name: json['name'] as String,
       address: json['address'] as String? ?? '',
+      placeId: json['placeId'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       observations: json['observations'] as String?,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       groupId: json['groupId'] as String,
@@ -39,6 +48,9 @@ class Market {
       'id': id,
       'name': name,
       'address': address,
+      if (placeId != null) 'placeId': placeId,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       if (observations != null) 'observations': observations,
       'rating': rating,
       'groupId': groupId,
@@ -51,6 +63,9 @@ class Market {
     String? id,
     String? name,
     String? address,
+    String? placeId,
+    double? latitude,
+    double? longitude,
     String? observations,
     double? rating,
     String? groupId,
@@ -61,6 +76,9 @@ class Market {
       id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
+      placeId: placeId ?? this.placeId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       observations: observations ?? this.observations,
       rating: rating ?? this.rating,
       groupId: groupId ?? this.groupId,

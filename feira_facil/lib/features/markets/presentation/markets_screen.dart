@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -131,76 +133,155 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
 
   void _showAddMarketModal(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();
-    final neighborhoodController = TextEditingController();
+    final addressController = TextEditingController();
+    double? selectedLat;
+    double? selectedLng;
+    String? selectedPlaceId;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Cadastrar Mercado',
-              style: GoogleFonts.fraunces(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Cadastrar Mercado',
+                style: GoogleFonts.fraunces(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome do Mercado',
-                prefixIcon: Icon(Icons.storefront),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: neighborhoodController,
-              decoration: const InputDecoration(
-                labelText: 'Bairro',
-                prefixIcon: Icon(Icons.location_on_outlined),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.trim().isEmpty) return;
-                final groupId = ref.read(currentGroupIdProvider);
-                if (groupId == null) return;
+              const SizedBox(height: 24),
 
-                final newMarket = Market(
-                  id: const Uuid().v4(),
-                  name: nameController.text.trim(),
-                  address: neighborhoodController.text.trim().isEmpty
-                      ? ''
-                      : neighborhoodController.text.trim(),
-                  groupId: groupId,
-                  createdBy: '',
-                  createdAt: DateTime.now(),
-                );
+              // Nome do mercado
+              TextField(
+                controller: nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Nome do Mercado',
+                  prefixIcon: Icon(Icons.storefront),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                await ref
-                    .read(marketRepositoryProvider)
-                    .createMarket(newMarket);
-                Navigator.pop(ctx);
-              },
-              child: const Text('CADASTRAR'),
-            ),
-          ],
+              // Localização via Google Places
+              Text(
+                'LOCALIZAÇÃO',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textTertiary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              const SizedBox(height: 8),
+              GooglePlaceAutoCompleteTextField(
+                textEditingController: addressController,
+                googleAPIKey: 'AIzaSyAS3-vnzPSXdO41uw3sXsVBOOyATFPIaIY',
+                inputDecoration: const InputDecoration(
+                  hintText: 'Buscar endereço ou bairro...',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+                debounceTime: 400,
+                countries: const ['br'],
+                isLatLngRequired: true,
+                getPlaceDetailWithLatLng: (Prediction prediction) {
+                  setModalState(() {
+                    addressController.text = prediction.description ?? '';
+                    selectedLat = double.tryParse(prediction.lat ?? '');
+                    selectedLng = double.tryParse(prediction.lng ?? '');
+                    selectedPlaceId = prediction.placeId;
+                  });
+                },
+                itemClick: (Prediction prediction) {
+                  addressController.text = prediction.description ?? '';
+                  addressController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: addressController.text.length),
+                  );
+                },
+                itemBuilder: (context, index, Prediction prediction) {
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_pin, color: AppColors.orange, size: 18),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            prediction.description ?? '',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                seperatedBuilder: const Divider(height: 1, color: AppColors.cream2),
+                containerHorizontalPadding: 0,
+              ),
+
+              // Confirmação de endereço selecionado
+              if (selectedLat != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppColors.green, size: 16),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Localização confirmada',
+                        style: TextStyle(
+                          color: AppColors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nameController.text.trim().isEmpty) return;
+                  final groupId = ref.read(currentGroupIdProvider);
+                  if (groupId == null) return;
+
+                  final newMarket = Market(
+                    id: const Uuid().v4(),
+                    name: nameController.text.trim(),
+                    address: addressController.text.trim(),
+                    placeId: selectedPlaceId,
+                    latitude: selectedLat,
+                    longitude: selectedLng,
+                    groupId: groupId,
+                    createdBy: '',
+                    createdAt: DateTime.now(),
+                  );
+
+                  await ref
+                      .read(marketRepositoryProvider)
+                      .createMarket(newMarket);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('CADASTRAR'),
+              ),
+            ],
+          ),
         ),
       ),
     );
