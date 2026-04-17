@@ -1,0 +1,3635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Feira Fácil — Protótipo Completo</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --o: #F4620A;
+      --o2: #C94E06;
+      --o3: #FF8C42;
+      --olt: #FFF0E8;
+      --omd: #FFBA94;
+      --g: #2E7D32;
+      --g2: #1B5E20;
+      --glt: #E8F5E9;
+      --gmd: #A5D6A7;
+      --r: #D32F2F;
+      --rlt: #FFEBEE;
+      --cr: #FFF8F2;
+      --cr2: #FFE8D6;
+      --tx: #1A2E1A;
+      --tx2: #4A6B4A;
+      --tx3: #8FAF8F;
+      --wh: #FFFFFF;
+      --sh: 0 4px 20px rgba(244, 98, 10, 0.13);
+      --sh2: 0 2px 10px rgba(0, 0, 0, 0.08);
+      --rad: 18px;
+      --rad2: 12px;
+      --rad3: 8px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+      gap: 0
+    }
+
+    /* PHONE */
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--cr);
+      border-radius: 48px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
+      flex-shrink: 0
+    }
+
+    /* SCREENS */
+    .scr {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      overflow: hidden
+    }
+
+    .scr.on {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    /* SCROLLABLE */
+    .sa {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none
+    }
+
+    .sa::-webkit-scrollbar {
+      display: none
+    }
+
+    /* STATUS */
+    .sb {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      flex-shrink: 0
+    }
+
+    .sb-t {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .sb-w {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff
+    }
+
+    /* HEADER VERDE */
+    .hdr {
+      background: var(--g);
+      padding: 0 22px 22px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden
+    }
+
+    .hdr::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: var(--cr);
+      border-radius: 24px 24px 0 0
+    }
+
+    .hdr-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 22px 22px
+    }
+
+    .hdr-z {
+      position: relative;
+      z-index: 1
+    }
+
+    /* HEADER LARANJA */
+    .hdr-o {
+      background: var(--o);
+      padding: 0 22px 22px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden
+    }
+
+    .hdr-o::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: var(--cr);
+      border-radius: 24px 24px 0 0
+    }
+
+    .hdr-o-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 20px 20px
+    }
+
+    /* BACK ROW */
+    .back-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px
+    }
+
+    .back-btn {
+      width: 34px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      color: #fff;
+      flex-shrink: 0;
+      transition: background .15s
+    }
+
+    .back-btn:active {
+      background: rgba(255, 255, 255, 0.25)
+    }
+
+    .back-title {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff
+    }
+
+    /* TOP ROW HOME */
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px
+    }
+
+    .brand {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.5px
+    }
+
+    .brand span {
+      opacity: .5;
+      font-weight: 400
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      border: 1.5px solid rgba(255, 255, 255, .3);
+      cursor: pointer
+    }
+
+    /* TYPO */
+    .t-display {
+      font-family: 'Fraunces', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--tx);
+      line-height: 1.15
+    }
+
+    .t-display em {
+      font-style: italic;
+      color: var(--o)
+    }
+
+    .t-sec {
+      font-family: 'Fraunces', serif;
+      font-size: 19px;
+      font-weight: 600;
+      color: var(--tx);
+      margin-bottom: 10px
+    }
+
+    .t-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--tx3);
+      text-transform: uppercase;
+      letter-spacing: .9px
+    }
+
+    .t-sub {
+      font-size: 13px;
+      color: var(--tx2)
+    }
+
+    /* BUDGET WIDGET */
+    .budget {
+      background: rgba(255, 255, 255, .12);
+      border-radius: var(--rad2);
+      padding: 12px 14px;
+      margin-top: 12px
+    }
+
+    .budget-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px
+    }
+
+    .budget-lbl {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .7)
+    }
+
+    .budget-pct {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .budget-bar {
+      height: 5px;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 7px
+    }
+
+    .budget-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--o);
+      transition: width .5s
+    }
+
+    .budget-vals {
+      display: flex;
+      justify-content: space-between
+    }
+
+    .budget-v {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .7)
+    }
+
+    .budget-v strong {
+      color: #fff
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--wh);
+      border-radius: var(--rad);
+      padding: 18px;
+      box-shadow: var(--sh2);
+      cursor: pointer;
+      transition: transform .15s
+    }
+
+    .card:active {
+      transform: scale(.98)
+    }
+
+    .card-o {
+      border-left: 4px solid var(--o)
+    }
+
+    .card-g {
+      border-left: 4px solid var(--g)
+    }
+
+    /* BUTTONS */
+    .btn {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: var(--rad2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .15s
+    }
+
+    .btn-o {
+      background: var(--o);
+      color: #fff
+    }
+
+    .btn-o:active {
+      background: var(--o2);
+      transform: scale(.98)
+    }
+
+    .btn-g {
+      background: var(--g);
+      color: #fff
+    }
+
+    .btn-g:active {
+      background: var(--g2);
+      transform: scale(.98)
+    }
+
+    .btn-out {
+      background: transparent;
+      color: var(--o);
+      border: 1.5px solid var(--omd)
+    }
+
+    .btn-out:active {
+      background: var(--olt)
+    }
+
+    .btn-ghost {
+      background: var(--olt);
+      color: var(--o2);
+      border: none;
+      height: 40px;
+      border-radius: var(--rad3);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap
+    }
+
+    /* INPUT */
+    .field {
+      margin-bottom: 14px
+    }
+
+    .field-lbl {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--tx2);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      margin-bottom: 5px
+    }
+
+    .inp {
+      width: 100%;
+      height: 50px;
+      border: 1.5px solid var(--cr2);
+      border-radius: var(--rad3);
+      padding: 0 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--tx);
+      background: var(--wh);
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .inp:focus {
+      border-color: var(--o)
+    }
+
+    .inp::placeholder {
+      color: var(--tx3)
+    }
+
+    .inp-places {
+      background: var(--olt);
+      border-color: var(--omd)
+    }
+
+    /* FILTER TABS */
+    .tabs {
+      display: flex;
+      background: var(--wh);
+      padding: 0 20px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--cr2)
+    }
+
+    .tab {
+      flex: 1;
+      height: 42px;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tx3);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px
+    }
+
+    .tab.on {
+      color: var(--o);
+      border-color: var(--o);
+      font-weight: 700
+    }
+
+    .tab-cnt {
+      font-size: 10px;
+      background: var(--cr2);
+      color: var(--tx3);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-weight: 700
+    }
+
+    .tab.on .tab-cnt {
+      background: var(--olt);
+      color: var(--o)
+    }
+
+    /* BOTTOM NAV */
+    .bnav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 76px;
+      background: var(--wh);
+      border-top: 1px solid var(--cr2);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 8px 14px;
+      z-index: 20
+    }
+
+    .ni {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 14px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background .15s;
+      min-width: 52px
+    }
+
+    .ni:active {
+      background: var(--olt)
+    }
+
+    .ni-ico {
+      font-size: 21px
+    }
+
+    .ni-lbl {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--tx3)
+    }
+
+    .ni.on .ni-lbl {
+      color: var(--o);
+      font-weight: 700
+    }
+
+    /* FAB */
+    .fab {
+      position: absolute;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: var(--o);
+      border: none;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(244, 98, 10, .4);
+      transition: all .15s;
+      z-index: 15
+    }
+
+    .fab:active {
+      transform: scale(.93);
+      background: var(--o2)
+    }
+
+    /* SECTION TITLE */
+    .sec {
+      padding: 16px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .sec-t {
+      font-family: 'Fraunces', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .sec-link {
+      font-size: 13px;
+      color: var(--o);
+      font-weight: 600;
+      cursor: pointer
+    }
+
+    /* CAT LABEL */
+    .cat-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--tx3);
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      padding: 14px 20px 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .cat-lbl::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--cr2)
+    }
+
+    /* ITEM SIMPLES (lista) */
+    .item-row {
+      background: var(--wh);
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 0;
+      margin: 0 20px 8px;
+      border-radius: var(--rad2);
+      box-shadow: var(--sh2);
+      overflow: hidden;
+      transition: opacity .25s
+    }
+
+    .item-row.pego {
+      opacity: .45
+    }
+
+    .iq {
+      width: 46px;
+      background: var(--glt);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 0;
+      flex-shrink: 0;
+      align-self: stretch
+    }
+
+    .iq-btn {
+      width: 26px;
+      height: 26px;
+      background: var(--wh);
+      border: 1.5px solid var(--gmd);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--g);
+      font-weight: 700;
+      user-select: none;
+      transition: background .1s
+    }
+
+    .iq-btn:active {
+      background: var(--gmd)
+    }
+
+    .iq-n {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--tx)
+    }
+
+    .item-body {
+      flex: 1;
+      padding: 10px 12px
+    }
+
+    .item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .item-name.riscado {
+      text-decoration: line-through;
+      color: var(--tx3)
+    }
+
+    .item-brand {
+      font-size: 11px;
+      color: var(--tx3);
+      margin-bottom: 6px
+    }
+
+    /* expand detail */
+    .item-detail {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .25s ease
+    }
+
+    .item-detail.open {
+      max-height: 120px
+    }
+
+    .item-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px
+    }
+
+    .item-unit {
+      font-size: 12px;
+      color: var(--tx2)
+    }
+
+    .item-total {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--o2);
+      background: var(--olt);
+      padding: 3px 10px;
+      border-radius: 7px
+    }
+
+    .promo-chip {
+      background: var(--olt);
+      border: 1px solid var(--omd);
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 11px;
+      color: var(--o2);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px
+    }
+
+    .eco-chip {
+      background: var(--glt);
+      border: 1px dashed var(--gmd);
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 11px;
+      color: var(--g2);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px
+    }
+
+    /* item actions inline */
+    .item-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px
+    }
+
+    .peguei-btn {
+      flex: 1;
+      height: 32px;
+      background: var(--o);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all .15s
+    }
+
+    .peguei-btn:active {
+      background: var(--o2)
+    }
+
+    .peguei-btn.done {
+      background: var(--gmd);
+      color: var(--g2)
+    }
+
+    .ico-btn {
+      width: 32px;
+      height: 32px;
+      border: 1.5px solid var(--cr2);
+      border-radius: 7px;
+      background: var(--wh);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background .1s
+    }
+
+    .ico-btn:active {
+      background: var(--cr2)
+    }
+
+    /* expand toggle */
+    .expand-toggle {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--olt);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--o);
+      transition: all .15s
+    }
+
+    .expand-toggle.open {
+      background: var(--o);
+      color: #fff
+    }
+
+    /* MODO SIMPLES TOGGLE */
+    .mode-toggle {
+      margin: 10px 20px;
+      display: flex;
+      background: var(--cr2);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px
+    }
+
+    .mode-btn {
+      flex: 1;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--tx3);
+      background: transparent
+    }
+
+    .mode-btn.on {
+      background: var(--o);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(244, 98, 10, .3)
+    }
+
+    /* BUDGET STRIP */
+    .bstrip {
+      background: var(--glt);
+      padding: 10px 20px;
+      flex-shrink: 0
+    }
+
+    .bs1 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px
+    }
+
+    .bs-lbl {
+      font-size: 12px;
+      color: var(--tx2);
+      font-weight: 500
+    }
+
+    .bs-pct {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--o);
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .bs-bar {
+      height: 5px;
+      background: rgba(0, 0, 0, .08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 5px
+    }
+
+    .bs-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .5s
+    }
+
+    .bs2 {
+      display: flex;
+      justify-content: space-between
+    }
+
+    .bs-v {
+      font-size: 11px;
+      color: var(--tx2)
+    }
+
+    .bs-v strong {
+      color: var(--tx);
+      font-weight: 700
+    }
+
+    /* ECONOMIA BADGE */
+    .eco-badge {
+      background: var(--glt);
+      border: 1.5px solid var(--gmd);
+      border-radius: var(--rad2);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .eco-badge-lbl {
+      font-size: 13px;
+      color: var(--g2);
+      font-weight: 500
+    }
+
+    .eco-badge-val {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--g)
+    }
+
+    /* BOTTOM TOTAL BAR */
+    .total-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--wh);
+      border-top: 1px solid var(--cr2);
+      padding: 12px 20px 20px;
+      z-index: 20
+    }
+
+    .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px
+    }
+
+    .total-lbl {
+      font-size: 12px;
+      color: var(--tx2)
+    }
+
+    .total-val {
+      font-family: 'Fraunces', serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--tx)
+    }
+
+    /* COMPARADOR */
+    .comp-card {
+      background: var(--wh);
+      border-radius: var(--rad2);
+      margin: 0 20px 10px;
+      box-shadow: var(--sh2);
+      overflow: hidden
+    }
+
+    .comp-card.best {
+      border: 2px solid var(--g);
+      border-radius: var(--rad2)
+    }
+
+    .comp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px
+    }
+
+    .comp-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .comp-dist {
+      font-size: 11px;
+      color: var(--tx3)
+    }
+
+    .best-badge {
+      background: var(--g);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 3px
+    }
+
+    .comp-items {
+      padding: 0 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .comp-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .comp-item-name {
+      font-size: 12px;
+      color: var(--tx2)
+    }
+
+    .comp-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .comp-price.cheaper {
+      color: var(--g)
+    }
+
+    .comp-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-top: 1px solid var(--cr2);
+      background: var(--cr)
+    }
+
+    .comp-total-lbl {
+      font-size: 12px;
+      color: var(--tx2);
+      font-weight: 600
+    }
+
+    .comp-total-val {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--tx)
+    }
+
+    .comp-total-val.best-val {
+      color: var(--g)
+    }
+
+    /* SIMULAÇÃO */
+    .sim-card {
+      background: var(--wh);
+      border-radius: var(--rad);
+      margin: 0 20px 12px;
+      padding: 18px;
+      box-shadow: var(--sh2)
+    }
+
+    .sim-card.winner {
+      background: linear-gradient(135deg, var(--glt), #fff);
+      border: 2px solid var(--g)
+    }
+
+    .sim-rank {
+      font-size: 28px;
+      margin-bottom: 6px
+    }
+
+    .sim-name {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--tx);
+      margin-bottom: 4px
+    }
+
+    .sim-items-count {
+      font-size: 12px;
+      color: var(--tx3);
+      margin-bottom: 12px
+    }
+
+    .sim-total {
+      font-family: 'Fraunces', serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--tx)
+    }
+
+    .sim-total.winner-val {
+      color: var(--g)
+    }
+
+    .sim-economy {
+      font-size: 13px;
+      color: var(--g);
+      font-weight: 600;
+      margin-top: 4px
+    }
+
+    .sim-missing {
+      font-size: 12px;
+      color: var(--tx3);
+      margin-top: 4px
+    }
+
+    /* OCR */
+    .ocr-photo {
+      width: 100%;
+      height: 160px;
+      background: linear-gradient(135deg, #1a2e1a, #2e7d32);
+      border-radius: var(--rad2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .ocr-photo-inner {
+      font-size: 40px
+    }
+
+    .ocr-photo-lbl {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .7)
+    }
+
+    .ocr-corner {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(255, 255, 255, .6)
+    }
+
+    .ocr-corner.tl {
+      top: 12px;
+      left: 12px;
+      border-right: none;
+      border-bottom: none
+    }
+
+    .ocr-corner.tr {
+      top: 12px;
+      right: 12px;
+      border-left: none;
+      border-bottom: none
+    }
+
+    .ocr-corner.bl {
+      bottom: 12px;
+      left: 12px;
+      border-right: none;
+      border-top: none
+    }
+
+    .ocr-corner.br {
+      bottom: 12px;
+      right: 12px;
+      border-left: none;
+      border-top: none
+    }
+
+    .ocr-chip {
+      background: var(--olt);
+      border: 1px solid var(--omd);
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: var(--o2);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 14px
+    }
+
+    /* FAIXA ROWS */
+    .faixa-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px
+    }
+
+    .faixa-inp {
+      flex: 1;
+      height: 42px;
+      border: 1.5px solid var(--cr2);
+      border-radius: var(--rad3);
+      padding: 0 12px;
+      font-size: 14px;
+      color: var(--tx);
+      background: var(--wh);
+      outline: none
+    }
+
+    .faixa-inp:focus {
+      border-color: var(--o)
+    }
+
+    .faixa-rm {
+      width: 32px;
+      height: 32px;
+      background: var(--rlt);
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--r);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    /* FAMÍLIA */
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--cr2)
+    }
+
+    .member-row:last-child {
+      border-bottom: none
+    }
+
+    .member-av {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--olt);
+      border: 2px solid var(--omd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0
+    }
+
+    .member-av.admin {
+      border-color: var(--g);
+      background: var(--glt)
+    }
+
+    .member-info {
+      flex: 1
+    }
+
+    .member-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .member-role {
+      font-size: 11px;
+      color: var(--tx3)
+    }
+
+    .member-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gmd)
+    }
+
+    .member-status.on {
+      background: var(--g);
+      box-shadow: 0 0 0 3px var(--glt)
+    }
+
+    /* INVITE CARD */
+    .invite-card {
+      background: linear-gradient(135deg, var(--o), var(--o2));
+      border-radius: var(--rad);
+      padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .invite-card::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 50%
+    }
+
+    .invite-title {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .8);
+      margin-bottom: 6px
+    }
+
+    .invite-code {
+      font-family: 'Fraunces', serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 8px
+    }
+
+    .invite-hint {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .6);
+      margin-top: 4px
+    }
+
+    .invite-copy {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, .2);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer
+    }
+
+    /* FEED */
+    .feed-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--cr2)
+    }
+
+    .feed-item:last-child {
+      border-bottom: none
+    }
+
+    .feed-av {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--glt);
+      border: 1.5px solid var(--gmd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0
+    }
+
+    .feed-t {
+      flex: 1
+    }
+
+    .feed-main {
+      font-size: 12px;
+      color: var(--tx);
+      line-height: 1.4
+    }
+
+    .feed-main strong {
+      font-weight: 700
+    }
+
+    .feed-time {
+      font-size: 10px;
+      color: var(--tx3);
+      margin-top: 1px
+    }
+
+    .feed-price {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--o)
+    }
+
+    /* RESUMO */
+    .resumo-hero {
+      background: linear-gradient(160deg, var(--g), var(--g2));
+      padding: 28px 22px 40px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0
+    }
+
+    .resumo-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 28px;
+      background: var(--cr);
+      border-radius: 28px 28px 0 0
+    }
+
+    .resumo-hero-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, .06) 1px, transparent 1px);
+      background-size: 20px 20px
+    }
+
+    .resumo-tag {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .7);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .resumo-valor {
+      font-family: 'Fraunces', serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1
+    }
+
+    .resumo-economia {
+      background: rgba(255, 255, 255, .15);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #fff;
+      font-weight: 600
+    }
+
+    .resumo-stat {
+      background: var(--wh);
+      border-radius: var(--rad2);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--sh2)
+    }
+
+    .resumo-stat-lbl {
+      font-size: 13px;
+      color: var(--tx2)
+    }
+
+    .resumo-stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .resumo-stat-val.g {
+      color: var(--g)
+    }
+
+    .resumo-stat-val.o {
+      color: var(--o)
+    }
+
+    /* ONBOARDING */
+    .onb-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0
+    }
+
+    .onb-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+      animation: bounce 2s ease infinite
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    .onb-title {
+      font-family: 'Fraunces', serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--tx);
+      text-align: center;
+      line-height: 1.15;
+      margin-bottom: 10px
+    }
+
+    .onb-title em {
+      font-style: italic;
+      color: var(--o)
+    }
+
+    .onb-sub {
+      font-size: 15px;
+      color: var(--tx2);
+      text-align: center;
+      line-height: 1.5
+    }
+
+    .onb-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px
+    }
+
+    .onb-pill {
+      background: var(--cr2);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--tx2);
+      font-weight: 500
+    }
+
+    /* PLACES SUGGESTIONS */
+    .places-drop {
+      background: var(--wh);
+      border: 1.5px solid var(--omd);
+      border-radius: var(--rad3);
+      overflow: hidden;
+      box-shadow: var(--sh)
+    }
+
+    .place-item {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--cr2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background .1s
+    }
+
+    .place-item:last-child {
+      border-bottom: none
+    }
+
+    .place-item:active {
+      background: var(--olt)
+    }
+
+    .place-ico {
+      font-size: 18px
+    }
+
+    .place-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .place-addr {
+      font-size: 11px;
+      color: var(--tx3)
+    }
+
+    /* MERCADO CARD */
+    .mercado-card {
+      background: var(--wh);
+      border-radius: var(--rad2);
+      margin: 0 20px 10px;
+      padding: 14px;
+      box-shadow: var(--sh2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: transform .15s
+    }
+
+    .mercado-card:active {
+      transform: scale(.98)
+    }
+
+    .mercado-ico {
+      width: 44px;
+      height: 44px;
+      background: var(--olt);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0
+    }
+
+    .mercado-info {
+      flex: 1
+    }
+
+    .mercado-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tx)
+    }
+
+    .mercado-addr {
+      font-size: 11px;
+      color: var(--tx3);
+      margin-top: 1px
+    }
+
+    .mercado-dist {
+      font-size: 11px;
+      color: var(--o);
+      font-weight: 600
+    }
+
+    .mercado-stars {
+      font-size: 12px;
+      color: var(--tx3);
+      margin-top: 2px
+    }
+
+    .nav-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--olt);
+      border: none;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px
+    }
+
+    /* PRODUTO CATALOG CARD */
+    .prod-card {
+      background: var(--wh);
+      border-radius: var(--rad2);
+      margin: 0 20px 8px;
+      padding: 12px 14px;
+      box-shadow: var(--sh2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: transform .15s
+    }
+
+    .prod-card:active {
+      transform: scale(.98)
+    }
+
+    .prod-emoji {
+      width: 40px;
+      height: 40px;
+      background: var(--cr2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0
+    }
+
+    .prod-info {
+      flex: 1
+    }
+
+    .prod-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--tx)
+    }
+
+    .prod-brand {
+      font-size: 11px;
+      color: var(--tx3);
+      margin-top: 1px
+    }
+
+    .prod-tag {
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--olt);
+      color: var(--o2);
+      padding: 2px 7px;
+      border-radius: 5px
+    }
+
+    .prod-fav {
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px
+    }
+
+    /* DIVIDER */
+    .div {
+      height: 1px;
+      background: var(--cr2);
+      margin: 0 20px
+    }
+
+    /* DOTS PROGRESS */
+    .prog-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 20px 0 0
+    }
+
+    .pd {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cr2);
+      transition: all .3s
+    }
+
+    .pd.on {
+      background: var(--o);
+      width: 24px;
+      border-radius: 4px
+    }
+
+    /* SCROLL CONTENT PADDING */
+    .sp {
+      padding: 0 0 90px
+    }
+
+    /* NAV EXTERNAL */
+    .nav-ext {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0;
+      background: rgba(0, 0, 0, .75);
+      border-radius: 40px;
+      padding: 6px 8px;
+      backdrop-filter: blur(12px);
+      z-index: 999;
+      align-items: center
+    }
+
+    .nav-ext-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, .6);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 20px;
+      transition: all .2s;
+      white-space: nowrap
+    }
+
+    .nav-ext-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, .1)
+    }
+
+    .nav-ext-btn.on {
+      color: #fff;
+      background: var(--o)
+    }
+
+    .nav-ext-sep {
+      width: 1px;
+      height: 16px;
+      background: rgba(255, 255, 255, .15)
+    }
+
+    .scrn-lbl {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, .6);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 998
+    }
+
+    /* MISC */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px
+    }
+
+    .tag-o {
+      background: var(--olt);
+      color: var(--o2)
+    }
+
+    .tag-g {
+      background: var(--glt);
+      color: var(--g2)
+    }
+
+    .tag-seed {
+      background: #F3E5F5;
+      color: #6A1B9A;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-weight: 600
+    }
+
+    .chip-ocr {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--olt);
+      border: 1.5px dashed var(--omd);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background .15s
+    }
+
+    .chip-ocr:active {
+      background: var(--cr2)
+    }
+
+    .chip-ocr-txt {
+      font-size: 13px;
+      color: var(--o2);
+      font-weight: 600
+    }
+
+    .p20 {
+      padding: 20px
+    }
+
+    .gap12 {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .gap8 {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .spacer {
+      flex: 1
+    }
+
+    /* Animação peguei */
+    @keyframes checkIn {
+      0% {
+        transform: scale(1)
+      }
+
+      40% {
+        transform: scale(1.12)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .peguei-anim {
+      animation: checkIn .25s ease
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="phone">
+
+    <!-- ══════════════════════════════════════
+     T01 — SPLASH
+══════════════════════════════════════ -->
+    <div class="scr on" id="t01">
+      <div
+        style="background:var(--g);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;position:relative;overflow:hidden">
+        <div
+          style="position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);background-size:24px 24px">
+        </div>
+        <div
+          style="position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:rgba(244,98,10,.15);border-radius:50%">
+        </div>
+        <div
+          style="position:absolute;top:-40px;left:-40px;width:150px;height:150px;background:rgba(255,255,255,.04);border-radius:50%">
+        </div>
+        <div
+          style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;animation:splashIn .8s ease both">
+          <div
+            style="width:88px;height:88px;background:rgba(255,255,255,.12);border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:22px;border:1.5px solid rgba(255,255,255,.2)">
+            <img src="logo.png" width="250" alt="">
+          </div>
+          <!--div
+            style="font-family:'Fraunces',serif;font-size:44px;font-weight:800;color:#fff;letter-spacing:-1.5px;line-height:1">
+            Feira</div>
+          <div
+            style="font-family:'Fraunces',serif;font-size:44px;font-weight:400;font-style:italic;color:rgba(255,255,255,.7);letter-spacing:-1px;line-height:1;margin-bottom:10px">
+            Fácil</div-->
+          <div
+            style="font-size:14px;color:rgba(255,255,255,.5);letter-spacing:.5px; width: 70%; text-align: center; margin-top: 50px;">
+            Organize,
+            compare e economize de
+            forma inteligente</div>
+        </div>
+        <div style="position:absolute;bottom:60px;display:flex;gap:8px">
+          <span
+            style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);animation:pulse 1.2s ease infinite"></span>
+          <span
+            style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);animation:pulse 1.2s ease .2s infinite"></span>
+          <span
+            style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);animation:pulse 1.2s ease .4s infinite"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T02 — ONBOARDING
+══════════════════════════════════════ -->
+    <div class="scr" id="t02">
+      <div
+        style="background:var(--cr);flex:1;display:flex;flex-direction:column;padding:40px 28px 28px;overflow-y:auto">
+        <div class="prog-dots" style="justify-content:flex-start;padding:0 0 28px">
+          <div class="pd on"></div>
+          <div class="pd"></div>
+          <div class="pd"></div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-icon">🛒</div>
+          <div class="onb-title">Bem-vindo ao<br><em>Feira Fácil!</em></div>
+          <div class="onb-sub">Compare preços, economize na feira e faça as compras em família — tudo em um só lugar.
+          </div>
+          <div class="onb-pills">
+            <div class="onb-pill">📷 OCR de etiquetas</div>
+            <div class="onb-pill">👨‍👩‍👧 Família em tempo real</div>
+            <div class="onb-pill">🏪 Comparar mercados</div>
+            <div class="onb-pill">💰 Controle de orçamento</div>
+          </div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:28px">
+          <button class="btn btn-o" onclick="goTo('t03')">Criar minha conta</button>
+          <button class="btn btn-out" onclick="goTo('t03')">Já tenho conta — Entrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T03 — LOGIN
+══════════════════════════════════════ -->
+    <div class="scr" id="t03">
+      <div class="hdr" style="padding-bottom:28px">
+        <div class="hdr-dots"></div>
+        <div class="hdr-z">
+          <div class="sb sb-w" style="padding:0">
+            <span style="font-size:15px;font-weight:600">9:41</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+            <div
+              style="width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.2)">
+              🛒</div>
+            <div>
+              <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:800;color:#fff;letter-spacing:-.5px">
+                Feira Fácil</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.55)">compra inteligente em família</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="p20" style="padding-top:24px">
+          <div class="t-display" style="margin-bottom:22px">Bem-vindo de<br><em>volta!</em></div>
+          <div class="field">
+            <div class="field-lbl">E-mail</div>
+            <input class="inp" type="email" placeholder="seu@email.com">
+          </div>
+          <div class="field">
+            <div class="field-lbl">Senha</div>
+            <input class="inp" type="password" placeholder="••••••••">
+          </div>
+          <div style="text-align:right;margin-bottom:18px"><span
+              style="font-size:13px;color:var(--o);font-weight:600;cursor:pointer">Esqueci a senha</span></div>
+          <button class="btn btn-o" style="margin-bottom:12px" onclick="goTo('t04b')">Entrar</button>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="flex:1;height:1px;background:var(--cr2)"></div>
+            <span style="font-size:12px;color:var(--tx3)">ou</span>
+            <div style="flex:1;height:1px;background:var(--cr2)"></div>
+          </div>
+          <button class="btn btn-out" style="margin-bottom:10px;gap:10px" onclick="goTo('t04b')">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4" />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853" />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05" />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335" />
+            </svg>
+            Entrar com Google
+          </button>
+          <div style="text-align:center;font-size:13px;color:var(--tx2);margin-top:8px">Não tem conta? <span
+              style="color:var(--o);font-weight:700;cursor:pointer" onclick="goTo('t04b')">Criar agora</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T04b — ONBOARDING GRUPO FAMILIAR
+══════════════════════════════════════ -->
+    <div class="scr" id="t04b">
+      <div class="hdr-o" style="padding-bottom:28px">
+        <div class="hdr-o-dots"></div>
+        <div style="position:relative;z-index:1">
+          <div class="sb sb-w" style="padding:0"><span style="font-size:15px;font-weight:600">9:43</span></div>
+          <div style="margin-top:8px">
+            <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:4px">Quase lá!</div>
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:800;color:#fff;line-height:1.1">
+              Configure seu<br>grupo familiar</div>
+          </div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="p20 gap12" style="padding-top:22px">
+          <div class="card" style="cursor:default;border:2px solid var(--o)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="font-size:32px">👨‍👩‍👧</div>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:var(--tx)">Criar novo grupo</div>
+                <div style="font-size:12px;color:var(--tx3)">Você será o administrador</div>
+              </div>
+            </div>
+            <div class="field-lbl" style="margin-bottom:5px">Nome do grupo</div>
+            <input class="inp" placeholder="Ex: Família Silva" value="Família Guga">
+            <button class="btn btn-o" style="margin-top:12px;height:44px;font-size:14px" onclick="goTo('t05')">Criar
+              grupo ✓</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;height:1px;background:var(--cr2)"></div>
+            <span style="font-size:12px;color:var(--tx3)">ou</span>
+            <div style="flex:1;height:1px;background:var(--cr2)"></div>
+          </div>
+          <div class="card" style="cursor:default">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div style="font-size:32px">🔗</div>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:var(--tx)">Entrar com código</div>
+                <div style="font-size:12px;color:var(--tx3)">Alguém te convidou?</div>
+              </div>
+            </div>
+            <input class="inp" placeholder="Digite o código de 6 dígitos"
+              style="letter-spacing:6px;font-size:18px;font-weight:700;text-align:center">
+            <button class="btn btn-out" style="margin-top:12px;height:44px;font-size:14px">Entrar no grupo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T05 — HOME
+══════════════════════════════════════ -->
+    <div class="scr" id="t05">
+      <div class="hdr">
+        <div class="hdr-dots"></div>
+        <div class="hdr-z">
+          <div class="sb sb-w" style="padding:0"><span style="font-size:15px;font-weight:600">9:41</span></div>
+          <div class="top-row" style="margin-top:2px">
+            <div class="brand">Feira <span>Fácil</span></div>
+            <div class="avatar" onclick="goTo('t13')">👤</div>
+          </div>
+          <div>
+            <div style="font-size:13px;color:rgba(255,255,255,.55);margin-bottom:3px">Bom dia,</div>
+            <div
+              style="font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:#fff;letter-spacing:-.3px;line-height:1">
+              Guga <span style="font-style:italic;opacity:.7">✌️</span></div>
+          </div>
+          <div class="budget">
+            <div class="budget-row">
+              <span class="budget-lbl">Feira de Abril · Assaí</span>
+              <span class="budget-pct">🟢 18%</span>
+            </div>
+            <div class="budget-bar">
+              <div class="budget-fill" style="width:18%"></div>
+            </div>
+            <div class="budget-vals">
+              <span class="budget-v">Gasto: <strong>R$ 90</strong></span>
+              <span class="budget-v">Restante: <strong>R$ 410</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="sp">
+          <!-- CTA principal -->
+          <div style="padding:16px 20px 0">
+            <button class="btn btn-o" style="height:56px;font-size:16px;border-radius:var(--rad);box-shadow:var(--sh)"
+              onclick="goTo('t07')">
+              🛍️ Iniciar compra — Feira de Abril
+            </button>
+          </div>
+          <!-- Quick actions -->
+          <div class="sec">
+            <div class="sec-t">Ações rápidas</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px">
+            <div class="card" style="padding:14px" onclick="goTo('t06')">
+              <div style="font-size:24px;margin-bottom:6px">📋</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx)">Minhas Listas</div>
+              <div style="font-size:11px;color:var(--tx3)">1 lista ativa</div>
+            </div>
+            <div class="card" style="padding:14px;border-color:var(--o);border-width:1.5px" onclick="goTo('t11')">
+              <div style="font-size:24px;margin-bottom:6px">📷</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx)">Escanear Etiqueta</div>
+              <div style="font-size:11px;color:var(--tx3)">Cadastrar preço rápido</div>
+            </div>
+            <div class="card" style="padding:14px" onclick="goTo('t09')">
+              <div style="font-size:24px;margin-bottom:6px">📊</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx)">Comparar</div>
+              <div style="font-size:11px;color:var(--tx3)">Melhor preço por item</div>
+            </div>
+            <div class="card" style="padding:14px" onclick="goTo('t10')">
+              <div style="font-size:24px;margin-bottom:6px">🏪</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx)">Simular Feira</div>
+              <div style="font-size:11px;color:var(--tx3)">Qual mercado é mais barato</div>
+            </div>
+          </div>
+          <!-- Feed família -->
+          <div class="sec">
+            <div class="sec-t">Família</div>
+            <div class="sec-link" onclick="goTo('t13')">ver tudo</div>
+          </div>
+          <div
+            style="background:var(--wh);border-radius:var(--rad);margin:0 20px;padding:4px 16px;box-shadow:var(--sh2)">
+            <div class="feed-item">
+              <div class="feed-av">👩</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Ana</strong> cadastrou Iogurte Activia no Assaí</div>
+                <div class="feed-time">há 12 min</div>
+              </div>
+              <div class="feed-price">R$ 16,90</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-av">👤</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Você</strong> adicionou 5 itens à Feira de Abril</div>
+                <div class="feed-time">há 1 hora</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bnav">
+        <div class="ni on"><span class="ni-ico">🏠</span><span class="ni-lbl">Início</span></div>
+        <div class="ni" onclick="goTo('t06')"><span class="ni-ico">📋</span><span class="ni-lbl">Listas</span></div>
+        <div class="ni" onclick="goTo('t08')"><span class="ni-ico">🏪</span><span class="ni-lbl">Mercados</span></div>
+        <div class="ni" onclick="goTo('t13')"><span class="ni-ico">👨‍👩‍👧</span><span class="ni-lbl">Família</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T06 — LISTA DE FEIRA (modo simples+detalhe)
+══════════════════════════════════════ -->
+    <div class="scr" id="t06">
+      <div style="background:var(--wh);flex-shrink:0;box-shadow:var(--sh2)">
+        <div class="sb" style="background:var(--wh)">
+          <span class="sb-t">9:43</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 20px 12px">
+          <button class="back-btn" style="background:var(--olt);color:var(--o)" onclick="goTo('t05')">←</button>
+          <div style="flex:1">
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--tx)">🛒 Feira de Abril
+            </div>
+            <div style="font-size:11px;color:var(--tx3)">Assaí Atacadista · 23 itens</div>
+          </div>
+          <button class="ico-btn" onclick="goTo('t07')">▶️</button>
+          <button class="ico-btn">⋯</button>
+        </div>
+      </div>
+      <div class="bstrip">
+        <div class="bs1">
+          <span class="bs-lbl">Orçamento: <strong>R$ 500,00</strong></span>
+          <span class="bs-pct">🟢 18%</span>
+        </div>
+        <div class="bs-bar">
+          <div class="bs-fill" style="width:18%;background:var(--o)"></div>
+        </div>
+        <div class="bs2">
+          <span class="bs-v">Gasto: <strong>R$ 90,00</strong></span>
+          <span class="bs-v">Restante: <strong>R$ 410,00</strong></span>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTab(this)">Todos <span class="tab-cnt">23</span></button>
+        <button class="tab" onclick="setTab(this)">Pendentes <span class="tab-cnt">15</span></button>
+        <button class="tab" onclick="setTab(this)">Pegos <span class="tab-cnt">8</span></button>
+      </div>
+      <!-- modo toggle -->
+      <div class="mode-toggle">
+        <button class="mode-btn on" onclick="setMode(this,'simples')">Simples</button>
+        <button class="mode-btn" onclick="setMode(this,'detalhe')">Detalhado</button>
+      </div>
+      <div class="sa">
+        <div style="padding-bottom:90px">
+          <div class="cat-lbl">🥛 Laticínios & Ovos</div>
+
+          <!-- item expandível -->
+          <div class="item-row" id="ir1">
+            <div class="iq">
+              <div class="iq-btn" onclick="iQty('q1',1)">+</div>
+              <div class="iq-n" id="q1">3</div>
+              <div class="iq-btn" onclick="iQty('q1',-1)">−</div>
+            </div>
+            <div class="item-body">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="item-name">Iogurte Natural</div>
+                  <div class="item-brand detail-only">Activia · 170g</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span
+                    style="font-size:13px;font-weight:700;color:var(--o2);background:var(--olt);padding:2px 9px;border-radius:7px"
+                    id="tot1">R$ 50,70</span>
+                  <button class="expand-toggle" id="exp1" onclick="toggleExpand('det1','exp1')">▾</button>
+                </div>
+              </div>
+              <div class="item-detail" id="det1">
+                <div style="height:6px"></div>
+                <div class="promo-chip">🏷️ Faixa especial ativa! 3+ por R$ 16,90/un</div>
+                <div class="item-actions">
+                  <button class="peguei-btn" onclick="doPeguei('ir1',this)">✓ Peguei!</button>
+                  <button class="ico-btn">✏️</button>
+                  <button class="ico-btn">🗑</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- item sem detalhe aberto -->
+          <div class="item-row" id="ir2">
+            <div class="iq">
+              <div class="iq-btn">+</div>
+              <div class="iq-n">2</div>
+              <div class="iq-btn">−</div>
+            </div>
+            <div class="item-body">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="item-name">Leite Integral</div>
+                  <div class="item-brand detail-only">Piracanjuba · 1L</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span
+                    style="font-size:13px;font-weight:700;color:var(--o2);background:var(--olt);padding:2px 9px;border-radius:7px">R$
+                    10,98</span>
+                  <button class="expand-toggle" id="exp2" onclick="toggleExpand('det2','exp2')">▾</button>
+                </div>
+              </div>
+              <div class="item-detail" id="det2">
+                <div style="height:6px"></div>
+                <!-- item sem preço -> mostra OCR chip -->
+                <div class="chip-ocr" onclick="goTo('t11')">
+                  <span style="font-size:16px">📷</span>
+                  <span class="chip-ocr-txt">Cadastrar preço com foto de etiqueta</span>
+                </div>
+                <div class="item-actions">
+                  <button class="peguei-btn" onclick="doPeguei('ir2',this)">✓ Peguei!</button>
+                  <button class="ico-btn">✏️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- item pego -->
+          <div class="item-row pego" id="ir3">
+            <div class="iq">
+              <div class="iq-btn">+</div>
+              <div class="iq-n">1</div>
+              <div class="iq-btn">−</div>
+            </div>
+            <div class="item-body">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="item-name riscado">Queijo Mussarela</div>
+                  <div class="item-brand detail-only">Tirolez · 200g</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span
+                    style="font-size:13px;font-weight:700;color:var(--tx3);background:var(--cr2);padding:2px 9px;border-radius:7px">R$
+                    12,90</span>
+                  <button class="expand-toggle done" style="background:var(--gmd);color:var(--g2)">✓</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cat-lbl">🌾 Grãos & Cereais</div>
+          <div class="item-row">
+            <div class="iq">
+              <div class="iq-btn">+</div>
+              <div class="iq-n">2</div>
+              <div class="iq-btn">−</div>
+            </div>
+            <div class="item-body">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="item-name">Arroz Branco</div>
+                  <div class="item-brand detail-only">Tio João · 5kg</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span
+                    style="font-size:13px;font-weight:700;color:var(--o2);background:var(--olt);padding:2px 9px;border-radius:7px">R$
+                    49,80</span>
+                  <button class="expand-toggle" id="exp4" onclick="toggleExpand('det4','exp4')">▾</button>
+                </div>
+              </div>
+              <div class="item-detail" id="det4">
+                <div style="height:6px"></div>
+                <div class="eco-chip">💡 Leve mais 1 e economize R$ 5,00</div>
+                <div class="item-actions">
+                  <button class="peguei-btn" onclick="doPeguei(null,this)">✓ Peguei!</button>
+                  <button class="ico-btn">✏️</button>
+                  <button class="ico-btn">🗑</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cat-lbl">🥩 Carnes & Peixes</div>
+          <div class="item-row">
+            <div class="iq">
+              <div class="iq-btn">+</div>
+              <div class="iq-n">2</div>
+              <div class="iq-btn">−</div>
+            </div>
+            <div class="item-body">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div class="item-name">Frango Inteiro</div>
+                  <div class="item-brand detail-only">Seara · ~2,2kg</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span
+                    style="font-size:13px;font-weight:700;color:var(--o2);background:var(--olt);padding:2px 9px;border-radius:7px">R$
+                    37,80</span>
+                  <button class="expand-toggle" id="exp5" onclick="toggleExpand('det5','exp5')">▾</button>
+                </div>
+              </div>
+              <div class="item-detail" id="det5">
+                <div style="height:6px"></div>
+                <div class="item-actions">
+                  <button class="peguei-btn" onclick="doPeguei(null,this)">✓ Peguei!</button>
+                  <button class="ico-btn">✏️</button>
+                  <button class="ico-btn">🗑</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="total-bar">
+        <div class="total-row">
+          <div>
+            <div class="total-lbl">Total da lista</div>
+            <div class="total-val">R$ 162,18</div>
+          </div>
+          <button class="btn btn-o" style="width:auto;height:44px;padding:0 18px;font-size:14px"
+            onclick="goTo('t07')">🛍️ Iniciar compra</button>
+        </div>
+      </div>
+      <button class="fab" style="bottom:88px" onclick="goTo('t12')">+</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T07 — MODO COMPRA
+══════════════════════════════════════ -->
+    <div class="scr" id="t07">
+      <div style="background:var(--wh);flex-shrink:0;box-shadow:var(--sh2)">
+        <div class="sb"><span class="sb-t">9:48</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:0 20px 10px">
+          <button class="back-btn" style="background:var(--olt);color:var(--o)" onclick="goTo('t06')">←</button>
+          <div style="flex:1">
+            <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--tx)">Modo Compra</div>
+            <div style="font-size:11px;color:var(--tx3)">📍 Assaí Atacadista — Recife</div>
+          </div>
+          <button class="ico-btn" onclick="goTo('t08')">🗺️</button>
+          <button class="ico-btn" onclick="goTo('t11')">📷</button>
+        </div>
+        <!-- BIG BUDGET -->
+        <div style="background:var(--glt);margin:0 20px 14px;border-radius:var(--rad2);padding:12px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--tx2);font-weight:500">Orçamento: <strong>R$ 500,00</strong></span>
+            <span style="font-size:18px;font-weight:800;color:var(--o);display:flex;align-items:center;gap:4px"
+              id="bb-pct">45% 🟡</span>
+          </div>
+          <div style="height:7px;background:rgba(0,0,0,.07);border-radius:4px;overflow:hidden;margin-bottom:6px">
+            <div style="height:100%;border-radius:4px;transition:width .5s" id="bb-fill"
+              style="width:45%;background:var(--o)"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:12px;color:var(--tx2)">Gasto: <strong id="bb-gasto" style="color:var(--tx)">R$
+                225,00</strong></span>
+            <span style="font-size:12px;color:var(--tx2)">Restante: <strong id="bb-rest" style="color:var(--g)">R$
+                275,00</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTab(this)">Todos <span class="tab-cnt">15</span></button>
+        <button class="tab" onclick="setTab(this)">Pendentes <span class="tab-cnt">8</span></button>
+        <button class="tab" onclick="setTab(this)">Pegos <span class="tab-cnt">7</span></button>
+      </div>
+      <div class="sa">
+        <div style="padding-bottom:110px">
+          <div class="cat-lbl">🥛 Laticínios & Ovos</div>
+
+          <!-- compra item 1 -->
+          <div
+            style="background:var(--wh);border-radius:var(--rad2);margin:0 20px 8px;box-shadow:var(--sh2);overflow:hidden"
+            id="ci1">
+            <div style="display:flex;align-items:stretch">
+              <div class="iq" style="width:50px">
+                <div class="iq-btn" onclick="cQty('cq1','ctot1',16.90,18,3,1)">+</div>
+                <div class="iq-n" id="cq1">3</div>
+                <div class="iq-btn" onclick="cQty('cq1','ctot1',16.90,18,3,-1)">−</div>
+              </div>
+              <div style="flex:1;padding:11px 13px">
+                <div style="font-size:14px;font-weight:700;color:var(--tx)" id="cn1">Iogurte Natural</div>
+                <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Activia · 170g</div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;color:var(--tx2)">R$ 16,90/un</span>
+                  <span
+                    style="font-size:15px;font-weight:800;color:var(--o2);background:var(--olt);padding:3px 11px;border-radius:7px"
+                    id="ctot1">R$ 50,70</span>
+                </div>
+              </div>
+            </div>
+            <div
+              style="margin:0 13px 8px;background:linear-gradient(135deg,var(--olt),#FFF5EF);border:1px solid var(--omd);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--o2);font-weight:600;display:flex;justify-content:space-between">
+              <span>🏷️ Faixa especial ativa! (3+)</span><span style="color:var(--g);font-weight:700">−R$ 3,30</span>
+            </div>
+            <div style="padding:0 13px 11px;display:flex;gap:6px">
+              <button class="peguei-btn" style="height:36px" onclick="cPeguei('ci1','cn1',this)">✓ JÁ PEGUEI</button>
+            </div>
+          </div>
+
+          <!-- compra item 2 -->
+          <div
+            style="background:var(--wh);border-radius:var(--rad2);margin:0 20px 8px;box-shadow:var(--sh2);overflow:hidden"
+            id="ci2">
+            <div style="display:flex;align-items:stretch">
+              <div class="iq" style="width:50px">
+                <div class="iq-btn">+</div>
+                <div class="iq-n">2</div>
+                <div class="iq-btn">−</div>
+              </div>
+              <div style="flex:1;padding:11px 13px">
+                <div style="font-size:14px;font-weight:700;color:var(--tx)">Leite Integral</div>
+                <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Piracanjuba · 1L</div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;color:var(--tx2)">R$ 5,49/un</span>
+                  <span
+                    style="font-size:15px;font-weight:800;color:var(--o2);background:var(--olt);padding:3px 11px;border-radius:7px">R$
+                    10,98</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 13px 11px;display:flex;gap:6px">
+              <button class="peguei-btn" style="height:36px" onclick="cPeguei('ci2',null,this)">✓ JÁ PEGUEI</button>
+            </div>
+          </div>
+
+          <div class="cat-lbl">🌾 Grãos & Cereais</div>
+
+          <div
+            style="background:var(--wh);border-radius:var(--rad2);margin:0 20px 8px;box-shadow:var(--sh2);overflow:hidden"
+            id="ci3">
+            <div style="display:flex;align-items:stretch">
+              <div class="iq" style="width:50px">
+                <div class="iq-btn" onclick="cQty('cq3','ctot3',24.90,22.40,3,1)">+</div>
+                <div class="iq-n" id="cq3">2</div>
+                <div class="iq-btn" onclick="cQty('cq3','ctot3',24.90,22.40,3,-1)">−</div>
+              </div>
+              <div style="flex:1;padding:11px 13px">
+                <div style="font-size:14px;font-weight:700;color:var(--tx)">Arroz Branco</div>
+                <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Tio João · 5kg</div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;color:var(--tx2)">R$ 24,90/un</span>
+                  <span
+                    style="font-size:15px;font-weight:800;color:var(--o2);background:var(--olt);padding:3px 11px;border-radius:7px"
+                    id="ctot3">R$ 49,80</span>
+                </div>
+              </div>
+            </div>
+            <div
+              style="margin:0 13px 8px;background:var(--glt);border:1px dashed var(--gmd);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--g2);font-weight:500;display:flex;align-items:center;gap:5px"
+              id="eco3">
+              💡 Leve mais 1 e economize <strong style="margin:0 2px">R$ 7,50</strong> no total
+            </div>
+            <div style="padding:0 13px 11px">
+              <button class="peguei-btn" style="height:36px" onclick="cPeguei('ci3',null,this)">✓ JÁ PEGUEI</button>
+            </div>
+          </div>
+
+          <!-- já pego -->
+          <div
+            style="background:var(--wh);border-radius:var(--rad2);margin:0 20px 8px;box-shadow:var(--sh2);overflow:hidden;opacity:.45"
+            id="ci4">
+            <div style="display:flex;align-items:stretch">
+              <div class="iq" style="width:50px">
+                <div class="iq-btn">+</div>
+                <div class="iq-n">2</div>
+                <div class="iq-btn">−</div>
+              </div>
+              <div style="flex:1;padding:11px 13px">
+                <div style="font-size:14px;font-weight:700;color:var(--tx3);text-decoration:line-through">Frango Inteiro
+                </div>
+                <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Seara · ~2,2kg</div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;color:var(--tx3)">R$ 18,90/un</span>
+                  <span
+                    style="font-size:15px;font-weight:800;color:var(--tx3);background:var(--cr2);padding:3px 11px;border-radius:7px">R$
+                    37,80</span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 13px 11px">
+              <button class="peguei-btn done" style="height:36px" onclick="cPeguei('ci4',null,this)">✓ JÁ
+                PEGUEI</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- bottom bar compra -->
+      <div
+        style="position:absolute;bottom:0;left:0;right:0;background:var(--wh);border-top:1px solid var(--cr2);padding:12px 20px 22px;z-index:20">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:12px;color:var(--tx2)">Valor total</div>
+            <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:800;color:var(--tx)">R$ 225,15</div>
+          </div>
+          <div
+            style="background:var(--glt);border:1.5px solid var(--gmd);border-radius:10px;padding:6px 12px;text-align:center">
+            <div style="font-size:10px;color:var(--g2)">💚 Economizou</div>
+            <div style="font-size:16px;font-weight:800;color:var(--g)">R$ 11,10</div>
+          </div>
+        </div>
+        <button class="btn btn-g" style="height:48px" onclick="goTo('t14')">🏁 Finalizar Compra</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T08 — CADASTRO DE MERCADO
+══════════════════════════════════════ -->
+    <div class="scr" id="t08">
+      <div class="hdr-o">
+        <div class="hdr-o-dots"></div>
+        <div style="position:relative;z-index:1">
+          <div class="sb sb-w" style="padding:0"><span style="font-size:15px;font-weight:600">9:50</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t05')">←</button>
+            <div class="back-title">Cadastrar Mercado</div>
+          </div>
+          <div style="font-size:13px;color:rgba(255,255,255,.65)">Digite o nome e selecione nas sugestões</div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="p20" style="padding-top:22px">
+          <div class="field">
+            <div class="field-lbl">Buscar mercado</div>
+            <input class="inp inp-places" placeholder="🔍  Ex: Assaí, Mateus, Extra..." id="places-inp"
+              oninput="showPlaces(this.value)">
+          </div>
+          <!-- places suggestions -->
+          <div class="places-drop" id="places-drop" style="display:none;margin-top:-8px;margin-bottom:14px">
+            <div class="place-item"
+              onclick="selectPlace('Assaí Atacadista','Av. Agamenon Magalhães, 4200 — Recife/PE')">
+              <span class="place-ico">🏪</span>
+              <div>
+                <div class="place-name">Assaí Atacadista</div>
+                <div class="place-addr">Av. Agamenon Magalhães, 4200 — Recife/PE</div>
+              </div>
+            </div>
+            <div class="place-item" onclick="selectPlace('Assaí Atacadista','R. Padre Carapuceiro, 858 — Recife/PE')">
+              <span class="place-ico">🏪</span>
+              <div>
+                <div class="place-name">Assaí Atacadista</div>
+                <div class="place-addr">R. Padre Carapuceiro, 858 — Recife/PE</div>
+              </div>
+            </div>
+            <div class="place-item" onclick="selectPlace('Assaí Atacadista','Estrada do Arraial, 1200 — Recife/PE')">
+              <span class="place-ico">🏪</span>
+              <div>
+                <div class="place-name">Assaí Atacadista</div>
+                <div class="place-addr">Estrada do Arraial, 1200 — Recife/PE</div>
+              </div>
+            </div>
+          </div>
+          <!-- campos auto-preenchidos -->
+          <div id="place-fields" style="display:none">
+            <div
+              style="background:var(--glt);border:1.5px solid var(--gmd);border-radius:var(--rad3);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">✅</span>
+              <span style="font-size:13px;color:var(--g2);font-weight:600">Endereço preenchido automaticamente pelo
+                Google Places</span>
+            </div>
+            <div class="field">
+              <div class="field-lbl">Nome oficial</div>
+              <input class="inp" id="pf-nome" readonly style="background:var(--cr2)">
+            </div>
+            <div class="field">
+              <div class="field-lbl">Endereço</div>
+              <input class="inp" id="pf-end" readonly style="background:var(--cr2)">
+            </div>
+            <div class="field">
+              <div class="field-lbl">Apelido (opcional)</div>
+              <input class="inp" placeholder="Ex: Assaí da Agamenon">
+            </div>
+            <div class="field">
+              <div class="field-lbl">Observações</div>
+              <input class="inp" placeholder="Ex: Aberto até 22h, fila no caixa rápido">
+            </div>
+            <div class="field">
+              <div class="field-lbl">Avaliação</div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <span style="font-size:28px;cursor:pointer">⭐</span>
+                <span style="font-size:28px;cursor:pointer">⭐</span>
+                <span style="font-size:28px;cursor:pointer">⭐</span>
+                <span style="font-size:28px;cursor:pointer">⭐</span>
+                <span style="font-size:28px;cursor:pointer;opacity:.3">⭐</span>
+              </div>
+            </div>
+            <button class="btn btn-o" onclick="goTo('t05')">💾 Salvar Mercado</button>
+            <div style="height:20px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T09 — CATÁLOGO DE PRODUTOS
+══════════════════════════════════════ -->
+    <div class="scr" id="t09">
+      <div style="background:var(--wh);flex-shrink:0;box-shadow:var(--sh2)">
+        <div class="sb"><span class="sb-t">9:52</span></div>
+        <div style="padding:0 20px 12px;display:flex;align-items:center;gap:10px">
+          <button class="back-btn" style="background:var(--olt);color:var(--o)" onclick="goTo('t05')">←</button>
+          <div style="flex:1">
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--tx)">Catálogo de
+              Produtos</div>
+            <div style="font-size:11px;color:var(--tx3)">80 itens pré-cadastrados · 6 adicionados por você</div>
+          </div>
+          <button class="ico-btn">🔍</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" onclick="setTab(this)">Todos</button>
+        <button class="tab" onclick="setTab(this)">⭐ Favoritos</button>
+        <button class="tab" onclick="setTab(this)">Meus</button>
+      </div>
+      <div class="sa">
+        <div style="padding-bottom:90px">
+          <div class="cat-lbl">🥛 Laticínios & Ovos</div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🥛</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Leite Integral</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Sem marca definida · 1L</div>
+            </div>
+            <div class="prod-fav">⭐</div>
+          </div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🧀</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Iogurte Natural</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Activia · 170g</div>
+            </div>
+            <div class="prod-fav" style="color:var(--o)">⭐</div>
+          </div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🥚</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Ovos</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Sem marca definida · dúzia</div>
+            </div>
+            <div class="prod-fav">⭐</div>
+          </div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🧀</div>
+            <div class="prod-info">
+              <div class="prod-name">Queijo Mussarela</div>
+              <div class="prod-brand">Tirolez · 200g</div>
+            </div>
+            <div class="prod-fav" style="color:var(--o)">⭐</div>
+          </div>
+
+          <div class="cat-lbl">🌾 Grãos & Cereais</div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🌾</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Arroz Branco</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Tio João · 5kg</div>
+            </div>
+            <div class="prod-fav" style="color:var(--o)">⭐</div>
+          </div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🫘</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Feijão Carioca</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Sem marca definida · 1kg</div>
+            </div>
+            <div class="prod-fav">⭐</div>
+          </div>
+
+          <div class="cat-lbl">🥩 Carnes & Peixes</div>
+
+          <div class="prod-card">
+            <div class="prod-emoji">🍗</div>
+            <div class="prod-info">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="prod-name">Frango Inteiro</div><span class="tag-seed">padrão</span>
+              </div>
+              <div class="prod-brand">Seara · ~2,2kg</div>
+            </div>
+            <div class="prod-fav" style="color:var(--o)">⭐</div>
+          </div>
+
+          <div class="prod-card" onclick="goTo('t12')">
+            <div class="prod-emoji" style="background:var(--olt)">➕</div>
+            <div class="prod-info">
+              <div class="prod-name" style="color:var(--o)">Adicionar novo produto</div>
+              <div class="prod-brand">Cadastre um produto personalizado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="fab" style="bottom:16px" onclick="goTo('t12')">+</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T10 — CADASTRO DE PREÇO (faixas dinâmicas)
+══════════════════════════════════════ -->
+    <div class="scr" id="t10">
+      <div class="hdr-o">
+        <div class="hdr-o-dots"></div>
+        <div style="position:relative;z-index:1">
+          <div class="sb sb-w" style="padding:0"><span style="font-size:15px;font-weight:600">9:53</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t05')">←</button>
+            <div class="back-title">Cadastrar Preço</div>
+          </div>
+          <div style="font-size:13px;color:rgba(255,255,255,.65)">Adicione faixas para promoções de quantidade</div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="p20" style="padding-top:20px">
+          <div class="field">
+            <div class="field-lbl">Produto</div>
+            <input class="inp" value="Iogurte Natural — Activia 170g">
+          </div>
+          <div class="field">
+            <div class="field-lbl">Mercado</div>
+            <input class="inp" value="Assaí Atacadista — Recife">
+          </div>
+          <div class="field">
+            <div class="field-lbl">Data de registro</div>
+            <input class="inp" value="14/04/2026">
+          </div>
+
+          <!-- faixas dinâmicas -->
+          <div class="field-lbl" style="margin-bottom:10px">Faixas de preço</div>
+          <div
+            style="background:var(--cr2);border-radius:var(--rad3);padding:8px 10px;margin-bottom:10px;font-size:12px;color:var(--tx2)">
+            💡 Adicione mais faixas para promoções do tipo "leve 3 por R$ X"
+          </div>
+
+          <div id="faixas-container">
+            <div class="faixa-row">
+              <div style="flex:1">
+                <div
+                  style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+                  A partir de</div>
+                <input class="faixa-inp" value="1" style="text-align:center">
+              </div>
+              <div style="font-size:13px;color:var(--tx3);margin-top:18px">und.</div>
+              <div style="flex:2">
+                <div
+                  style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+                  Preço unitário</div>
+                <input class="faixa-inp" value="R$ 18,00">
+              </div>
+              <div style="width:32px;margin-top:18px"></div>
+            </div>
+            <div class="faixa-row">
+              <div style="flex:1">
+                <div
+                  style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+                  A partir de</div>
+                <input class="faixa-inp" value="3" style="text-align:center">
+              </div>
+              <div style="font-size:13px;color:var(--tx3);margin-top:18px">und.</div>
+              <div style="flex:2">
+                <div
+                  style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+                  Preço unitário</div>
+                <input class="faixa-inp" value="R$ 16,90">
+              </div>
+              <button class="faixa-rm" style="margin-top:18px">✕</button>
+            </div>
+          </div>
+
+          <button class="btn-ghost" style="margin-bottom:16px" onclick="addFaixa()">+ Adicionar faixa</button>
+
+          <div class="field">
+            <div class="field-lbl">Observação (opcional)</div>
+            <input class="inp" placeholder="Ex: Promoção válida até domingo">
+          </div>
+
+          <!-- preview -->
+          <div
+            style="background:var(--glt);border:1.5px solid var(--gmd);border-radius:var(--rad3);padding:12px 14px;margin-bottom:16px">
+            <div
+              style="font-size:11px;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">
+              Preview do preço</div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--tx2);margin-bottom:4px">
+              <span>1 unidade</span><span style="font-weight:700;color:var(--tx)">R$ 18,00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--tx2)">
+              <span>3+ unidades</span><span style="font-weight:700;color:var(--g)">R$ 16,90/un 🏷️</span>
+            </div>
+          </div>
+
+          <button class="btn btn-o" onclick="goTo('t05')">💾 Salvar Preço</button>
+          <div style="height:20px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T11 — COMPARADOR DE PREÇOS
+══════════════════════════════════════ -->
+    <div class="scr" id="t11">
+      <div class="hdr">
+        <div class="hdr-dots"></div>
+        <div class="hdr-z">
+          <div class="sb sb-w" style="padding:0"><span>9:55</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t05')">←</button>
+            <div class="back-title">Comparador de Preços</div>
+          </div>
+          <input
+            style="width:100%;height:40px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.2);border-radius:10px;padding:0 14px;color:#fff;font-size:14px;outline:none"
+            placeholder="🔍  Buscar produto...">
+        </div>
+      </div>
+      <div class="tabs" style="background:var(--wh)">
+        <button class="tab on" onclick="setTab(this)">Por produto</button>
+        <button class="tab" onclick="setTab(this)">Por mercado</button>
+      </div>
+      <div class="sa">
+        <div style="padding-bottom:30px">
+          <div style="padding:14px 20px 6px;font-size:12px;color:var(--tx3)">Mostrando resultado para: <strong
+              style="color:var(--tx)">Iogurte Natural</strong></div>
+
+          <!-- melhor opção -->
+          <div class="comp-card best">
+            <div class="comp-header">
+              <div>
+                <div class="comp-name">Assaí Atacadista</div>
+                <div class="comp-dist">📍 2,3 km · atualizado hoje</div>
+              </div>
+              <div class="best-badge">🏆 Mais barato</div>
+            </div>
+            <div class="comp-items">
+              <div class="comp-row">
+                <span class="comp-item-name">1 unidade</span>
+                <span class="comp-price cheaper">R$ 18,00</span>
+              </div>
+              <div
+                style="background:var(--glt);border-radius:7px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:var(--g2);font-weight:600">🏷️ Leve 3+ por</span>
+                <span style="font-size:14px;font-weight:800;color:var(--g)">R$ 16,90/un</span>
+              </div>
+            </div>
+            <div class="comp-total-row">
+              <span class="comp-total-lbl">Total (3 unidades)</span>
+              <span class="comp-total-val best-val">R$ 50,70</span>
+            </div>
+          </div>
+
+          <!-- 2ª opção -->
+          <div class="comp-card">
+            <div class="comp-header">
+              <div>
+                <div class="comp-name">Mateus Supermercados</div>
+                <div class="comp-dist">📍 1,1 km · atualizado há 3 dias</div>
+              </div>
+            </div>
+            <div class="comp-items">
+              <div class="comp-row">
+                <span class="comp-item-name">1 unidade</span>
+                <span class="comp-price">R$ 19,50</span>
+              </div>
+              <div class="comp-row">
+                <span class="comp-item-name">Sem promoção de quantidade</span>
+                <span style="font-size:11px;color:var(--tx3)">—</span>
+              </div>
+            </div>
+            <div class="comp-total-row">
+              <span class="comp-total-lbl">Total (3 unidades)</span>
+              <span class="comp-total-val">R$ 58,50</span>
+            </div>
+          </div>
+
+          <!-- 3ª opção c/ alerta -->
+          <div class="comp-card">
+            <div
+              style="background:var(--rlt);padding:6px 14px;font-size:11px;color:var(--r);font-weight:600;display:flex;align-items:center;gap:4px">
+              ⚠️ Preço atualizado há 18 dias — pode estar desatualizado
+            </div>
+            <div class="comp-header">
+              <div>
+                <div class="comp-name">Extra Hiper</div>
+                <div class="comp-dist">📍 4,5 km</div>
+              </div>
+            </div>
+            <div class="comp-items">
+              <div class="comp-row">
+                <span class="comp-item-name">1 unidade</span>
+                <span class="comp-price">R$ 17,80</span>
+              </div>
+            </div>
+            <div class="comp-total-row">
+              <span class="comp-total-lbl">Total (3 unidades)</span>
+              <span class="comp-total-val">R$ 53,40</span>
+            </div>
+          </div>
+
+          <!-- CTA atualizar -->
+          <div style="padding:0 20px;margin-top:4px">
+            <button class="btn btn-out" style="height:44px;font-size:14px" onclick="goTo('t12b')">📷 Atualizar preço com
+              foto de etiqueta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T12 — SIMULAÇÃO DE FEIRA
+══════════════════════════════════════ -->
+    <div class="scr" id="t12">
+      <div class="hdr">
+        <div class="hdr-dots"></div>
+        <div class="hdr-z">
+          <div class="sb sb-w" style="padding:0"><span>9:57</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t05')">←</button>
+            <div class="back-title">Simulação de Feira</div>
+          </div>
+          <div style="font-size:13px;color:rgba(255,255,255,.65)">Lista: Feira de Abril · 23 itens</div>
+        </div>
+      </div>
+      <div
+        style="display:flex;gap:0;background:var(--wh);padding:0 20px;border-bottom:1px solid var(--cr2);flex-shrink:0">
+        <button class="tab on" style="flex:1" onclick="setTab(this)">Compra única</button>
+        <button class="tab" style="flex:1" onclick="setTab(this)">Distribuída</button>
+      </div>
+      <div class="sa">
+        <div style="padding:14px 0 30px">
+          <div style="padding:0 20px 10px;font-size:13px;color:var(--tx2)">
+            💡 <strong>Compra única:</strong> comprando tudo no mesmo mercado
+          </div>
+
+          <!-- vencedor -->
+          <div class="sim-card winner">
+            <div class="sim-rank">🏆</div>
+            <div class="sim-name">Assaí Atacadista</div>
+            <div class="sim-items-count">📍 2,3 km · 23/23 itens disponíveis</div>
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <div class="sim-total winner-val">R$ 387,40</div>
+              <div style="background:var(--glt);border:1.5px solid var(--gmd);border-radius:8px;padding:4px 10px">
+                <div style="font-size:10px;color:var(--g2)">economia</div>
+                <div style="font-size:14px;font-weight:800;color:var(--g)">R$ 42,60</div>
+              </div>
+            </div>
+            <div class="sim-economy">✅ Melhor opção — todas as promoções aplicadas</div>
+            <button class="btn btn-g" style="margin-top:14px;height:44px;font-size:14px" onclick="goTo('t07')">🛍️ Ir
+              fazer a feira aqui</button>
+          </div>
+
+          <!-- 2ª opção -->
+          <div class="sim-card">
+            <div class="sim-rank">🥈</div>
+            <div class="sim-name">Mateus Supermercados</div>
+            <div class="sim-items-count">📍 1,1 km · 21/23 itens disponíveis</div>
+            <div class="sim-total">R$ 412,80</div>
+            <div class="sim-missing">⚠️ 2 itens sem preço cadastrado</div>
+          </div>
+
+          <!-- 3ª opção -->
+          <div class="sim-card">
+            <div class="sim-rank">🥉</div>
+            <div class="sim-name">Extra Hiper</div>
+            <div class="sim-items-count">📍 4,5 km · 18/23 itens disponíveis</div>
+            <div class="sim-total">R$ 430,00</div>
+            <div class="sim-missing">⚠️ 5 itens sem preço cadastrado · preços possivelmente desatualizados</div>
+          </div>
+
+          <div style="padding:0 20px;margin-top:4px">
+            <button class="btn btn-out" style="height:44px;font-size:14px">📷 Cadastrar preços faltantes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T12b — OCR / CONFIRMAÇÃO DE ETIQUETA
+══════════════════════════════════════ -->
+    <div class="scr" id="t12b">
+      <div class="hdr-o">
+        <div class="hdr-o-dots"></div>
+        <div style="position:relative;z-index:1">
+          <div class="sb sb-w" style="padding:0"><span style="font-size:15px;font-weight:600">9:58</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t11')">←</button>
+            <div class="back-title">Confirmar Etiqueta</div>
+          </div>
+          <div style="font-size:13px;color:rgba(255,255,255,.65)">Verifique e corrija os dados lidos</div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="p20" style="padding-top:20px">
+          <!-- foto da etiqueta -->
+          <div class="ocr-photo">
+            <div class="ocr-corner tl"></div>
+            <div class="ocr-corner tr"></div>
+            <div class="ocr-corner bl"></div>
+            <div class="ocr-corner br"></div>
+            <div class="ocr-photo-inner">🏷️</div>
+            <div class="ocr-photo-lbl">Etiqueta capturada · Assaí</div>
+          </div>
+
+          <div class="ocr-chip">⚡ Dados lidos automaticamente — revise antes de salvar</div>
+
+          <div class="field">
+            <div class="field-lbl">Produto identificado</div>
+            <input class="inp" value="Iogurte Natural Integral">
+            <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+              <div style="font-size:11px;color:var(--tx3)">Sugestões:</div>
+              <span
+                style="font-size:11px;background:var(--olt);color:var(--o2);padding:2px 8px;border-radius:5px;cursor:pointer;font-weight:600">Iogurte
+                Natural — Activia</span>
+              <span
+                style="font-size:11px;background:var(--cr2);color:var(--tx2);padding:2px 8px;border-radius:5px;cursor:pointer">+
+                Novo produto</span>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-lbl">Marca</div>
+            <input class="inp" value="Activia">
+          </div>
+          <div class="field">
+            <div class="field-lbl">Mercado</div>
+            <input class="inp" value="Assaí Atacadista — Recife" style="background:var(--glt);border-color:var(--gmd)">
+          </div>
+
+          <div class="field-lbl" style="margin-bottom:10px">Faixas de preço (lidas da etiqueta)</div>
+          <div class="faixa-row">
+            <div style="flex:1">
+              <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase">A
+                partir de</div><input class="faixa-inp" value="1" style="text-align:center">
+            </div>
+            <div style="font-size:12px;color:var(--tx3);margin-top:18px">und.</div>
+            <div style="flex:2">
+              <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase">
+                Preço unit.</div><input class="faixa-inp" value="R$ 18,00">
+            </div>
+            <div style="width:32px;margin-top:18px"></div>
+          </div>
+          <div class="faixa-row">
+            <div style="flex:1"><input class="faixa-inp" value="3" style="text-align:center"></div>
+            <div style="font-size:12px;color:var(--tx3);margin-top:2px">und.</div>
+            <div style="flex:2"><input class="faixa-inp" value="R$ 16,90"></div>
+            <button class="faixa-rm">✕</button>
+          </div>
+          <button class="btn-ghost" style="margin-bottom:14px">+ Faixa</button>
+
+          <div class="field">
+            <div class="field-lbl">Observação</div>
+            <input class="inp" placeholder="Opcional">
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button class="btn btn-out" style="height:48px;flex:1;font-size:14px">🔄 Refotografar</button>
+            <button class="btn btn-o" style="height:48px;flex:2;font-size:14px" onclick="goTo('t05')">✅ Confirmar e
+              Salvar</button>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T13 — FAMÍLIA
+══════════════════════════════════════ -->
+    <div class="scr" id="t13">
+      <div class="hdr">
+        <div class="hdr-dots"></div>
+        <div class="hdr-z">
+          <div class="sb sb-w" style="padding:0"><span>10:02</span></div>
+          <div class="back-row">
+            <button class="back-btn" onclick="goTo('t05')">←</button>
+            <div class="back-title">Família Guga</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="font-size:13px;color:rgba(255,255,255,.65)">2 membros ativos</div>
+            <div
+              style="width:8px;height:8px;border-radius:50%;background:#69F0AE;box-shadow:0 0 0 3px rgba(105,240,174,.2)">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sa">
+        <div class="sp">
+          <!-- código de convite -->
+          <div style="padding:16px 20px 0">
+            <div class="invite-card">
+              <div class="invite-title">Código de convite</div>
+              <div class="invite-code">FF4892</div>
+              <div class="invite-hint">Compartilhe com familiares para entrar no grupo</div>
+              <button class="invite-copy">Copiar</button>
+            </div>
+          </div>
+
+          <!-- membros -->
+          <div class="sec">
+            <div class="sec-t">Membros</div>
+            <div class="sec-link">+ Convidar</div>
+          </div>
+          <div
+            style="background:var(--wh);border-radius:var(--rad);margin:0 20px;padding:4px 16px;box-shadow:var(--sh2)">
+            <div class="member-row">
+              <div class="member-av admin">👤</div>
+              <div class="member-info">
+                <div class="member-name">Guga (você)</div>
+                <div class="member-role">Administrador</div>
+              </div>
+              <div class="member-status on"></div>
+            </div>
+            <div class="member-row">
+              <div class="member-av">👩</div>
+              <div class="member-info">
+                <div class="member-name">Ana</div>
+                <div class="member-role">Membro · online agora</div>
+              </div>
+              <div class="member-status on"></div>
+            </div>
+          </div>
+
+          <!-- atividade recente -->
+          <div class="sec">
+            <div class="sec-t">Atividade recente</div>
+          </div>
+          <div
+            style="background:var(--wh);border-radius:var(--rad);margin:0 20px;padding:4px 16px;box-shadow:var(--sh2)">
+            <div class="feed-item">
+              <div class="feed-av">👩</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Ana</strong> cadastrou Iogurte Activia no Assaí via OCR</div>
+                <div class="feed-time">há 12 min</div>
+              </div>
+              <div class="feed-price">R$ 16,90</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-av">👤</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Guga</strong> adicionou 5 itens à Feira de Abril</div>
+                <div class="feed-time">há 1 hora</div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-av">👩</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Ana</strong> cadastrou Leite Piracanjuba no Mateus</div>
+                <div class="feed-time">ontem 18:30</div>
+              </div>
+              <div class="feed-price">R$ 5,49</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-av">👤</div>
+              <div class="feed-t">
+                <div class="feed-main"><strong>Guga</strong> criou a lista Feira de Abril</div>
+                <div class="feed-time">ontem 10:15</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- sincronização -->
+          <div style="padding:16px 20px 0">
+            <div
+              style="background:var(--glt);border:1.5px solid var(--gmd);border-radius:var(--rad2);padding:14px;display:flex;align-items:center;gap:12px">
+              <div style="font-size:28px">⚡</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--g2)">Sincronização em tempo real</div>
+                <div style="font-size:12px;color:var(--tx2);margin-top:2px">Qualquer atualização aparece
+                  instantaneamente para todos os membros do grupo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bnav">
+        <div class="ni" onclick="goTo('t05')"><span class="ni-ico">🏠</span><span class="ni-lbl">Início</span></div>
+        <div class="ni" onclick="goTo('t06')"><span class="ni-ico">📋</span><span class="ni-lbl">Listas</span></div>
+        <div class="ni" onclick="goTo('t08')"><span class="ni-ico">🏪</span><span class="ni-lbl">Mercados</span></div>
+        <div class="ni on"><span class="ni-ico">👨‍👩‍👧</span><span class="ni-lbl">Família</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+     T14 — RESUMO DA COMPRA
+══════════════════════════════════════ -->
+    <div class="scr" id="t14">
+      <div class="resumo-hero">
+        <div class="resumo-hero-dots"></div>
+        <div style="position:relative;z-index:1">
+          <div class="sb sb-w" style="padding:0"><span>10:05</span></div>
+          <div style="margin-top:8px">
+            <div class="resumo-tag">
+              <span style="width:8px;height:8px;border-radius:50%;background:#69F0AE;display:inline-block"></span>
+              Compra finalizada · Assaí Atacadista
+            </div>
+            <div style="font-size:14px;color:rgba(255,255,255,.6);margin-bottom:4px">Valor total pago</div>
+            <div class="resumo-valor">R$ 225,15</div>
+            <div class="resumo-economia">💚 Você economizou R$ 11,10 com faixas de preço!</div>
+          </div>
+        </div>
+      </div>
+      <div class="sa">
+        <div style="padding:20px 20px 30px;display:flex;flex-direction:column;gap:10px">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="resumo-stat" style="flex-direction:column;align-items:flex-start;gap:4px">
+              <div class="resumo-stat-lbl">Itens comprados</div>
+              <div class="resumo-stat-val">15 / 23</div>
+            </div>
+            <div class="resumo-stat" style="flex-direction:column;align-items:flex-start;gap:4px">
+              <div class="resumo-stat-lbl">Orçamento usado</div>
+              <div class="resumo-stat-val o">45%</div>
+            </div>
+          </div>
+
+          <div class="resumo-stat">
+            <div class="resumo-stat-lbl">💰 Economia com faixas</div>
+            <div class="resumo-stat-val g">R$ 11,10</div>
+          </div>
+
+          <div class="resumo-stat">
+            <div class="resumo-stat-lbl">📅 Data</div>
+            <div class="resumo-stat-val">14/04/2026</div>
+          </div>
+
+          <!-- itens comprados resumo -->
+          <div style="background:var(--wh);border-radius:var(--rad2);padding:14px;box-shadow:var(--sh2)">
+            <div style="font-size:13px;font-weight:700;color:var(--tx);margin-bottom:10px">Itens comprados</div>
+            <div
+              style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--cr2)">
+              <span style="color:var(--tx2)">Iogurte Natural Activia ×3</span>
+              <span style="font-weight:700;color:var(--tx)">R$ 50,70</span>
+            </div>
+            <div
+              style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--cr2)">
+              <span style="color:var(--tx2)">Leite Piracanjuba ×2</span>
+              <span style="font-weight:700;color:var(--tx)">R$ 10,98</span>
+            </div>
+            <div
+              style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--cr2)">
+              <span style="color:var(--tx2)">Arroz Tio João ×2</span>
+              <span style="font-weight:700;color:var(--tx)">R$ 49,80</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0">
+              <span style="color:var(--tx2)">Frango Seara ×2</span>
+              <span style="font-weight:700;color:var(--tx)">R$ 37,80</span>
+            </div>
+          </div>
+
+          <!-- próxima feira -->
+          <div
+            style="background:linear-gradient(135deg,var(--olt),#FFF5EF);border:1.5px solid var(--omd);border-radius:var(--rad2);padding:14px">
+            <div style="font-size:14px;font-weight:700;color:var(--o2);margin-bottom:4px">🔁 Usar como base para próxima
+              feira?</div>
+            <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Cria uma nova lista com os mesmos itens e
+              quantidades</div>
+            <button class="btn btn-o" style="height:44px;font-size:14px" onclick="goTo('t06')">Criar próxima
+              lista</button>
+          </div>
+
+          <button class="btn btn-out" style="height:44px;font-size:14px" onclick="goTo('t05')">Voltar para o
+            início</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+
+  <!-- NAV EXTERNO -->
+  <div class="nav-ext" id="nav-ext">
+    <button class="nav-ext-btn on" onclick="goTo('t01')">Splash</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t02')">Onboard</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t03')">Login</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t04b')">Grupo</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t05')">Home</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t06')">Lista</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t07')">Compra</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t08')">Mercado</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t09')">Produtos</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t10')">Preço</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t11')">Comparar</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t12')">Simular</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t12b')">OCR</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t13')">Família</button>
+    <div class="nav-ext-sep"></div>
+    <button class="nav-ext-btn" onclick="goTo('t14')">Resumo</button>
+  </div>
+
+  <div class="scrn-lbl" id="scrn-lbl">Tela 1 — Splash</div>
+
+  <style>
+    @keyframes splashIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .3;
+        transform: scale(.8)
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2)
+      }
+    }
+  </style>
+
+  <script>
+    const SCREENS = {
+      t01: 'Tela 1 — Splash',
+      t02: 'Tela 2 — Onboarding',
+      t03: 'Tela 3 — Login',
+      t04b: 'Tela 4 — Configurar Grupo',
+      t05: 'Tela 5 — Home',
+      t06: 'Tela 6 — Lista de Feira',
+      t07: 'Tela 7 — Modo Compra',
+      t08: 'Tela 8 — Cadastro de Mercado',
+      t09: 'Tela 9 — Catálogo de Produtos',
+      t10: 'Tela 10 — Cadastro de Preço',
+      t11: 'Tela 11 — Comparador de Preços',
+      t12: 'Tela 12 — Simulação de Feira',
+      t12b: 'Tela 13 — OCR / Confirmação Etiqueta',
+      t13: 'Tela 14 — Família',
+      t14: 'Tela 15 — Resumo da Compra'
+    };
+    let cur = 't01';
+
+    function goTo(id) {
+      if (!document.getElementById(id)) return;
+      document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+      document.getElementById(id).classList.add('on');
+      document.querySelectorAll('.nav-ext-btn').forEach(b => b.classList.remove('on'));
+      const btns = document.querySelectorAll('.nav-ext-btn');
+      btns.forEach(b => { if (b.getAttribute('onclick') === `goTo('${id}')`) b.classList.add('on'); });
+      document.getElementById('scrn-lbl').textContent = SCREENS[id] || id;
+      cur = id;
+      document.getElementById(id).querySelector('.sa')?.scrollTo(0, 0);
+    }
+
+    // auto-splash
+    setTimeout(() => goTo('t02'), 2500);
+
+    function setTab(btn) {
+      btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+      btn.classList.add('on');
+    }
+
+    function setMode(btn, mode) {
+      btn.closest('.mode-toggle').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      const details = document.querySelectorAll('.item-detail');
+      const brands = document.querySelectorAll('.detail-only');
+      if (mode === 'detalhe') {
+        details.forEach(d => { d.classList.add('open'); });
+        brands.forEach(b => b.style.display = 'block');
+        document.querySelectorAll('.expand-toggle:not(.done)').forEach(e => { e.textContent = '▴'; e.classList.add('open'); });
+      } else {
+        details.forEach(d => d.classList.remove('open'));
+        brands.forEach(b => b.style.display = 'none');
+        document.querySelectorAll('.expand-toggle:not(.done)').forEach(e => { e.textContent = '▾'; e.classList.remove('open'); });
+      }
+    }
+
+    function toggleExpand(detId, btnId) {
+      const det = document.getElementById(detId);
+      const btn = document.getElementById(btnId);
+      if (!det || !btn) return;
+      const open = det.classList.toggle('open');
+      btn.textContent = open ? '▴' : '▾';
+      btn.classList.toggle('open', open);
+    }
+
+    function doPeguei(cardId, btn) {
+      const card = cardId ? document.getElementById(cardId) : btn.closest('.item-row');
+      const nameEl = card?.querySelector('.item-name');
+      const isPego = card?.classList.toggle('pego');
+      if (nameEl) nameEl.classList.toggle('riscado', isPego);
+      btn.classList.toggle('done', isPego);
+      btn.textContent = isPego ? '✓ Peguei!' : '✓ Peguei!';
+      btn.classList.add('peguei-anim');
+      setTimeout(() => btn.classList.remove('peguei-anim'), 300);
+    }
+
+    // Qty lista
+    function iQty(elId, delta) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      let v = Math.max(1, parseInt(el.textContent) + delta);
+      el.textContent = v;
+      if (elId === 'q1') {
+        const price = v >= 3 ? 16.90 : 18.00;
+        document.getElementById('tot1').textContent = 'R$ ' + (price * v).toFixed(2).replace('.', ',');
+      }
+    }
+
+    // Compra qty + budget update
+    const base = { iog: { q: 3, np: 18, pp: 16.90, th: 3 }, arroz: { q: 2, np: 24.90, pp: 22.40, th: 3 } };
+    function cQty(qId, totId, np, pp, th, delta) {
+      const el = document.getElementById(qId);
+      const tot = document.getElementById(totId);
+      if (!el || !tot) return;
+      const key = qId === 'cq1' ? 'iog' : 'arroz';
+      base[key].q = Math.max(1, base[key].q + delta);
+      el.textContent = base[key].q;
+      const price = base[key].q >= base[key].th ? base[key].pp : base[key].np;
+      tot.textContent = 'R$ ' + (price * base[key].q).toFixed(2).replace('.', ',');
+      if (key === 'arroz') {
+        const eco = document.getElementById('eco3');
+        if (eco) eco.style.display = base[key].q >= base[key].th ? 'none' : 'flex';
+      }
+      updateBudget();
+    }
+
+    function updateBudget() {
+      const iogT = (base.iog.q >= base.iog.th ? base.iog.pp : base.iog.np) * base.iog.q;
+      const arrozT = (base.arroz.q >= base.arroz.th ? base.arroz.pp : base.arroz.np) * base.arroz.q;
+      const fixo = 225 - 50.70 - 49.80;
+      const total = fixo + iogT + arrozT;
+      const pct = Math.round(total / 500 * 100);
+      const fill = document.getElementById('bb-fill');
+      const pctEl = document.getElementById('bb-pct');
+      const gasto = document.getElementById('bb-gasto');
+      const rest = document.getElementById('bb-rest');
+      if (!fill || !pctEl) return;
+      fill.style.width = Math.min(pct, 100) + '%';
+      gasto.textContent = 'R$ ' + total.toFixed(0);
+      rest.textContent = 'R$ ' + (500 - total).toFixed(0);
+      if (pct < 75) { fill.style.background = 'var(--o)'; pctEl.textContent = pct + '% 🟢'; pctEl.style.color = 'var(--g)'; }
+      else if (pct < 90) { fill.style.background = 'var(--o)'; pctEl.textContent = pct + '% 🟡'; pctEl.style.color = 'var(--o)'; }
+      else { fill.style.background = 'var(--r)'; pctEl.textContent = pct + '% 🔴'; pctEl.style.color = 'var(--r)'; }
+    }
+    // init budget bar
+    document.addEventListener('DOMContentLoaded', () => {
+      const f = document.getElementById('bb-fill');
+      if (f) { f.style.width = '45%'; f.style.background = 'var(--o)'; }
+    });
+
+    function cPeguei(cardId, nameId, btn) {
+      const card = cardId ? document.getElementById(cardId) : btn.closest('[id]');
+      const nameEl = nameId ? document.getElementById(nameId) : card?.querySelector('[id^="cn"]');
+      const isPego = card?.classList.toggle('pego');
+      if (nameEl) nameEl.style.textDecoration = isPego ? 'line-through' : 'none';
+      if (nameEl) nameEl.style.color = isPego ? 'var(--tx3)' : 'var(--tx)';
+      btn.classList.toggle('done', isPego);
+      btn.classList.add('peguei-anim');
+      setTimeout(() => btn.classList.remove('peguei-anim'), 300);
+    }
+
+    // Places autocomplete simulado
+    let placesTimer;
+    function showPlaces(val) {
+      clearTimeout(placesTimer);
+      const drop = document.getElementById('places-drop');
+      if (val.length < 2) { drop.style.display = 'none'; return; }
+      placesTimer = setTimeout(() => { drop.style.display = 'block'; }, 300);
+    }
+    function selectPlace(name, addr) {
+      document.getElementById('places-inp').value = name;
+      document.getElementById('places-drop').style.display = 'none';
+      document.getElementById('place-fields').style.display = 'block';
+      document.getElementById('pf-nome').value = name;
+      document.getElementById('pf-end').value = addr;
+    }
+
+    // add faixa
+    let faixaCount = 2;
+    function addFaixa() {
+      faixaCount++;
+      const c = document.getElementById('faixas-container');
+      const row = document.createElement('div');
+      row.className = 'faixa-row';
+      row.innerHTML = `
+    <div style="flex:1"><div style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">A partir de</div><input class="faixa-inp" placeholder="5" style="text-align:center"></div>
+    <div style="font-size:13px;color:var(--tx3);margin-top:18px">und.</div>
+    <div style="flex:2"><div style="font-size:10px;color:var(--tx3);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Preço unitário</div><input class="faixa-inp" placeholder="R$ 0,00"></div>
+    <button class="faixa-rm" style="margin-top:18px" onclick="this.closest('.faixa-row').remove()">✕</button>`;
+      c.appendChild(row);
+    }
+
+    // keyboard
+    document.addEventListener('keydown', e => {
+      const ids = Object.keys(SCREENS);
+      const i = ids.indexOf(cur);
+      if (e.key === 'ArrowRight' && i < ids.length - 1) goTo(ids[i + 1]);
+      if (e.key === 'ArrowLeft' && i > 0) goTo(ids[i - 1]);
+    });
+  </script>
+</body>
+
+</html>
