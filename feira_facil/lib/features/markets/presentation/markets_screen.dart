@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:google_places_flutter/model/prediction.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/providers/user_providers.dart';
 import '../../../core/widgets/premium_header.dart';
+import '../../../core/services/places_service.dart';
 import '../data/market_repository.dart';
 import '../domain/market.dart';
 import 'market_detail_screen.dart';
@@ -137,6 +136,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
     double? selectedLat;
     double? selectedLng;
     String? selectedPlaceId;
+    String? selectedAddress;
 
     showModalBottomSheet(
       context: context,
@@ -178,7 +178,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Localização via Google Places
+              // Localização via Google Places (New API)
               Text(
                 'LOCALIZAÇÃO',
                 style: TextStyle(
@@ -189,49 +189,84 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              GooglePlaceAutoCompleteTextField(
-                textEditingController: addressController,
-                googleAPIKey: 'AIzaSyAS3-vnzPSXdO41uw3sXsVBOOyATFPIaIY',
-                inputDecoration: const InputDecoration(
-                  hintText: 'Buscar endereço ou bairro...',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                ),
-                debounceTime: 400,
-                countries: const ['br'],
-                isLatLngRequired: true,
-                getPlaceDetailWithLatLng: (Prediction prediction) {
-                  setModalState(() {
-                    addressController.text = prediction.description ?? '';
-                    selectedLat = double.tryParse(prediction.lat ?? '');
-                    selectedLng = double.tryParse(prediction.lng ?? '');
-                    selectedPlaceId = prediction.placeId;
-                  });
+              Autocomplete<PlacePrediction>(
+                displayStringForOption: (p) => p.description,
+                optionsBuilder: (textValue) async {
+                  if (textValue.text.length < 3) return [];
+                  return PlacesService.autocomplete(textValue.text);
                 },
-                itemClick: (Prediction prediction) {
-                  addressController.text = prediction.description ?? '';
-                  addressController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: addressController.text.length),
-                  );
+                onSelected: (PlacePrediction prediction) async {
+                  addressController.text = prediction.description;
+                  final details = await PlacesService.getDetails(prediction.placeId);
+                  if (details != null) {
+                    setModalState(() {
+                      selectedLat = details.latitude;
+                      selectedLng = details.longitude;
+                      selectedPlaceId = prediction.placeId;
+                      selectedAddress = details.formattedAddress;
+                      addressController.text = details.formattedAddress;
+                    });
+                  }
                 },
-                itemBuilder: (context, index, Prediction prediction) {
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.location_pin, color: AppColors.orange, size: 18),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            prediction.description ?? '',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
+                fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar endereço ou bairro...',
+                      prefixIcon: Icon(Icons.location_on_outlined),
                     ),
                   );
                 },
-                seperatedBuilder: const Divider(height: 1, color: AppColors.cream2),
-                containerHorizontalPadding: 0,
+                optionsViewBuilder: (context, onSelected, options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: ListView.separated(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.cream2),
+                          itemBuilder: (context, index) {
+                            final pred = options.elementAt(index);
+                            return InkWell(
+                              onTap: () => onSelected(pred),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_pin, color: AppColors.orange, size: 18),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            pred.mainText,
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                          ),
+                                          if (pred.secondaryText.isNotEmpty)
+                                            Text(
+                                              pred.secondaryText,
+                                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
 
               // Confirmação de endereço selecionado
@@ -264,7 +299,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                   final newMarket = Market(
                     id: const Uuid().v4(),
                     name: nameController.text.trim(),
-                    address: addressController.text.trim(),
+                    address: selectedAddress ?? addressController.text.trim(),
                     placeId: selectedPlaceId,
                     latitude: selectedLat,
                     longitude: selectedLng,
@@ -273,10 +308,8 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                     createdAt: DateTime.now(),
                   );
 
-                  await ref
-                      .read(marketRepositoryProvider)
-                      .createMarket(newMarket);
-                  Navigator.pop(ctx);
+                  await ref.read(marketRepositoryProvider).createMarket(newMarket);
+                  if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('CADASTRAR'),
               ),
