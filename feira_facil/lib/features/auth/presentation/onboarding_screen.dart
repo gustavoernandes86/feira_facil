@@ -57,6 +57,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         '🏪 Comparar mercados',
                         '💰 Controle de orçamento',
                       ],
+                      logoWidget: Image.asset(
+                        'assets/images/logo.png',
+                        height: 120,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     _buildStep(
                       emoji: '📊',
@@ -110,11 +115,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String titleEmphasis,
     required String sub,
     required List<String> chips,
+    Widget? logoWidget,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 72)),
+        logoWidget ?? Text(emoji, style: const TextStyle(fontSize: 72)),
         const SizedBox(height: 16),
         RichText(
           textAlign: TextAlign.center,

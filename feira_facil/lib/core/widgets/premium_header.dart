@@ -49,7 +49,14 @@ class PremiumHeader extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (leading != null) leading! else const SizedBox(width: 40),
+                      if (leading != null)
+                        leading!
+                      else
+                        Image.asset(
+                          'assets/images/logo-horizontal-escura.png',
+                          height: 34,
+                          fit: BoxFit.contain,
+                        ),
                       if (actions != null) Row(children: actions!) else const SizedBox(width: 40),
                     ],
                   ),

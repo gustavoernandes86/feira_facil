@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -33,25 +32,24 @@ class LoginScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
 
-                  // Welcome message
+                  // Logo colorida no body
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 16),
+
                   Text(
-                    'Bem-vindo ao',
+                    'Bem-vindo ao Feira Fácil!',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Feira Fácil',
-                    style: GoogleFonts.fraunces(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
 
                   Text(
                     'Organize suas compras e compare preços\ncom sua família de forma inteligente',
@@ -172,39 +170,10 @@ class LoginScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    ),
-                    child: const Center(
-                      child: Text('🛒', style: TextStyle(fontSize: 24)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Feira Fácil',
-                        style: GoogleFonts.fraunces(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      Text(
-                        'compra inteligente em família',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.55),
-                        ),
-                      ),
-                    ],
+                  Image.asset(
+                    'assets/images/logo-horizontal-escura.png',
+                    height: 56,
+                    fit: BoxFit.contain,
                   ),
                 ],
               ),

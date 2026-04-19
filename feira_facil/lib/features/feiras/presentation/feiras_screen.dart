@@ -107,29 +107,14 @@ class FeirasScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Logo no topo do dashboard
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.white.withOpacity(0.15),
-                    child: const Text('👤', style: TextStyle(fontSize: 24)),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Olá, ${user?.name?.split(' ').first ?? 'visitante'}', style: const TextStyle(
-                        fontSize: 14, color: Colors.white70
-                      )),
-                      Text(group?.name ?? 'Sua Família', style: GoogleFonts.fraunces(
-                        fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white
-                      )),
-                    ],
-                  )
-                ],
+              Image.asset(
+                'assets/images/logo-horizontal-escura.png',
+                height: 36,
+                fit: BoxFit.contain,
               ),
               Row(
                 children: [
@@ -138,6 +123,28 @@ class FeirasScreen extends ConsumerWidget {
                   _headerIcon(Icons.menu_rounded, onTap: () => context.push('/group-management')),
                 ],
               ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.white.withOpacity(0.15),
+                child: const Text('👤', style: TextStyle(fontSize: 24)),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Olá, ${user?.name?.split(' ').first ?? 'visitante'}', style: const TextStyle(
+                    fontSize: 14, color: Colors.white70
+                  )),
+                  Text(group?.name ?? 'Sua Família', style: GoogleFonts.fraunces(
+                    fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white
+                  )),
+                ],
+              )
             ],
           ),
           const SizedBox(height: 32),

@@ -92,25 +92,14 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(26),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.contain,
-                    ),
+                  width: 220,
+                  height: 220,
+                  child: Image.asset(
+                    'assets/images/logo-escura.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: 200,
                   child: Text(
