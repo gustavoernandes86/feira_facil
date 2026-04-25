@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/user_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../lists/presentation/fair_lists_controller.dart';
 
 class FeirasScreen extends ConsumerWidget {
   const FeirasScreen({super.key});
@@ -374,45 +375,87 @@ class FeirasScreen extends ConsumerWidget {
     if (ref == null) return;
     String marketName = '';
     double budget = 0;
+    String? selectedBaseListId;
+    
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Nova Feira'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nome do Mercado'),
-              onChanged: (val) => marketName = val,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Nova Feira'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(labelText: 'Nome do Mercado'),
+                    onChanged: (val) => marketName = val,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Orçamento', prefixText: 'R\$ '),
+                    onChanged: (val) => budget = double.tryParse(val) ?? 0,
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final groupId = ref.watch(currentGroupIdProvider);
+                      if (groupId == null) return const SizedBox();
+                      
+                      final listsAsync = ref.watch(fairListsStreamProvider(groupId));
+                      
+                      return listsAsync.when(
+                        data: (lists) {
+                          if (lists.isEmpty) return const SizedBox();
+                          
+                          return DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Usar Lista Base (Opcional)',
+                              border: OutlineInputBorder(),
+                            ),
+                            value: selectedBaseListId,
+                            items: [
+                              const DropdownMenuItem(value: null, child: Text('Não usar lista base')),
+                              ...lists.map((l) => DropdownMenuItem(value: l.id, child: Text(l.name))),
+                            ],
+                            onChanged: (val) {
+                              setState(() {
+                                selectedBaseListId = val;
+                              });
+                            },
+                          );
+                        },
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, __) => const SizedBox(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Orçamento', prefixText: 'R\$ '),
-              onChanged: (val) => budget = double.tryParse(val) ?? 0,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final groupId = ref.read(currentGroupIdProvider);
-              if (groupId == null || marketName.trim().isEmpty) return;
-              final newFeira = Feira(
-                id: FirebaseFirestore.instance.collection('feiras').doc().id,
-                groupId: groupId,
-                marketName: marketName,
-                date: DateTime.now(),
-                budget: budget,
-              );
-              await ref.read(feiraRepositoryProvider).createFeira(newFeira);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Criar'),
-          ),
-        ],
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: () async {
+                  final groupId = ref.read(currentGroupIdProvider);
+                  if (groupId == null || marketName.trim().isEmpty) return;
+                  final newFeira = Feira(
+                    id: FirebaseFirestore.instance.collection('feiras').doc().id,
+                    groupId: groupId,
+                    marketName: marketName,
+                    date: DateTime.now(),
+                    budget: budget,
+                  );
+                  await ref.read(feiraRepositoryProvider).createFeira(newFeira, baseListId: selectedBaseListId);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Criar'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }

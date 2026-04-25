@@ -57,9 +57,15 @@ class FairListsRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => FairList.fromJson({...doc.data(), 'id': doc.id}))
-              .toList(),
+          (snapshot) {
+            print('[DEBUG] listsStream groupId=$groupId => ${snapshot.docs.length} listas');
+            for (var doc in snapshot.docs) {
+              print('[DEBUG]   lista: ${doc.id} => ${doc.data()['name']}');
+            }
+            return snapshot.docs
+                .map((doc) => FairList.fromJson({...doc.data(), 'id': doc.id}))
+                .toList();
+          },
         );
   }
 

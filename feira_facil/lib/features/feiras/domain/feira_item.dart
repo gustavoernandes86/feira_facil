@@ -65,7 +65,7 @@ class FeiraItem {
   factory FeiraItem.fromJson(Map<String, dynamic> json) {
     return FeiraItem(
       id: json['id'] as String,
-      name: json['name'] as String,
+      name: (json['name'] as String?) ?? (json['itemId'] as String?) ?? 'Sem nome',
       brand: json['brand'] as String? ?? '',
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
       quantity: (json['quantity'] as num?)?.toDouble() ?? 1.0,

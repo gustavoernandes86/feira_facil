@@ -46,8 +46,52 @@ class FeiraRepository {
     });
   }
 
-  Future<void> createFeira(Feira feira) async {
+  Future<void> createFeira(Feira feira, {String? baseListId}) async {
     await _feiras.doc(feira.id).set(feira.toJson());
+    
+    // Copy items from base list if provided
+    if (baseListId != null) {
+      try {
+        final listItemsSnapshot = await _firestore
+            .collection('grupos')
+            .doc(feira.groupId)
+            .collection('listas')
+            .doc(baseListId)
+            .collection('itens')
+            .get();
+            
+        if (listItemsSnapshot.docs.isNotEmpty) {
+          final batch = _firestore.batch();
+          final feiraItensRef = _feiras.doc(feira.id).collection('itens'); // Note: 'itens' in portuguese per context
+          
+          for (var doc in listItemsSnapshot.docs) {
+            final data = doc.data();
+            final newItemRef = feiraItensRef.doc();
+            batch.set(newItemRef, {
+              'name': data['itemId'], // Base list itemId is the actual name
+              'quantity': (data['plannedQuantity'] as num?)?.toDouble() ?? 1.0,
+              'category': 'Geral', // Default or fetch if available
+              'isAdded': false,
+              'unit': 'un',
+              'unitPrice': 0.0,
+            });
+          }
+          
+          await batch.commit();
+          
+          // Update item count on Feira
+          await updateFeiraStats(
+            feiraId: feira.id,
+            totalSpent: 0,
+            estimatedTotal: 0,
+            itemsCount: listItemsSnapshot.docs.length,
+            checkedItemsCount: 0,
+          );
+        }
+      } catch (e) {
+        print('Erro ao copiar itens da lista base: $e');
+      }
+    }
   }
 
   Future<void> updateFeiraStats({

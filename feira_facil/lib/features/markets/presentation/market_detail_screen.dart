@@ -107,9 +107,13 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             children: [
               const Icon(Icons.location_on, color: AppColors.orange, size: 20),
               const SizedBox(width: 8),
-              Text(
-                widget.market.address.isNotEmpty ? widget.market.address : 'Endereço não informado',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              Expanded(
+                child: Text(
+                  widget.market.address.isNotEmpty ? widget.market.address : 'Endereço não informado',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
               ),
             ],
           ),

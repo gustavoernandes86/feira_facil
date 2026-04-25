@@ -26,7 +26,7 @@ class ListsScreen extends ConsumerWidget {
       body: listsAsync.when(
         data: (lists) {
           if (lists.isEmpty) {
-            return _buildEmptyState(context);
+            return _buildEmptyState(context, ref);
           }
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -50,7 +50,7 @@ class ListsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -68,6 +68,26 @@ class ListsScreen extends ConsumerWidget {
               'Crie uma lista base (ex: "Lista do Mês", "Churrasco") para usar nos mercados.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final groupId = ref.read(currentGroupIdProvider);
+                final userId = ref.read(currentUserProfileProvider).value?.id;
+                if (groupId != null && userId != null) {
+                  await ref.read(fairListsControllerProvider(groupId).notifier).checkDefaultList(userId);
+                }
+              },
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Gerar Lista Essencial'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),

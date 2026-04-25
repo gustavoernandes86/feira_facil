@@ -27,6 +27,14 @@ class MarketListSelector extends ConsumerWidget {
       );
     }
 
+    // Find selected from current list by ID to avoid stale reference issues
+    final currentSelected = selectedList != null
+        ? lists.cast<FairList?>().firstWhere(
+              (l) => l?.id == selectedList!.id,
+              orElse: () => null,
+            )
+        : null;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -37,14 +45,14 @@ class MarketListSelector extends ConsumerWidget {
         boxShadow: const [AppColors.shadow1],
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<FairList>(
-          value: selectedList,
+        child: DropdownButton<String>(
+          value: currentSelected?.id,
           hint: const Text('Selecione uma lista...'),
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.orange),
           items: lists.map((list) {
-            return DropdownMenuItem(
-              value: list,
+            return DropdownMenuItem<String>(
+              value: list.id,
               child: Row(
                 children: [
                   Container(
@@ -56,15 +64,21 @@ class MarketListSelector extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    list.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      list.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
             );
           }).toList(),
-          onChanged: onListSelected,
+          onChanged: (selectedId) {
+            if (selectedId == null) return;
+            final selected = lists.firstWhere((l) => l.id == selectedId);
+            onListSelected(selected);
+          },
         ),
       ),
     );
