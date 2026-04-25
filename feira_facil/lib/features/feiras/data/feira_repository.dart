@@ -37,10 +37,12 @@ class FeiraRepository {
   Stream<List<Feira>> watchFeirasPorGrupo(String groupId) {
     return _feiras
         .where('groupId', isEqualTo: groupId)
-        // .orderBy('date', descending: true) // Temporariamente removido para evitar erro de índice
+        .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Feira.fromJson(doc.data())).toList();
+      return snapshot.docs
+          .map((doc) => Feira.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
     });
   }
 

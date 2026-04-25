@@ -91,14 +91,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(height: 28),
               Column(
                 children: [
-                  ElevatedButton(
-                    onPressed: () => context.go(RoutePaths.login),
-                    child: const Text('Criar minha conta'),
-                  ),
-                  const SizedBox(height: 10),
                   OutlinedButton(
                     onPressed: () => context.go(RoutePaths.login),
-                    child: const Text('Já tenho conta — Entrar'),
+                    child: const Text('Entrar'),
                   ),
                 ],
               ),

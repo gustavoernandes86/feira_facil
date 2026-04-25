@@ -44,3 +44,8 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+feira_facil/web/index.html
+feira_facil/android/app/google-services.json
+feira_facil/pubspec.lock
+feira_facil/feira_facil_fixed.zip
+WhatsApp Image 2026-04-25 at 15.48.02.jpeg

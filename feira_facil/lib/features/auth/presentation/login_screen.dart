@@ -10,6 +10,14 @@ class LoginScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(authControllerProvider, (previous, next) {
       if (next.hasError) {
+        final errorString = next.error.toString().toLowerCase();
+        // Ignore user cancellation errors
+        if (errorString.contains('canceled') || 
+            errorString.contains('cancelled') || 
+            errorString.contains('sign_in_canceled')) {
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao fazer login: ${next.error}'),

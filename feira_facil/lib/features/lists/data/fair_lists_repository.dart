@@ -63,6 +63,106 @@ class FairListsRepository {
         );
   }
 
+  /// Verifica se há listas e, se não houver, cria a lista padrão
+  Future<void> seedDefaultListIfNeeded(String groupId, String userId) async {
+    try {
+      final snapshot = await _listsRef(groupId).limit(1).get();
+      if (snapshot.docs.isEmpty) {
+        // Nenhuma lista existe, vamos criar a Lista Básica
+        final listId = await createList(
+          groupId: groupId,
+          name: 'Lista Básica',
+          color: const Color(0xFF4CAF50), // Verde
+          userId: userId,
+        );
+
+        // Itens da Lista Básica
+        final defaultItems = [
+          // Hortifruti
+          {'id': 'Banana prata', 'qty': 2},
+          {'id': 'Maçã', 'qty': 2},
+          {'id': 'Mamão', 'qty': 2},
+          {'id': 'Manga', 'qty': 4},
+          {'id': 'Laranja', 'qty': 2},
+          {'id': 'Limão', 'qty': 1},
+          {'id': 'Tomate', 'qty': 2},
+          {'id': 'Cebola', 'qty': 1},
+          {'id': 'Alho', 'qty': 1},
+          {'id': 'Batata', 'qty': 2},
+          {'id': 'Cenoura', 'qty': 1},
+          {'id': 'Abóbora', 'qty': 1},
+          {'id': 'Pimentão', 'qty': 3},
+          {'id': 'Coentro', 'qty': 2},
+          {'id': 'Cebolinha', 'qty': 2},
+          {'id': 'Alface', 'qty': 3},
+          {'id': 'Repolho', 'qty': 1},
+          // Carnes e Ovos
+          {'id': 'Peito de frango', 'qty': 3},
+          {'id': 'Carne bovina', 'qty': 2},
+          {'id': 'Carne moída', 'qty': 1},
+          {'id': 'Linguiça', 'qty': 1},
+          {'id': 'Ovos', 'qty': 3},
+          // Peixes
+          {'id': 'Filé de peixe', 'qty': 2},
+          // Laticínios
+          {'id': 'Leite', 'qty': 30},
+          {'id': 'Queijo coalho', 'qty': 1},
+          {'id': 'Queijo muçarela', 'qty': 1},
+          {'id': 'Iogurte', 'qty': 12},
+          // Padaria
+          {'id': 'Pão francês', 'qty': 30},
+          {'id': 'Pão de forma', 'qty': 2},
+          {'id': 'Bolo simples', 'qty': 2},
+          // Grãos e Cereais
+          {'id': 'Arroz', 'qty': 5},
+          {'id': 'Feijão', 'qty': 2},
+          {'id': 'Macarrão', 'qty': 1},
+          {'id': 'Flocão de milho', 'qty': 1},
+          {'id': 'Farinha de mandioca', 'qty': 1},
+          {'id': 'Aveia', 'qty': 1},
+          // Mercearia
+          {'id': 'Óleo de soja', 'qty': 2},
+          {'id': 'Azeite', 'qty': 1},
+          {'id': 'Açúcar', 'qty': 2},
+          {'id': 'Café', 'qty': 1},
+          {'id': 'Sal', 'qty': 1},
+          {'id': 'Molho de tomate', 'qty': 3},
+          {'id': 'Milho verde', 'qty': 2},
+          {'id': 'Sardinha/atum', 'qty': 4},
+          // Bebidas
+          {'id': 'Água mineral', 'qty': 6},
+          {'id': 'Refrigerante', 'qty': 4},
+          {'id': 'Suco', 'qty': 6},
+          // Limpeza
+          {'id': 'Detergente', 'qty': 3},
+          {'id': 'Sabão em pó', 'qty': 1},
+          {'id': 'Água sanitária', 'qty': 2},
+          {'id': 'Desinfetante', 'qty': 2},
+          {'id': 'Esponja', 'qty': 2},
+          {'id': 'Saco de lixo', 'qty': 2},
+          // Higiene
+          {'id': 'Papel higiênico', 'qty': 24},
+          {'id': 'Creme dental', 'qty': 3},
+          {'id': 'Sabonete', 'qty': 6},
+          {'id': 'Shampoo', 'qty': 2},
+          {'id': 'Condicionador', 'qty': 1},
+          {'id': 'Desodorante', 'qty': 2},
+        ];
+
+        for (final item in defaultItems) {
+          await addItemToList(
+            groupId: groupId,
+            listId: listId,
+            itemId: item['id'] as String,
+            quantity: item['qty'] as int,
+          );
+        }
+      }
+    } catch (e) {
+      throw Exception('Erro ao popular lista padrão: $e');
+    }
+  }
+
   /// Adiciona um item à lista
   Future<String> addItemToList({
     required String groupId,

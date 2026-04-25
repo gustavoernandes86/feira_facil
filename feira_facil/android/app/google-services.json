@@ -12,7 +12,12 @@
           "package_name": "com.feirafacil.feira_facil"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "638460786906-4sqkk8vjf0jsl64nvh1i3lb0nqa5h6sm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBjAYDJuUyQ8fZ4JGCJNkR1nFm_IN7Vb9o"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "638460786906-4sqkk8vjf0jsl64nvh1i3lb0nqa5h6sm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "638460786906-6saq763tj18sr4u2nko28gokrpotintd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.feirafacil.feiraFacil"
+              }
+            }
+          ]
         }
       }
     }

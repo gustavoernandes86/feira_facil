@@ -25,6 +25,7 @@ class PricesRepository {
     required String userId,
     String? observation,
     String? photoUrl,
+    String? brand,
     String sourceType = 'manual',
   }) async {
     try {
@@ -36,6 +37,7 @@ class PricesRepository {
         'tiers': tiers.map((tier) => tier.toJson()).toList(),
         'observation': observation,
         'photoUrl': photoUrl,
+        'brand': brand,
         'sourceType': sourceType,
         'registeredAt': DateTime.now().toIso8601String(),
         'registeredBy': userId,

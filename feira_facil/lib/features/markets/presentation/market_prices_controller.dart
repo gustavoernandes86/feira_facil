@@ -16,23 +16,22 @@ final marketPricesStreamProvider = StreamProvider.family<List<Price>, String>((r
 /// Controller para gerenciar ações de preços em um mercado (criar, deletar)
 final marketPricesControllerProvider =
     AsyncNotifierProvider.family<MarketPricesController, void, String>(
-      (marketId) => MarketPricesController(marketId),
+      MarketPricesController.new,
     );
 
-class MarketPricesController extends AsyncNotifier<void> {
-  final String _marketId;
-
-  MarketPricesController(this._marketId);
+class MarketPricesController extends FamilyAsyncNotifier<void, String> {
+  late final String _marketId;
 
   @override
-  FutureOr<void> build() {
-    // Estado inicial vazio
+  FutureOr<void> build(String arg) {
+    _marketId = arg;
   }
 
   Future<void> addPrice({
     required String itemName,
     required List<PriceTier> tiers,
     String? observation,
+    String? brand,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -49,6 +48,7 @@ class MarketPricesController extends AsyncNotifier<void> {
         tiers: tiers,
         userId: userId,
         observation: observation,
+        brand: brand,
         sourceType: 'manual',
       );
       

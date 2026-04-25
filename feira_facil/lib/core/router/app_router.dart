@@ -11,6 +11,11 @@ import '../../features/feiras/presentation/feiras_screen.dart';
 import '../../features/feiras/presentation/feira_items_screen.dart';
 import '../../features/feiras/domain/feira.dart';
 import '../../features/markets/presentation/markets_screen.dart';
+import '../../features/markets/presentation/market_detail_screen.dart';
+import '../../features/markets/domain/market.dart';
+import '../../features/lists/presentation/lists_screen.dart';
+import '../../features/lists/presentation/list_items_screen.dart';
+import '../../features/lists/domain/fair_list.dart';
 import 'router_notifier.dart';
 
 // Constantes de rota
@@ -23,6 +28,9 @@ class RouteNames {
   static const feiras = 'feiras';
   static const feiraDetails = 'feiraDetails';
   static const markets = 'markets';
+  static const marketDetails = 'marketDetails';
+  static const lists = 'lists';
+  static const listDetails = 'listDetails';
 }
 
 class RoutePaths {
@@ -33,6 +41,7 @@ class RoutePaths {
   static const groupManagement = '/group-management';
   static const feiras = '/feiras';
   static const markets = '/markets';
+  static const lists = '/lists';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -51,22 +60,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isSplash = state.matchedLocation == RoutePaths.splash;
       final isOnboarding = state.matchedLocation == RoutePaths.onboarding;
       final isLoggingIn = state.matchedLocation == RoutePaths.login;
+      final isGroupSetup = state.matchedLocation == RoutePaths.groupSetup;
 
-      // Se for Splash ou Onboarding, não redireciona por enquanto
-      if (isSplash || isOnboarding) return null;
-
-      // Se não estiver logado, obriga a ir para a tela de login
+      // 1. Se não estiver logado
       if (authState == null) {
-        return isLoggingIn ? null : RoutePaths.login;
+        // Permite ficar nas telas públicas (splash, onboarding, login)
+        if (isSplash || isOnboarding || isLoggingIn) {
+          return null;
+        }
+        // Obriga a ir para login
+        return RoutePaths.login;
       }
 
-      // Se estiver logado e na tela de login, redireciona para home
-      if (isLoggingIn) {
+      // 2. A partir daqui, o usuário ESTÁ logado.
+      // Se ele estiver nas telas iniciais, precisamos redirecioná-lo para dentro do app.
+      if (isSplash || isOnboarding || isLoggingIn) {
+        // Se o perfil carregou e não tem grupos, manda para setup
+        if (userProfile != null && userProfile.groupIds.isEmpty) {
+          return RoutePaths.groupSetup;
+        }
+        // Se ainda está carregando ou já tem grupos, vai para feiras
+        // (A checagem de grupo também pode acontecer no FeirasScreen, mas o router ajuda)
         return RoutePaths.feiras;
       }
 
-      // Se estiver no Setup mas já tiver grupo, permite ir para Home
-      if (state.matchedLocation == RoutePaths.groupSetup) {
+      // 3. Se estiver no Setup mas JÁ TIVER grupo, não precisa ficar lá
+      if (isGroupSetup) {
         if (userProfile != null && userProfile.groupIds.isNotEmpty) {
            return RoutePaths.feiras;
         }
@@ -120,6 +139,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.markets,
         name: RouteNames.markets,
         builder: (context, state) => const MarketsScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            name: RouteNames.marketDetails,
+            builder: (context, state) {
+              final market = state.extra as Market;
+              return MarketDetailScreen(market: market);
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: RoutePaths.lists,
+        name: RouteNames.lists,
+        builder: (context, state) => const ListsScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            name: RouteNames.listDetails,
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              final list = state.extra as FairList?;
+              return ListItemsScreen(listId: id, listContext: list);
+            },
+          ),
+        ],
       ),
     ],
   );

@@ -1,44 +1,11 @@
 {
   "indexes": [
     {
-      "collectionGroup": "precos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "marketId", "order": "ASCENDING" },
-        { "fieldPath": "registeredAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "precos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "itemId", "order": "ASCENDING" },
-        { "fieldPath": "registeredAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "precos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "itemId", "order": "ASCENDING" },
-        { "fieldPath": "marketId", "order": "ASCENDING" },
-        { "fieldPath": "registeredAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "precos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "itemId", "order": "ASCENDING" },
-        { "fieldPath": "registeredAt", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "feiras",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
     {
@@ -46,15 +13,35 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "name", "order": "ASCENDING" }
+        { "fieldPath": "name", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "mercados",
+      "collectionGroup": "precos",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "name", "order": "ASCENDING" }
+        { "fieldPath": "itemId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "precos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId", "order": "ASCENDING" },
+        { "fieldPath": "marketId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
       ]
     }
   ],

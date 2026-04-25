@@ -21,16 +21,7 @@ final _itemFilterProvider = NotifierProvider<ItemFilterNotifier, String>(() {
   return ItemFilterNotifier();
 });
 
-/// Subtotal da lista com cálculos de melhor preço
-final _listSubtotalProvider =
-    FutureProvider.family<
-      double,
-      ({String groupId, String listId, String marketId})
-    >((ref, params) async {
-      // Aqui você implementaria a lógica de cálculo do subtotal
-      // considerando os preços dos itens no mercado selecionado
-      return 0.0;
-    });
+
 
 class ShoppingCartScreen extends ConsumerWidget {
   final String groupId;
@@ -49,8 +40,8 @@ class ShoppingCartScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(_itemFilterProvider);
-    // Instantiate controller directly with groupId
-    final listController = FairListsController(groupId);
+    // Acessa o controller pelo Riverpod — instanciar diretamente causaria crash (ref nulo)
+    final listController = ref.read(fairListsControllerProvider(groupId).notifier);
 
     // Filtra itens baseado no filtro selecionado
     final filteredItems = _applyFilter(filter);
@@ -190,7 +181,7 @@ class ShoppingCartScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () => _showCheckoutDialog(context),
+                        onPressed: () => _showCheckoutDialog(context, ref),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.green,
                           shape: RoundedRectangleBorder(
@@ -336,24 +327,46 @@ class ShoppingCartScreen extends ConsumerWidget {
     );
   }
 
-  void _showCheckoutDialog(BuildContext context) {
+  void _showCheckoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Finalizar Compras'),
-        content: const Text('Marcar esta lista como concluída?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Deseja marcar esta lista como concluída?'),
+            const SizedBox(height: 8),
+            Text(
+              'Itens pegos: ${itemsWithDetails.where((i) => i.listItem.marked).length}/${itemsWithDetails.length}',
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Implementar lógica de conclusão
+            onPressed: () async {
               Navigator.pop(context);
+              await ref
+                  .read(fairListsControllerProvider(groupId).notifier)
+                  .completeList(listId);
+              if (context.mounted) {
+                Navigator.pop(context); // Fecha o ShoppingCartScreen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🎉 Lista concluída!'),
+                    backgroundColor: AppColors.green,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
-            child: const Text('Concluír'),
+            child: const Text('Concluir'),
           ),
         ],
       ),

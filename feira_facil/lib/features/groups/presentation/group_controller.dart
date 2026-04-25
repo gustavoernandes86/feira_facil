@@ -4,30 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/group_repository.dart';
 import '../domain/family_group.dart';
 
+// Re-exporta o provider canônico de grupo (definido em user_providers.dart)
+export 'package:feira_facil/core/providers/user_providers.dart' show currentGroupIdProvider;
+
 /// Provider do usuário autenticado atualmente
 final currentUserProvider = Provider<User?>((ref) {
   return FirebaseAuth.instance.currentUser;
 });
-
-/// Notifier para gerenciar o ID do grupo selecionado
-class CurrentGroupIdNotifier extends Notifier<String?> {
-  @override
-  String? build() => null;
-
-  void setGroupId(String? id) {
-    state = id;
-  }
-
-  void clearGroupId() {
-    state = null;
-  }
-}
-
-/// Provider do ID do grupo atualmente selecionado
-final currentGroupIdProvider =
-    NotifierProvider<CurrentGroupIdNotifier, String?>(() {
-      return CurrentGroupIdNotifier();
-    });
 
 /// Stream dos grupos do usuário
 final userGroupsStreamProvider = StreamProvider<List<FamilyGroup>>((ref) {
@@ -57,10 +40,8 @@ class GroupController extends AsyncNotifier<void> {
       if (user == null) throw Exception('Usuário não autenticado');
 
       final repository = ref.read(groupRepositoryProvider);
-      final group = await repository.createGroup(name, user.uid);
-
-      // Atualiza o groupId selecionado
-      ref.read(currentGroupIdProvider.notifier).setGroupId(group.id);
+      // createGroup já persiste groupIds no Firestore, o router reage automaticamente
+      await repository.createGroup(name, user.uid);
 
       // Invalida o provider de streams
       ref.invalidate(userGroupsStreamProvider);
@@ -78,10 +59,7 @@ class GroupController extends AsyncNotifier<void> {
       final group = await repository.joinGroup(inviteCode, user.uid);
       if (group == null) throw Exception('Código de convite inválido');
 
-      // Atualiza o groupId selecionado
-      ref.read(currentGroupIdProvider.notifier).setGroupId(group.id);
-
-      // Invalida o provider de streams
+      // Invalida o provider de streams — router redireciona automaticamente
       ref.invalidate(userGroupsStreamProvider);
     });
   }
@@ -96,9 +74,6 @@ class GroupController extends AsyncNotifier<void> {
       final repository = ref.read(groupRepositoryProvider);
       await repository.removeMemberFromGroup(groupId, user.uid);
 
-      // Limpa o groupId selecionado
-      ref.read(currentGroupIdProvider.notifier).clearGroupId();
-
       // Invalida o provider de streams
       ref.invalidate(userGroupsStreamProvider);
     });
@@ -111,3 +86,4 @@ class GroupController extends AsyncNotifier<void> {
     return group?.inviteCode;
   }
 }
+

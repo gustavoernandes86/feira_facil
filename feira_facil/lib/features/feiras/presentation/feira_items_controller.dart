@@ -6,17 +6,15 @@ import '../domain/feira_item.dart';
 
 final feiraItemsControllerProvider =
     AsyncNotifierProvider.family<FeiraItemsController, void, String>(
-      (feiraId) => FeiraItemsController(feiraId),
+      FeiraItemsController.new,
     );
 
-class FeiraItemsController extends AsyncNotifier<void> {
-  final String _feiraId;
-
-  FeiraItemsController(this._feiraId);
+class FeiraItemsController extends FamilyAsyncNotifier<void, String> {
+  late final String _feiraId;
 
   @override
-  FutureOr<void> build() {
-    // No initial state needed
+  FutureOr<void> build(String arg) {
+    _feiraId = arg;
   }
 
   Future<void> addItem(FeiraItem item) async {

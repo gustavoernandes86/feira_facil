@@ -7,9 +7,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/providers/user_providers.dart';
 import '../../../core/widgets/premium_header.dart';
 import '../../../core/services/places_service.dart';
-import '../data/market_repository.dart';
+import '../data/markets_repository.dart';
 import '../domain/market.dart';
 import 'market_detail_screen.dart';
+import 'markets_controller.dart';
 
 class MarketsScreen extends ConsumerStatefulWidget {
   const MarketsScreen({super.key});
@@ -23,7 +24,10 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final marketsAsync = ref.watch(groupMarketsProvider);
+    final groupId = ref.watch(currentGroupIdProvider);
+    final marketsAsync = groupId != null
+        ? ref.watch(marketsStreamProvider(groupId))
+        : const AsyncValue<List<Market>>.loading();
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -292,7 +296,6 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
-                  if (nameController.text.trim().isEmpty) return;
                   final groupId = ref.read(currentGroupIdProvider);
                   if (groupId == null) return;
 
@@ -308,7 +311,14 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                     createdAt: DateTime.now(),
                   );
 
-                  await ref.read(marketRepositoryProvider).createMarket(newMarket);
+                  // Usa o MarketsController que salva na subcollection correta
+                  await ref.read(marketsRepositoryProvider).createMarket(
+                    groupId: groupId,
+                    name: newMarket.name,
+                    address: newMarket.address,
+                    userId: '',
+                    observations: null,
+                  );
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('CADASTRAR'),
@@ -398,8 +408,10 @@ class _MarketListItem extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
-              await ref.read(marketRepositoryProvider).deleteMarket(market.id);
-              Navigator.pop(ctx);
+              final groupId = ref.read(currentGroupIdProvider);
+              if (groupId == null) return;
+              await ref.read(marketsRepositoryProvider).deleteMarket(groupId, market.id);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('EXCLUIR', style: TextStyle(color: Colors.red)),
           ),

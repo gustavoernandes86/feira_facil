@@ -26,18 +26,16 @@ final listItemsStreamProvider =
 
 /// Controller para gerenciar listas de compras
 final fairListsControllerProvider =
-    AsyncNotifierProvider<FairListsController, void>(
-      () => FairListsController(''),
+    AsyncNotifierProvider.family<FairListsController, void, String>(
+      FairListsController.new,
     );
 
-class FairListsController extends AsyncNotifier<void> {
-  final String groupId;
-
-  FairListsController(this.groupId);
+class FairListsController extends FamilyAsyncNotifier<void, String> {
+  late final String groupId;
 
   @override
-  FutureOr<void> build() {
-    // No initial state
+  FutureOr<void> build(String arg) {
+    groupId = arg;
   }
 
   /// Cria uma nova lista de compras
@@ -58,6 +56,17 @@ class FairListsController extends AsyncNotifier<void> {
         userId: userId,
       );
 
+      ref.invalidate(fairListsStreamProvider(groupId));
+    });
+  }
+
+  /// Verifica e cria a lista padrão se necessário
+  Future<void> checkDefaultList(String userId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      await repository.seedDefaultListIfNeeded(groupId, userId);
+      // Invalida para garantir que a UI pegue a nova lista se ela foi criada
       ref.invalidate(fairListsStreamProvider(groupId));
     });
   }

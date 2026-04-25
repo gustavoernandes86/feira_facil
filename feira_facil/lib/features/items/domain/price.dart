@@ -9,6 +9,7 @@ class Price {
   final String? observation;
   final String? photoUrl; // URL da foto da etiqueta (evidência)
   final String sourceType; // 'manual' ou 'ocr'
+  final String? brand; // Marca do produto
   final DateTime registeredAt;
   final String registeredBy;
 
@@ -20,6 +21,7 @@ class Price {
     this.observation,
     this.photoUrl,
     this.sourceType = 'manual',
+    this.brand,
     required this.registeredAt,
     required this.registeredBy,
   });
@@ -82,6 +84,7 @@ class Price {
       observation: json['observation'] as String?,
       photoUrl: json['photoUrl'] as String?,
       sourceType: json['sourceType'] as String? ?? 'manual',
+      brand: json['brand'] as String?,
       registeredAt: DateTime.parse(
         json['registeredAt'] as String? ?? DateTime.now().toIso8601String(),
       ),
@@ -97,6 +100,7 @@ class Price {
     if (observation != null) 'observation': observation,
     if (photoUrl != null) 'photoUrl': photoUrl,
     'sourceType': sourceType,
+    if (brand != null) 'brand': brand,
     'registeredAt': registeredAt.toIso8601String(),
     'registeredBy': registeredBy,
   };
@@ -109,6 +113,7 @@ class Price {
     String? observation,
     String? photoUrl,
     String? sourceType,
+    String? brand,
     DateTime? registeredAt,
     String? registeredBy,
   }) {
@@ -120,6 +125,7 @@ class Price {
       observation: observation ?? this.observation,
       photoUrl: photoUrl ?? this.photoUrl,
       sourceType: sourceType ?? this.sourceType,
+      brand: brand ?? this.brand,
       registeredAt: registeredAt ?? this.registeredAt,
       registeredBy: registeredBy ?? this.registeredBy,
     );

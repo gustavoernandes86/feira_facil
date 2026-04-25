@@ -33,6 +33,13 @@
 
   <title>feira_facil</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Para usar o renderer HTML (evita download do CanvasKit):
+      flutter run -d chrome --web-renderer html
+      flutter build web --web-renderer html
+    O padrão (canvaskit) funciona normalmente sem configuração adicional.
+  -->
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

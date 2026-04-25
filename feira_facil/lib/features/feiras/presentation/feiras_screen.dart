@@ -256,7 +256,7 @@ class FeirasScreen extends ConsumerWidget {
             children: [
               _actionTile(context, '🏷️', 'Nova Feira', 'Criar lista agora', AppColors.orangeLT, () => _showCreateDialog(context, null)),
               _actionTile(context, '🏪', 'Mercados', 'Ver os melhores', AppColors.greenLT, () => context.push('/markets')),
-              _actionTile(context, '👨‍🍳', 'Dicas de Chef', 'Como economizar', const Color(0xFFE3F2FD), () {}),
+              _actionTile(context, '📋', 'Listas Base', 'Gerenciar itens base', const Color(0xFFE3F2FD), () => context.push('/lists')),
               _actionTile(context, '📅', 'Histórico', 'Ver feiras passadas', AppColors.cream2, () {}),
             ],
           ),

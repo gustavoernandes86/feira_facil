@@ -7,7 +7,10 @@ import 'core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Permite que as fontes (Fraunces, DM Sans) sejam baixadas pelo Google Fonts.
+  // Para ambientes sem internet ou builds de produção, considere bundlar as fontes localmente.
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

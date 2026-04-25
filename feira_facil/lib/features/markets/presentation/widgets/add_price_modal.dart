@@ -8,16 +8,36 @@ import 'package:feira_facil/features/markets/presentation/market_prices_controll
 
 class AddPriceModal extends ConsumerStatefulWidget {
   final String marketId;
-  const AddPriceModal({super.key, required this.marketId});
+  final String? initialItemName;
+  
+  const AddPriceModal({
+    super.key, 
+    required this.marketId,
+    this.initialItemName,
+  });
 
   @override
   ConsumerState<AddPriceModal> createState() => _AddPriceModalState();
 }
 
 class _AddPriceModalState extends ConsumerState<AddPriceModal> {
-  final _nameController = TextEditingController();
+  late final TextEditingController _nameController;
+  final _brandController = TextEditingController();
   final _tiers = <PriceTier>[const PriceTier(quantityMinimum: 1, pricePerUnit: 0.0)];
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialItemName);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _brandController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +111,25 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               error: (_, __) => const TextField(decoration: InputDecoration(hintText: 'Nome do Produto')),
             ),
             
+            const SizedBox(height: 16),
+            Text(
+              'MARCA (OPCIONAL)',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textTertiary,
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _brandController,
+              decoration: const InputDecoration(
+                hintText: 'Ex: Tio João, Qualitá...',
+                prefixIcon: Icon(Icons.branding_watermark_outlined, size: 20),
+              ),
+            ),
+
             const SizedBox(height: 24),
 
             // Price Tiers
@@ -176,6 +215,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
+    final brand = _brandController.text.trim();
     if (name.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -184,6 +224,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
       await ref.read(marketPricesControllerProvider(widget.marketId).notifier).addPrice(
         itemName: name,
         tiers: _tiers,
+        brand: brand.isEmpty ? null : brand,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {

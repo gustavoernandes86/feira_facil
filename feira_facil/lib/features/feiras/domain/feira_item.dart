@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'price_tier.dart';
+import 'package:feira_facil/features/items/domain/price_tier.dart';
 
 class FeiraItem {
   final String id;
@@ -37,14 +37,14 @@ class FeiraItem {
     // Filtra as faixas alcançadas e pega a que tem a maior quantidade mínima (mais desconto)
     PriceTier? bestTier;
     for (final tier in tiers) {
-      if (currentQuantity >= tier.minQuantity) {
-        if (bestTier == null || tier.minQuantity > bestTier.minQuantity) {
+      if (currentQuantity >= tier.quantityMinimum) {
+        if (bestTier == null || tier.quantityMinimum > bestTier.quantityMinimum) {
           bestTier = tier;
         }
       }
     }
     
-    return bestTier?.unitPrice ?? unitPrice;
+    return bestTier?.pricePerUnit ?? unitPrice;
   }
 
   /// Retorna a próxima faixa disponível para sugerir economia
@@ -53,8 +53,8 @@ class FeiraItem {
     
     PriceTier? nextTier;
     for (final tier in tiers) {
-      if (tier.minQuantity > currentQuantity) {
-        if (nextTier == null || tier.minQuantity < nextTier.minQuantity) {
+      if (tier.quantityMinimum > currentQuantity) {
+        if (nextTier == null || tier.quantityMinimum < nextTier.quantityMinimum) {
           nextTier = tier;
         }
       }
