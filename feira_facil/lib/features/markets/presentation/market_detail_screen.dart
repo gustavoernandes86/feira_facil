@@ -8,9 +8,9 @@ import 'package:feira_facil/features/markets/presentation/market_prices_controll
 import 'package:feira_facil/features/markets/presentation/widgets/add_price_modal.dart';
 import 'package:feira_facil/features/markets/presentation/widgets/market_list_selector.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
-import 'package:feira_facil/features/lists/domain/fair_list.dart';
-import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/features/groups/presentation/group_controller.dart';
+import 'package:feira_facil/features/feiras/data/feira_repository.dart';
+import 'package:feira_facil/features/feiras/data/feira_items_repository.dart';
 
 class MarketDetailScreen extends ConsumerStatefulWidget {
   final Market market;
@@ -21,13 +21,30 @@ class MarketDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
-  FairList? _selectedList;
+  MarketListOption? _selectedList;
 
   @override
   Widget build(BuildContext context) {
     final groupId = ref.watch(currentGroupIdProvider);
     final listsAsync = groupId != null ? ref.watch(fairListsStreamProvider(groupId)) : const AsyncValue.loading();
+    final feirasAsync = groupId != null ? ref.watch(groupFeirasProvider) : const AsyncValue.loading();
     final pricesAsync = ref.watch(marketPricesStreamProvider(widget.market.id));
+
+    List<MarketListOption> options = [];
+    if (listsAsync is AsyncData && feirasAsync is AsyncData) {
+      options.addAll(listsAsync.value!.map<MarketListOption>((l) => MarketListOption(
+        id: l.id,
+        name: l.name,
+        color: l.color,
+        isFeira: false,
+      )).toList());
+      options.addAll(feirasAsync.value!.map<MarketListOption>((f) => MarketListOption(
+        id: f.id,
+        name: f.marketName != null && f.marketName!.isNotEmpty ? f.marketName! : 'Feira ${f.date.day}/${f.date.month}',
+        color: AppColors.green,
+        isFeira: true,
+      )).toList());
+    }
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -40,22 +57,22 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       body: Column(
         children: [
           _buildMarketInfo(),
-          if (groupId != null)
-            listsAsync.when(
-              data: (lists) {
+          if (groupId != null && listsAsync is AsyncData && feirasAsync is AsyncData)
+            Builder(
+              builder: (context) {
                 // Seleciona a primeira lista por padrão se nenhuma estiver selecionada
-                if (_selectedList == null && lists.isNotEmpty) {
+                if (_selectedList == null && options.isNotEmpty) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted) {
                       setState(() {
-                        _selectedList = lists.first;
+                        _selectedList = options.first;
                       });
                     }
                   });
                 }
                 
                 return MarketListSelector(
-                  lists: lists,
+                  lists: options,
                   selectedList: _selectedList,
                   onListSelected: (list) {
                     setState(() {
@@ -64,14 +81,14 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text('Erro ao carregar listas: $err')),
-            ),
+            )
+          else
+             const Center(child: CircularProgressIndicator()),
           
           Expanded(
             child: _selectedList == null
                 ? _buildEmptyState(context)
-                : _buildListItems(context, groupId!, _selectedList!.id, pricesAsync),
+                : _buildListItems(context, groupId!, _selectedList!, pricesAsync),
           ),
         ],
       ),
@@ -162,49 +179,84 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     );
   }
 
-  Widget _buildListItems(BuildContext context, String groupId, String listId, AsyncValue<List<Price>> pricesAsync) {
-    final itemsAsync = ref.watch(listItemsStreamProvider((groupId: groupId, listId: listId)));
-    
-    return itemsAsync.when(
-      data: (items) {
-        if (items.isEmpty) {
-          return const Center(child: Text('Esta lista está vazia.'));
-        }
-        
-        return pricesAsync.when(
-          data: (prices) {
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final itemPrices = prices.where((p) => p.itemId == item.itemId).toList();
-                
-                return _ListItemPriceCard(
-                  item: item,
-                  marketId: widget.market.id,
-                  prices: itemPrices,
-                );
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Erro ao carregar preços: $err')),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Erro ao carregar itens: $err')),
-    );
+  Widget _buildListItems(BuildContext context, String groupId, MarketListOption selected, AsyncValue<List<Price>> pricesAsync) {
+    if (selected.isFeira) {
+      final itemsAsync = ref.watch(feiraItemsStreamProvider(selected.id));
+      
+      return itemsAsync.when(
+        data: (items) {
+          if (items.isEmpty) {
+            return const Center(child: Text('Esta feira está vazia.'));
+          }
+          
+          return pricesAsync.when(
+            data: (prices) {
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final itemPrices = prices.where((p) => p.itemId == item.name).toList();
+                  
+                  return _ListItemPriceCard(
+                    itemName: item.name,
+                    marketId: widget.market.id,
+                    prices: itemPrices,
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Center(child: Text('Erro ao carregar preços: $err')),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Erro ao carregar itens: $err')),
+      );
+    } else {
+      final itemsAsync = ref.watch(listItemsStreamProvider((groupId: groupId, listId: selected.id)));
+      
+      return itemsAsync.when(
+        data: (items) {
+          if (items.isEmpty) {
+            return const Center(child: Text('Esta lista base está vazia.'));
+          }
+          
+          return pricesAsync.when(
+            data: (prices) {
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final itemPrices = prices.where((p) => p.itemId == item.itemId).toList();
+                  
+                  return _ListItemPriceCard(
+                    itemName: item.itemId,
+                    marketId: widget.market.id,
+                    prices: itemPrices,
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Center(child: Text('Erro ao carregar preços: $err')),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Erro ao carregar itens: $err')),
+      );
+    }
   }
 }
 
 class _ListItemPriceCard extends ConsumerWidget {
-  final ListItem item;
+  final String itemName;
   final String marketId;
   final List<Price> prices;
   
   const _ListItemPriceCard({
-    required this.item,
+    required this.itemName,
     required this.marketId,
     required this.prices,
   });
@@ -243,7 +295,7 @@ class _ListItemPriceCard extends ConsumerWidget {
             )
           ),
         ),
-        title: Text(item.itemId, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(itemName, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -278,7 +330,7 @@ class _ListItemPriceCard extends ConsumerWidget {
             backgroundColor: Colors.transparent,
             builder: (context) => AddPriceModal(
               marketId: marketId,
-              initialItemName: item.itemId,
+              initialItemName: itemName,
             ),
           ),
         ),
