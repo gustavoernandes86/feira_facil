@@ -44,17 +44,25 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
     required Color color,
     double? budget,
     required String userId,
+    bool copyFromBaseList = false,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final repository = ref.read(fairListsRepositoryProvider);
-      await repository.createList(
+      final newListId = await repository.createList(
         groupId: groupId,
         name: name,
         color: color,
         budget: budget,
         userId: userId,
       );
+
+      if (copyFromBaseList) {
+        await repository.copyBaseListItems(
+          groupId: groupId,
+          targetListId: newListId,
+        );
+      }
 
       ref.invalidate(fairListsStreamProvider(groupId));
     });
@@ -76,6 +84,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
     required String listId,
     required String itemId,
     int quantity = 1,
+    String category = 'Outros',
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -85,6 +94,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
         listId: listId,
         itemId: itemId,
         quantity: quantity,
+        category: category,
       );
 
       ref.invalidate(

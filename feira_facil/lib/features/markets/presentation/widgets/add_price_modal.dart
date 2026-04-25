@@ -85,31 +85,50 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               ),
             ),
             const SizedBox(height: 8),
-            itemNamesAsync.when(
-              data: (names) => Autocomplete<String>(
-                optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text == '') return const Iterable<String>.empty();
-                  return names.where((String option) {
-                    return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                  });
-                },
-                onSelected: (String selection) {
-                  _nameController.text = selection;
-                },
-                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                  return TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    decoration: const InputDecoration(
-                      hintText: 'Ex: Arroz Tio João 5kg',
-                      prefixIcon: Icon(Icons.search, size: 20),
-                    ),
-                  );
-                },
+            if (widget.initialItemName != null && widget.initialItemName!.isNotEmpty)
+              TextField(
+                controller: _nameController,
+                readOnly: true,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textBody),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.check_circle, size: 20, color: AppColors.green),
+                  filled: true,
+                  fillColor: AppColors.cream,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              )
+            else
+              itemNamesAsync.when(
+                data: (names) => Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') return const Iterable<String>.empty();
+                    return names.where((String option) {
+                      return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                    });
+                  },
+                  onSelected: (String selection) {
+                    _nameController.text = selection;
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        hintText: 'Ex: Arroz Tio João 5kg',
+                        prefixIcon: Icon(Icons.search, size: 20),
+                      ),
+                    );
+                  },
+                ),
+                loading: () => const LinearProgressIndicator(),
+                error: (_, __) => TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(hintText: 'Nome do Produto')
+                ),
               ),
-              loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const TextField(decoration: InputDecoration(hintText: 'Nome do Produto')),
-            ),
             
             const SizedBox(height: 16),
             Text(

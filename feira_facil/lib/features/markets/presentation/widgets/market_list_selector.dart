@@ -1,33 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
-
-class MarketListOption {
-  final String id;
-  final String name;
-  final Color color;
-  final bool isFeira;
-
-  MarketListOption({
-    required this.id,
-    required this.name,
-    required this.color,
-    required this.isFeira,
-  });
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MarketListOption && runtimeType == other.runtimeType && id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
-}
+import 'package:feira_facil/features/lists/domain/fair_list.dart';
 
 class MarketListSelector extends ConsumerWidget {
-  final List<MarketListOption> lists;
-  final MarketListOption? selectedList;
-  final ValueChanged<MarketListOption?> onListSelected;
+  final List<FairList> lists;
+  final FairList? selectedList;
+  final ValueChanged<FairList?> onListSelected;
 
   const MarketListSelector({
     super.key,
@@ -42,7 +21,7 @@ class MarketListSelector extends ConsumerWidget {
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
-          'Nenhuma lista ou feira encontrada. Crie uma para começar a registrar preços.',
+          'Nenhuma lista encontrada. Crie uma para começar a registrar preços.',
           style: TextStyle(color: AppColors.textSecondary),
         ),
       );
@@ -50,7 +29,7 @@ class MarketListSelector extends ConsumerWidget {
 
     // Find selected from current list by ID to avoid stale reference issues
     final currentSelected = selectedList != null
-        ? lists.cast<MarketListOption?>().firstWhere(
+        ? lists.cast<FairList?>().firstWhere(
               (l) => l?.id == selectedList!.id,
               orElse: () => null,
             )
@@ -87,7 +66,7 @@ class MarketListSelector extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      list.name + (list.isFeira ? ' (Feira)' : ''),
+                      list.name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

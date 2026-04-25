@@ -85,74 +85,74 @@ class FairListsRepository {
         // Itens da Lista Básica
         final defaultItems = [
           // Hortifruti
-          {'id': 'Banana prata', 'qty': 2},
-          {'id': 'Maçã', 'qty': 2},
-          {'id': 'Mamão', 'qty': 2},
-          {'id': 'Manga', 'qty': 4},
-          {'id': 'Laranja', 'qty': 2},
-          {'id': 'Limão', 'qty': 1},
-          {'id': 'Tomate', 'qty': 2},
-          {'id': 'Cebola', 'qty': 1},
-          {'id': 'Alho', 'qty': 1},
-          {'id': 'Batata', 'qty': 2},
-          {'id': 'Cenoura', 'qty': 1},
-          {'id': 'Abóbora', 'qty': 1},
-          {'id': 'Pimentão', 'qty': 3},
-          {'id': 'Coentro', 'qty': 2},
-          {'id': 'Cebolinha', 'qty': 2},
-          {'id': 'Alface', 'qty': 3},
-          {'id': 'Repolho', 'qty': 1},
+          {'id': 'Banana prata', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Maçã', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Mamão', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Manga', 'qty': 4, 'cat': 'Hortifruti'},
+          {'id': 'Laranja', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Limão', 'qty': 1, 'cat': 'Hortifruti'},
+          {'id': 'Tomate', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Cebola', 'qty': 1, 'cat': 'Hortifruti'},
+          {'id': 'Alho', 'qty': 1, 'cat': 'Hortifruti'},
+          {'id': 'Batata', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Cenoura', 'qty': 1, 'cat': 'Hortifruti'},
+          {'id': 'Abóbora', 'qty': 1, 'cat': 'Hortifruti'},
+          {'id': 'Pimentão', 'qty': 3, 'cat': 'Hortifruti'},
+          {'id': 'Coentro', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Cebolinha', 'qty': 2, 'cat': 'Hortifruti'},
+          {'id': 'Alface', 'qty': 3, 'cat': 'Hortifruti'},
+          {'id': 'Repolho', 'qty': 1, 'cat': 'Hortifruti'},
           // Carnes e Ovos
-          {'id': 'Peito de frango', 'qty': 3},
-          {'id': 'Carne bovina', 'qty': 2},
-          {'id': 'Carne moída', 'qty': 1},
-          {'id': 'Linguiça', 'qty': 1},
-          {'id': 'Ovos', 'qty': 3},
+          {'id': 'Peito de frango', 'qty': 3, 'cat': 'Carnes'},
+          {'id': 'Carne bovina', 'qty': 2, 'cat': 'Carnes'},
+          {'id': 'Carne moída', 'qty': 1, 'cat': 'Carnes'},
+          {'id': 'Linguiça', 'qty': 1, 'cat': 'Carnes'},
+          {'id': 'Ovos', 'qty': 3, 'cat': 'Laticínios'},
           // Peixes
-          {'id': 'Filé de peixe', 'qty': 2},
+          {'id': 'Filé de peixe', 'qty': 2, 'cat': 'Carnes'},
           // Laticínios
-          {'id': 'Leite', 'qty': 30},
-          {'id': 'Queijo coalho', 'qty': 1},
-          {'id': 'Queijo muçarela', 'qty': 1},
-          {'id': 'Iogurte', 'qty': 12},
+          {'id': 'Leite', 'qty': 30, 'cat': 'Laticínios'},
+          {'id': 'Queijo coalho', 'qty': 1, 'cat': 'Laticínios'},
+          {'id': 'Queijo muçarela', 'qty': 1, 'cat': 'Laticínios'},
+          {'id': 'Iogurte', 'qty': 12, 'cat': 'Laticínios'},
           // Padaria
-          {'id': 'Pão francês', 'qty': 30},
-          {'id': 'Pão de forma', 'qty': 2},
-          {'id': 'Bolo simples', 'qty': 2},
+          {'id': 'Pão francês', 'qty': 30, 'cat': 'Padaria'},
+          {'id': 'Pão de forma', 'qty': 2, 'cat': 'Padaria'},
+          {'id': 'Bolo simples', 'qty': 2, 'cat': 'Padaria'},
           // Grãos e Cereais
-          {'id': 'Arroz', 'qty': 5},
-          {'id': 'Feijão', 'qty': 2},
-          {'id': 'Macarrão', 'qty': 1},
-          {'id': 'Flocão de milho', 'qty': 1},
-          {'id': 'Farinha de mandioca', 'qty': 1},
-          {'id': 'Aveia', 'qty': 1},
+          {'id': 'Arroz', 'qty': 5, 'cat': 'Grãos'},
+          {'id': 'Feijão', 'qty': 2, 'cat': 'Grãos'},
+          {'id': 'Macarrão', 'qty': 1, 'cat': 'Grãos'},
+          {'id': 'Flocão de milho', 'qty': 1, 'cat': 'Grãos'},
+          {'id': 'Farinha de mandioca', 'qty': 1, 'cat': 'Grãos'},
+          {'id': 'Aveia', 'qty': 1, 'cat': 'Grãos'},
           // Mercearia
-          {'id': 'Óleo de soja', 'qty': 2},
-          {'id': 'Azeite', 'qty': 1},
-          {'id': 'Açúcar', 'qty': 2},
-          {'id': 'Café', 'qty': 1},
-          {'id': 'Sal', 'qty': 1},
-          {'id': 'Molho de tomate', 'qty': 3},
-          {'id': 'Milho verde', 'qty': 2},
-          {'id': 'Sardinha/atum', 'qty': 4},
+          {'id': 'Óleo de soja', 'qty': 2, 'cat': 'Outros'},
+          {'id': 'Azeite', 'qty': 1, 'cat': 'Outros'},
+          {'id': 'Açúcar', 'qty': 2, 'cat': 'Outros'},
+          {'id': 'Café', 'qty': 1, 'cat': 'Bebidas'},
+          {'id': 'Sal', 'qty': 1, 'cat': 'Outros'},
+          {'id': 'Molho de tomate', 'qty': 3, 'cat': 'Outros'},
+          {'id': 'Milho verde', 'qty': 2, 'cat': 'Outros'},
+          {'id': 'Sardinha/atum', 'qty': 4, 'cat': 'Outros'},
           // Bebidas
-          {'id': 'Água mineral', 'qty': 6},
-          {'id': 'Refrigerante', 'qty': 4},
-          {'id': 'Suco', 'qty': 6},
+          {'id': 'Água mineral', 'qty': 6, 'cat': 'Bebidas'},
+          {'id': 'Refrigerante', 'qty': 4, 'cat': 'Bebidas'},
+          {'id': 'Suco', 'qty': 6, 'cat': 'Bebidas'},
           // Limpeza
-          {'id': 'Detergente', 'qty': 3},
-          {'id': 'Sabão em pó', 'qty': 1},
-          {'id': 'Água sanitária', 'qty': 2},
-          {'id': 'Desinfetante', 'qty': 2},
-          {'id': 'Esponja', 'qty': 2},
-          {'id': 'Saco de lixo', 'qty': 2},
+          {'id': 'Detergente', 'qty': 3, 'cat': 'Limpeza'},
+          {'id': 'Sabão em pó', 'qty': 1, 'cat': 'Limpeza'},
+          {'id': 'Água sanitária', 'qty': 2, 'cat': 'Limpeza'},
+          {'id': 'Desinfetante', 'qty': 2, 'cat': 'Limpeza'},
+          {'id': 'Esponja', 'qty': 2, 'cat': 'Limpeza'},
+          {'id': 'Saco de lixo', 'qty': 2, 'cat': 'Limpeza'},
           // Higiene
-          {'id': 'Papel higiênico', 'qty': 24},
-          {'id': 'Creme dental', 'qty': 3},
-          {'id': 'Sabonete', 'qty': 6},
-          {'id': 'Shampoo', 'qty': 2},
-          {'id': 'Condicionador', 'qty': 1},
-          {'id': 'Desodorante', 'qty': 2},
+          {'id': 'Papel higiênico', 'qty': 24, 'cat': 'Higiene'},
+          {'id': 'Creme dental', 'qty': 3, 'cat': 'Higiene'},
+          {'id': 'Sabonete', 'qty': 6, 'cat': 'Higiene'},
+          {'id': 'Shampoo', 'qty': 2, 'cat': 'Higiene'},
+          {'id': 'Condicionador', 'qty': 1, 'cat': 'Higiene'},
+          {'id': 'Desodorante', 'qty': 2, 'cat': 'Higiene'},
         ];
 
         for (final item in defaultItems) {
@@ -161,6 +161,7 @@ class FairListsRepository {
             listId: listId,
             itemId: item['id'] as String,
             quantity: item['qty'] as int,
+            category: item['cat'] as String,
           );
         }
       }
@@ -175,6 +176,7 @@ class FairListsRepository {
     required String listId,
     required String itemId,
     int quantity = 1,
+    String category = 'Outros',
   }) async {
     try {
       final docRef = _listItemsRef(groupId, listId).doc();
@@ -185,6 +187,7 @@ class FairListsRepository {
         'cartQuantity': 0,
         'marked': false,
         'selectedMarketId': null,
+        'category': category,
       });
 
       return docRef.id;
@@ -330,6 +333,47 @@ class FairListsRepository {
       ).doc(listItemId).update({'cartQuantity': cartQuantity});
     } catch (e) {
       throw Exception('Erro ao atualizar carrinho: $e');
+    }
+  }
+
+  /// Copia os itens da "Lista Básica" para uma nova lista
+  Future<void> copyBaseListItems({
+    required String groupId,
+    required String targetListId,
+  }) async {
+    try {
+      // 1. Encontrar a Lista Básica (por nome)
+      final snapshot = await _listsRef(groupId)
+          .where('name', isEqualTo: 'Lista Básica')
+          .limit(1)
+          .get();
+          
+      if (snapshot.docs.isEmpty) return; // Não achou a lista básica
+      
+      final baseListId = snapshot.docs.first.id;
+      
+      // 2. Buscar itens da lista básica
+      final itemsSnapshot = await _listItemsRef(groupId, baseListId).get();
+      
+      // 3. Adicionar itens na nova lista
+      final batch = _firestore.batch();
+      for (final doc in itemsSnapshot.docs) {
+        final data = doc.data();
+        final newDocRef = _listItemsRef(groupId, targetListId).doc();
+        batch.set(newDocRef, {
+          'itemId': data['itemId'],
+          'plannedQuantity': data['plannedQuantity'],
+          'cartQuantity': 0,
+          'marked': false,
+          'selectedMarketId': null,
+          'category': data['category'] ?? 'Outros',
+        });
+      }
+      
+      await batch.commit();
+      
+    } catch (e) {
+      throw Exception('Erro ao copiar itens da lista base: $e');
     }
   }
 }

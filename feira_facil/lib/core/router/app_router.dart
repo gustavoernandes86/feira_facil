@@ -7,9 +7,6 @@ import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/groups/presentation/group_setup_screen.dart';
 import '../../features/groups/presentation/group_management_screen.dart';
-import '../../features/feiras/presentation/feiras_screen.dart';
-import '../../features/feiras/presentation/feira_items_screen.dart';
-import '../../features/feiras/domain/feira.dart';
 import '../../features/markets/presentation/markets_screen.dart';
 import '../../features/markets/presentation/market_detail_screen.dart';
 import '../../features/markets/domain/market.dart';
@@ -25,8 +22,6 @@ class RouteNames {
   static const login = 'login';
   static const groupSetup = 'groupSetup';
   static const groupManagement = 'groupManagement';
-  static const feiras = 'feiras';
-  static const feiraDetails = 'feiraDetails';
   static const markets = 'markets';
   static const marketDetails = 'marketDetails';
   static const lists = 'lists';
@@ -39,7 +34,6 @@ class RoutePaths {
   static const login = '/login';
   static const groupSetup = '/group-setup';
   static const groupManagement = '/group-management';
-  static const feiras = '/feiras';
   static const markets = '/markets';
   static const lists = '/lists';
 }
@@ -79,15 +73,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (userProfile != null && userProfile.groupIds.isEmpty) {
           return RoutePaths.groupSetup;
         }
-        // Se ainda está carregando ou já tem grupos, vai para feiras
-        // (A checagem de grupo também pode acontecer no FeirasScreen, mas o router ajuda)
-        return RoutePaths.feiras;
+        // Se ainda está carregando ou já tem grupos, vai para lists
+        return RoutePaths.lists;
       }
 
       // 3. Se estiver no Setup mas JÁ TIVER grupo, não precisa ficar lá
       if (isGroupSetup) {
         if (userProfile != null && userProfile.groupIds.isNotEmpty) {
-           return RoutePaths.feiras;
+           return RoutePaths.lists;
         }
       }
 
@@ -118,22 +111,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.groupManagement,
         name: RouteNames.groupManagement,
         builder: (context, state) => const GroupManagementScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.feiras,
-        name: RouteNames.feiras,
-        builder: (context, state) => const FeirasScreen(),
-        routes: [
-          GoRoute(
-            path: ':id',
-            name: RouteNames.feiraDetails,
-            builder: (context, state) {
-              final id = state.pathParameters['id']!;
-              final feira = state.extra as Feira?;
-              return FeiraItemsScreen(feiraId: id, feiraContext: feira);
-            },
-          ),
-        ],
       ),
       GoRoute(
         path: RoutePaths.markets,

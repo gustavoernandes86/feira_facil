@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:feira_facil/core/providers/user_providers.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/core/utils/category_utils.dart';
+import 'package:go_router/go_router.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
@@ -35,6 +36,13 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         foregroundColor: Colors.white,
         title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(fontWeight: FontWeight.w700)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Excluir Lista',
+            onPressed: () => _confirmDeleteList(context, ref, groupId),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -76,12 +84,60 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
           if (filteredItems.isEmpty) return _buildEmptyState();
 
+          // Agrupar itens por categoria
+          final groupedItems = <String, List<ListItem>>{};
+          for (final item in filteredItems) {
+            final cat = item.category;
+            if (!groupedItems.containsKey(cat)) {
+              groupedItems[cat] = [];
+            }
+            groupedItems[cat]!.add(item);
+          }
+
+          // Ordernar as categorias pela ordem do AppCategories
+          final sortedCategories = groupedItems.keys.toList()..sort((a, b) {
+            final indexA = AppCategories.indexWhere((c) => c.name == a);
+            final indexB = AppCategories.indexWhere((c) => c.name == b);
+            if (indexA != -1 && indexB != -1) return indexA.compareTo(indexB);
+            if (indexA != -1) return -1;
+            if (indexB != -1) return 1;
+            return a.compareTo(b);
+          });
+
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-            itemCount: filteredItems.length,
+            itemCount: sortedCategories.length,
             itemBuilder: (context, index) {
-              final item = filteredItems[index];
-              return _buildItemCard(context, item, groupId);
+              final categoryName = sortedCategories[index];
+              final categoryItems = groupedItems[categoryName]!;
+              final catInfo = AppCategories.firstWhere(
+                (c) => c.name == categoryName, 
+                orElse: () => AppCategories.last,
+              );
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 12, left: 4),
+                    child: Row(
+                      children: [
+                        Icon(catInfo.icon, size: 20, color: catInfo.color),
+                        const SizedBox(width: 8),
+                        Text(
+                          categoryName,
+                          style: GoogleFonts.fraunces(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textBody,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ...categoryItems.map((item) => _buildItemCard(context, item, groupId, catInfo)),
+                ],
+              );
             },
           );
         },
@@ -123,7 +179,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ListItem item, String groupId) {
+  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, [CategoryInfo? catInfo]) {
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.endToStart,
@@ -157,10 +213,10 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.cream,
+                color: catInfo?.color.withValues(alpha: 0.1) ?? AppColors.cream,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.inventory_2_outlined, color: AppColors.textTertiary, size: 20),
+              child: Icon(catInfo?.icon ?? Icons.inventory_2_outlined, color: catInfo?.color ?? AppColors.textTertiary, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -172,7 +228,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textBody),
                   ),
                   Text(
-                    'Geral',
+                    item.category,
                     style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
                   ),
                 ],
@@ -302,7 +358,8 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                         ref.read(fairListsControllerProvider(groupId).notifier).addItemToList(
                           listId: widget.listId, 
                           itemId: itemName.trim(),
-                          quantity: itemQuantity.toInt()
+                          quantity: itemQuantity.toInt(),
+                          category: selectedCategory,
                         );
                         Navigator.pop(ctx);
                       },
@@ -316,5 +373,33 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeleteList(BuildContext context, WidgetRef ref, String groupId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Excluir Lista'),
+        content: Text('Deseja excluir a lista "${widget.listContext?.name ?? 'Lista'}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (confirmed && context.mounted) {
+      await ref.read(fairListsControllerProvider(groupId).notifier).deleteList(widget.listId);
+      if (context.mounted) {
+        context.pop();
+      }
+    }
   }
 }
