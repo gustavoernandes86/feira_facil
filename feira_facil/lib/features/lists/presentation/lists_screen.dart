@@ -6,6 +6,7 @@ import 'package:feira_facil/core/providers/user_providers.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/core/router/app_router.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -238,6 +239,22 @@ class ListsScreen extends ConsumerWidget {
               Expanded(
                 child: _actionTile(context, '🏪', 'Mercados', 'Catálogo de preços', AppColors.greenLT, () => context.push('/markets')),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _actionTile(
+                  context, 
+                  '📊', 
+                  'Comparar Preços', 
+                  'Melhor custo-benefício', 
+                  AppColors.cream2, 
+                  () => context.pushNamed(RouteNames.listCompare),
+                ),
+              ),
+              const Spacer(),
             ],
           ),
         ],

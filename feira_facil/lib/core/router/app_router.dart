@@ -136,6 +136,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ListsScreen(),
         routes: [
           GoRoute(
+            path: 'compare',
+            name: RouteNames.listCompare,
+            builder: (context, state) {
+              final data = state.extra as Map<String, dynamic>?;
+              return ListComparisonScreen(
+                fairList: data?['fairList'] as FairList?,
+                items: data?['items'] as List<ListItem>?,
+              );
+            },
+          ),
+          GoRoute(
             path: ':id',
             name: RouteNames.listDetails,
             builder: (context, state) {
@@ -143,19 +154,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final list = state.extra as FairList?;
               return ListItemsScreen(listId: id, listContext: list);
             },
-            routes: [
-              GoRoute(
-                path: 'compare',
-                name: RouteNames.listCompare,
-                builder: (context, state) {
-                  final data = state.extra as Map<String, dynamic>;
-                  return ListComparisonScreen(
-                    fairList: data['fairList'] as FairList,
-                    items: data['items'] as List<ListItem>,
-                  );
-                },
-              ),
-            ],
           ),
         ],
       ),

@@ -51,7 +51,11 @@ class MarketsRepository {
           .get();
 
       return snapshot.docs
-          .map((doc) => Market.fromJson({...doc.data(), 'id': doc.id}))
+          .map((doc) => Market.fromJson({
+                ...doc.data(),
+                'id': doc.id,
+                'groupId': groupId,
+              }))
           .toList();
     } catch (e) {
       throw Exception('Erro ao buscar mercados: $e');

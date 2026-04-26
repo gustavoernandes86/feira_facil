@@ -10,6 +10,8 @@ import 'package:feira_facil/features/markets/presentation/widgets/market_list_se
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/groups/presentation/group_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/core/router/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class MarketDetailScreen extends ConsumerStatefulWidget {
   final Market market;
@@ -35,6 +37,13 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics_outlined, color: AppColors.textBody),
+            tooltip: 'Comparar Preços',
+            onPressed: () => context.pushNamed(RouteNames.listCompare),
+          ),
+        ],
       ),
       body: Column(
         children: [

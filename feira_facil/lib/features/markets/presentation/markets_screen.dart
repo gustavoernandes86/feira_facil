@@ -9,8 +9,11 @@ import '../../../core/widgets/premium_header.dart';
 import '../../../core/services/places_service.dart';
 import '../data/markets_repository.dart';
 import '../domain/market.dart';
+import 'package:go_router/go_router.dart';
 import 'market_detail_screen.dart';
 import 'markets_controller.dart';
+import '../../lists/presentation/fair_lists_controller.dart';
+import '../../../core/router/app_router.dart';
 
 class MarketsScreen extends ConsumerStatefulWidget {
   const MarketsScreen({super.key});
@@ -33,9 +36,16 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
       backgroundColor: AppColors.cream,
       body: Column(
         children: [
-          const PremiumHeader(
+          PremiumHeader(
             title: 'Mercados',
             subtitle: 'Gerencie os locais de compra do seu grupo.',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+                tooltip: 'Comparar Preços',
+                onPressed: () => context.pushNamed(RouteNames.listCompare),
+              ),
+            ],
           ),
 
           _buildSearchSection(),

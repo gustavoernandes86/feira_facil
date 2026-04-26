@@ -402,5 +402,47 @@ class FairListsRepository {
       throw Exception('Erro ao aplicar estratégia: $e');
     }
   }
+
+  /// Cria uma nova lista a partir de uma estratégia de compra global
+  Future<String> createListFromStrategy({
+    required String groupId,
+    required String name,
+    required String userId,
+    required Map<String, String> itemMarketMapping, // itemId -> marketId (para análise global)
+    required List<ListItem> items,
+  }) async {
+    try {
+      // 1. Criar a lista
+      final listId = await createList(
+        groupId: groupId,
+        name: name,
+        color: const Color(0xFF4CAF50),
+        userId: userId,
+      );
+
+      // 2. Adicionar itens
+      final batch = _firestore.batch();
+      for (final item in items) {
+        final marketId = itemMarketMapping[item.id];
+        if (marketId == null) continue; // Pula itens sem preço na estratégia
+
+        final docRef = _listItemsRef(groupId, listId).doc();
+        batch.set(docRef, {
+          'itemId': item.itemId,
+          'plannedQuantity': item.plannedQuantity,
+          'cartQuantity': 0.0,
+          'unit': item.unit.name,
+          'marked': false,
+          'selectedMarketId': marketId,
+          'category': 'Outros', // No futuro podemos buscar a categoria real
+        });
+      }
+
+      await batch.commit();
+      return listId;
+    } catch (e) {
+      throw Exception('Erro ao criar lista da estratégia: $e');
+    }
+  }
 }
 

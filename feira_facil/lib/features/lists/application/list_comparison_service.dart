@@ -203,4 +203,32 @@ class ListComparisonService {
 
     return strategies;
   }
+
+  /// Analisa todos os itens que possuem pelo menos um preço cadastrado no grupo.
+  /// Útil para quando o usuário quer comparar "o catálogo" e gerar uma lista a partir disso.
+  Future<List<PurchaseStrategy>> analyzeAllPricedItems(String groupId) async {
+    // 1. Busca todos os preços do grupo
+    final allPrices = await _pricesRepo.getAllPrices(groupId);
+    if (allPrices.isEmpty) return [];
+
+    // 2. Cria "ListItems" virtuais (quantidade 1.0) para cada item único que possui preço
+    // Usamos o nome do item como ID temporário e a unidade do preço mais recente
+    final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
+    final virtualItems = <ListItem>[];
+
+    for (final itemId in uniqueItemIds) {
+      final itemPrices = allPrices.where((p) => p.itemId == itemId).toList();
+      // Ordena por data decrescente (se disponível) ou apenas pega o primeiro para definir a unidade
+      final latestPrice = itemPrices.first; 
+      
+      virtualItems.add(ListItem(
+        id: itemId, // Usamos o itemId como id da linha para a análise
+        itemId: itemId,
+        plannedQuantity: 1.0,
+        unit: latestPrice.unit,
+      ));
+    }
+
+    return analyzeList(groupId, virtualItems);
+  }
 }

@@ -56,7 +56,6 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
               
               context.pushNamed(
                 RouteNames.listCompare,
-                pathParameters: {'id': widget.listId},
                 extra: {
                   'fairList': widget.listContext ?? FairList(
                     id: widget.listId,

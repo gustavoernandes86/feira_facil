@@ -8,6 +8,7 @@ import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feira_facil/features/items/data/prices_repository.dart';
 
 final listComparisonFutureProvider = FutureProvider.autoDispose.family<List<PurchaseStrategy>, List<ListItem>>((ref, items) async {
   final groupId = ref.watch(currentGroupIdProvider);
@@ -17,14 +18,22 @@ final listComparisonFutureProvider = FutureProvider.autoDispose.family<List<Purc
   return service.analyzeList(groupId, items);
 });
 
+final globalComparisonFutureProvider = FutureProvider.autoDispose<List<PurchaseStrategy>>((ref) async {
+  final groupId = ref.watch(currentGroupIdProvider);
+  if (groupId == null) return [];
+  
+  final service = ref.read(listComparisonServiceProvider);
+  return service.analyzeAllPricedItems(groupId);
+});
+
 class ListComparisonScreen extends ConsumerStatefulWidget {
-  final FairList fairList;
-  final List<ListItem> items;
+  final FairList? fairList;
+  final List<ListItem>? items;
 
   const ListComparisonScreen({
     super.key,
-    required this.fairList,
-    required this.items,
+    this.fairList,
+    this.items,
   });
 
   @override
@@ -36,7 +45,9 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final strategiesAsync = ref.watch(listComparisonFutureProvider(widget.items));
+    final strategiesAsync = widget.fairList != null && widget.items != null
+        ? ref.watch(listComparisonFutureProvider(widget.items!))
+        : ref.watch(globalComparisonFutureProvider);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -269,9 +280,9 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                     ),
                     child: _isApplying
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text(
-                          'Aplicar Estratégia',
-                          style: TextStyle(
+                      : Text(
+                          widget.fairList != null ? 'Aplicar Estratégia' : 'Gerar Lista de Feira',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -294,18 +305,48 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
     setState(() => _isApplying = true);
     
     try {
-      await ref.read(fairListsRepositoryProvider).applyPurchaseStrategy(
-        groupId: groupId,
-        listId: widget.fairList.id,
-        itemMarketMapping: strategy.itemMarketMapping,
-      );
+      if (widget.fairList != null) {
+        // MODO: Atualizar lista existente
+        await ref.read(fairListsRepositoryProvider).applyPurchaseStrategy(
+          groupId: groupId,
+          listId: widget.fairList!.id,
+          itemMarketMapping: strategy.itemMarketMapping,
+        );
 
-      // Também atualiza o status da lista para "em_compra"
-      await ref.read(fairListsRepositoryProvider).updateListStatus(
-        groupId: groupId,
-        listId: widget.fairList.id,
-        status: 'em_compra',
-      );
+        await ref.read(fairListsRepositoryProvider).updateListStatus(
+          groupId: groupId,
+          listId: widget.fairList!.id,
+          status: 'em_compra',
+        );
+      } else {
+        // MODO: Gerar nova lista global
+        final userId = ref.read(currentUserProfileProvider).value?.id ?? '';
+        
+        // Buscamos os itens virtuais que foram analisados
+        final items = await ref.read(listComparisonServiceProvider).analyzeAllPricedItems(groupId);
+        // Precisamos dos itens originais usados na análise. 
+        // Na análise global, uniqueItemIds viraram os ids dos virtualItems.
+        // Vamos criar os listItems virtuais aqui também para o repositório.
+        final allPrices = await ref.read(pricesRepositoryProvider).getAllPrices(groupId);
+        final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
+        final virtualItems = uniqueItemIds.map((itemId) {
+          final p = allPrices.firstWhere((p) => p.itemId == itemId);
+          return ListItem(
+            id: itemId,
+            itemId: itemId,
+            plannedQuantity: 1.0,
+            unit: p.unit,
+          );
+        }).toList();
+
+        await ref.read(fairListsRepositoryProvider).createListFromStrategy(
+          groupId: groupId,
+          name: 'Compra Sugerida - ${DateTime.now().day}/${DateTime.now().month}',
+          userId: userId,
+          itemMarketMapping: strategy.itemMarketMapping,
+          items: virtualItems,
+        );
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -314,7 +355,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
             backgroundColor: AppColors.green,
           ),
         );
-        context.pop(); // Voltar para a tela de itens da lista
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
