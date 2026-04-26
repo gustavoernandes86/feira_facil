@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/fair_list.dart';
 import '../domain/list_item.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 import '../data/fair_lists_repository.dart';
 
 /// Stream de listas de um grupo
@@ -83,7 +84,8 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
   Future<void> addItemToList({
     required String listId,
     required String itemId,
-    int quantity = 1,
+    double quantity = 1.0,
+    ItemUnit unit = ItemUnit.un,
     String category = 'Outros',
   }) async {
     state = const AsyncValue.loading();
@@ -94,6 +96,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
         listId: listId,
         itemId: itemId,
         quantity: quantity,
+        unit: unit,
         category: category,
       );
 
@@ -107,7 +110,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
   Future<void> updateItemQuantity({
     required String listId,
     required String listItemId,
-    required int newQuantity,
+    required double newQuantity,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -126,7 +129,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
   }
 
   /// Marca um item como "Peguei!"
-  Future<void> toggleItemChecked({
+  Future<void> toggleItemMarked({
     required String listId,
     required String listItemId,
     required bool marked,
@@ -222,7 +225,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
   Future<void> updateCartQuantity({
     required String listId,
     required String listItemId,
-    int? cartQuantity,
+    double? cartQuantity,
     bool? marked,
   }) async {
     state = const AsyncValue.loading();

@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/features/items/domain/price_tier.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'package:feira_facil/features/items/presentation/providers/item_search_provider.dart';
 import 'package:feira_facil/features/markets/presentation/market_prices_controller.dart';
+import 'package:feira_facil/core/utils/currency_formatter.dart';
+import 'package:intl/intl.dart';
 
 class AddPriceModal extends ConsumerStatefulWidget {
   final String marketId;
@@ -23,19 +26,30 @@ class AddPriceModal extends ConsumerStatefulWidget {
 class _AddPriceModalState extends ConsumerState<AddPriceModal> {
   late final TextEditingController _nameController;
   final _brandController = TextEditingController();
+  ItemUnit _selectedUnit = ItemUnit.un;
   final _tiers = <PriceTier>[const PriceTier(quantityMinimum: 1, pricePerUnit: 0.0)];
+  final _qtyControllers = <TextEditingController>[];
+  final _priceControllers = <TextEditingController>[];
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialItemName);
+    _qtyControllers.add(TextEditingController(text: '1'));
+    _priceControllers.add(TextEditingController(text: '0,00'));
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _brandController.dispose();
+    for (var c in _qtyControllers) {
+      c.dispose();
+    }
+    for (var c in _priceControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -149,6 +163,39 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               ),
             ),
 
+            const SizedBox(height: 16),
+            Text(
+              'UNIDADE DE MEDIDA',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textTertiary,
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<ItemUnit>(
+              value: _selectedUnit,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.scale_outlined, size: 20),
+                filled: true,
+                fillColor: AppColors.cream.withValues(alpha: 0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: ItemUnit.values.map((unit) {
+                return DropdownMenuItem(
+                  value: unit,
+                  child: Text(unit.label),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedUnit = val);
+              },
+            ),
+
             const SizedBox(height: 24),
 
             // Price Tiers
@@ -166,7 +213,13 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
             
             const SizedBox(height: 12),
             TextButton.icon(
-              onPressed: () => setState(() => _tiers.add(PriceTier(quantityMinimum: _tiers.length + 1, pricePerUnit: 0.0))),
+              onPressed: () {
+                setState(() {
+                  _tiers.add(PriceTier(quantityMinimum: _tiers.length.toDouble() + 1, pricePerUnit: 0.0));
+                  _qtyControllers.add(TextEditingController(text: (_tiers.length).toString()));
+                  _priceControllers.add(TextEditingController(text: '0,00'));
+                });
+              },
               icon: const Icon(Icons.add),
               label: const Text('Adicionar Preço Mix/Atacado'),
             ),
@@ -186,6 +239,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
 
   Widget _buildTierInput(int index, PriceTier tier) {
     return Padding(
+      key: ValueKey('tier_$index'),
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
@@ -193,39 +247,49 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
             flex: 2,
             child: TextField(
               decoration: const InputDecoration(labelText: 'Qtd min.'),
-              keyboardType: TextInputType.number,
-              controller: TextEditingController(text: tier.quantityMinimum.toString()),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              controller: _qtyControllers[index],
               onChanged: (val) {
-                final q = int.tryParse(val) ?? 1;
-                setState(() {
-                  _tiers[index] = tier.copyWith(quantityMinimum: q);
-                });
+                final q = double.tryParse(val.replaceAll(',', '.')) ?? 1.0;
+                _tiers[index] = tier.copyWith(quantityMinimum: q);
               },
             ),
           ),
           const SizedBox(width: 8),
-          const Text('un =', style: TextStyle(color: AppColors.textTertiary)),
+          Text(
+            '${_selectedUnit.abbreviation} =', 
+            style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)
+          ),
           const SizedBox(width: 8),
           Expanded(
             flex: 3,
             child: TextField(
+              controller: _priceControllers[index],
               decoration: const InputDecoration(
                 labelText: 'Preço/un',
                 prefixText: 'R\$ ',
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [CurrencyInputFormatter()],
+              keyboardType: TextInputType.number,
               onChanged: (val) {
-                final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                setState(() {
-                  _tiers[index] = tier.copyWith(pricePerUnit: p);
-                });
+                final cleanVal = val.replaceAll('.', '').replaceAll(',', '.');
+                final p = double.tryParse(cleanVal) ?? 0.0;
+                _tiers[index] = tier.copyWith(pricePerUnit: p);
               },
             ),
           ),
           if (index > 0)
             IconButton(
               icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-              onPressed: () => setState(() => _tiers.removeAt(index)),
+              onPressed: () {
+                setState(() {
+                  _tiers.removeAt(index);
+                  _qtyControllers[index].dispose();
+                  _qtyControllers.removeAt(index);
+                  _priceControllers[index].dispose();
+                  _priceControllers.removeAt(index);
+                });
+              },
             ),
         ],
       ),
@@ -244,6 +308,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
         itemName: name,
         tiers: _tiers,
         brand: brand.isEmpty ? null : brand,
+        unit: _selectedUnit,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {

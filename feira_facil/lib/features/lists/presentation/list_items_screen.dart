@@ -8,6 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
+import 'package:feira_facil/features/markets/presentation/markets_controller.dart';
+import 'package:feira_facil/features/markets/domain/market.dart';
+import 'package:feira_facil/core/router/app_router.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 
 class ListItemsScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -28,6 +32,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     if (groupId == null) return const Scaffold(body: Center(child: Text('Erro: Nenhum grupo selecionado')));
 
     final itemsAsync = ref.watch(listItemsStreamProvider((groupId: groupId, listId: widget.listId)));
+    final marketsAsync = ref.watch(marketsStreamProvider(groupId));
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -37,6 +42,34 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(fontWeight: FontWeight.w700)),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics_outlined),
+            tooltip: 'Comparar Preços',
+            onPressed: () {
+              final items = itemsAsync.value ?? [];
+              if (items.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Adicione itens à lista primeiro!')),
+                );
+                return;
+              }
+              
+              context.pushNamed(
+                RouteNames.listCompare,
+                pathParameters: {'id': widget.listId},
+                extra: {
+                  'fairList': widget.listContext ?? FairList(
+                    id: widget.listId,
+                    name: 'Lista',
+                    color: AppColors.green,
+                    createdAt: DateTime.now(),
+                    createdBy: '',
+                  ),
+                  'items': items,
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Excluir Lista',
@@ -135,7 +168,13 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                       ],
                     ),
                   ),
-                  ...categoryItems.map((item) => _buildItemCard(context, item, groupId, catInfo)),
+                  ...categoryItems.map((item) {
+                    final market = marketsAsync.value?.firstWhere(
+                      (m) => m.id == item.selectedMarketId,
+                      orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
+                    );
+                    return _buildItemCard(context, item, groupId, catInfo, market);
+                  }),
                 ],
               );
             },
@@ -179,7 +218,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, [CategoryInfo? catInfo]) {
+  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market) {
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.endToStart,
@@ -210,6 +249,20 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         ),
         child: Row(
           children: [
+            Checkbox(
+              value: item.marked,
+              activeColor: AppColors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              onChanged: (val) {
+                if (val != null) {
+                  ref.read(fairListsControllerProvider(groupId).notifier).toggleItemMarked(
+                    listId: widget.listId,
+                    listItemId: item.id,
+                    marked: val,
+                  );
+                }
+              },
+            ),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -225,12 +278,32 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                 children: [
                   Text(
                     item.itemId,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textBody),
+                    style: TextStyle(
+                      fontSize: 15, 
+                      fontWeight: FontWeight.bold, 
+                      color: item.marked ? AppColors.textTertiary : AppColors.textBody,
+                      decoration: item.marked ? TextDecoration.lineThrough : null,
+                    ),
                   ),
-                  Text(
-                    item.category,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-                  ),
+                  if (market != null && market.id.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.storefront, size: 12, color: AppColors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Comprar no ${market.name}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.orange),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Text(
+                      item.category,
+                      style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                    ),
                 ],
               ),
             ),
@@ -253,7 +326,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      item.plannedQuantity.toStringAsFixed(0),
+                      '${item.plannedQuantity.toString().replaceAll('.0', '')} ${item.unit.abbreviation}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
@@ -286,6 +359,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
   void _showAddItemModal(BuildContext context, WidgetRef ref, String groupId) {
     String itemName = '';
     double itemQuantity = 1.0;
+    ItemUnit selectedUnit = ItemUnit.un;
     String selectedCategory = AppCategories.first.name;
 
     showModalBottomSheet(
@@ -345,12 +419,40 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: 'Quantidade'),
-                      keyboardType: TextInputType.number,
-                      initialValue: '1',
-                      onChanged: (val) => itemQuantity = double.tryParse(val) ?? 1.0,
-                    ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                decoration: const InputDecoration(labelText: 'Quantidade'),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                initialValue: '1',
+                                onChanged: (val) => itemQuantity = double.tryParse(val.replaceAll(',', '.')) ?? 1.0,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: DropdownButtonFormField<ItemUnit>(
+                                value: selectedUnit,
+                                decoration: const InputDecoration(
+                                  labelText: 'Unidade',
+                                  prefixIcon: Icon(Icons.scale_outlined),
+                                ),
+                                items: ItemUnit.values.map((unit) {
+                                  return DropdownMenuItem(
+                                    value: unit,
+                                    child: Text(unit.label),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) setState(() => selectedUnit = val);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
@@ -358,7 +460,8 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                         ref.read(fairListsControllerProvider(groupId).notifier).addItemToList(
                           listId: widget.listId, 
                           itemId: itemName.trim(),
-                          quantity: itemQuantity.toInt(),
+                          quantity: itemQuantity,
+                          unit: selectedUnit,
                           category: selectedCategory,
                         );
                         Navigator.pop(ctx);

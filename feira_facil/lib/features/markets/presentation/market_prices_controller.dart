@@ -4,6 +4,7 @@ import 'package:feira_facil/core/providers/user_providers.dart';
 import 'package:feira_facil/features/items/data/prices_repository.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/items/domain/price_tier.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 
 /// Provider para buscar a lista de preços de um mercado específico via Stream
 final marketPricesStreamProvider = StreamProvider.family<List<Price>, String>((ref, marketId) {
@@ -30,6 +31,7 @@ class MarketPricesController extends FamilyAsyncNotifier<void, String> {
   Future<void> addPrice({
     required String itemName,
     required List<PriceTier> tiers,
+    required ItemUnit unit,
     String? observation,
     String? brand,
   }) async {
@@ -46,6 +48,7 @@ class MarketPricesController extends FamilyAsyncNotifier<void, String> {
         itemId: itemName, 
         marketId: _marketId,
         tiers: tiers,
+        unit: unit,
         userId: userId,
         observation: observation,
         brand: brand,

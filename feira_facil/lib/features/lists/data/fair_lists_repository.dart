@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/fair_list.dart';
 import '../domain/list_item.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 
 final fairListsRepositoryProvider = Provider<FairListsRepository>((ref) {
   return FairListsRepository(FirebaseFirestore.instance);
@@ -160,7 +161,7 @@ class FairListsRepository {
             groupId: groupId,
             listId: listId,
             itemId: item['id'] as String,
-            quantity: item['qty'] as int,
+            quantity: (item['qty'] as num).toDouble(),
             category: item['cat'] as String,
           );
         }
@@ -175,7 +176,8 @@ class FairListsRepository {
     required String groupId,
     required String listId,
     required String itemId,
-    int quantity = 1,
+    double quantity = 1.0,
+    ItemUnit unit = ItemUnit.un,
     String category = 'Outros',
   }) async {
     try {
@@ -184,7 +186,8 @@ class FairListsRepository {
       await docRef.set({
         'itemId': itemId,
         'plannedQuantity': quantity,
-        'cartQuantity': 0,
+        'cartQuantity': 0.0,
+        'unit': unit.name,
         'marked': false,
         'selectedMarketId': null,
         'category': category,
@@ -210,7 +213,7 @@ class FairListsRepository {
     required String groupId,
     required String listId,
     required String listItemId,
-    required int quantity,
+    required double quantity,
   }) async {
     try {
       await _listItemsRef(
@@ -324,7 +327,7 @@ class FairListsRepository {
     required String groupId,
     required String listId,
     required String listItemId,
-    required int cartQuantity,
+    required double cartQuantity,
   }) async {
     try {
       await _listItemsRef(
@@ -376,4 +379,28 @@ class FairListsRepository {
       throw Exception('Erro ao copiar itens da lista base: $e');
     }
   }
+
+  /// Aplica a estratégia de compra (vincula mercados aos itens)
+  Future<void> applyPurchaseStrategy({
+    required String groupId,
+    required String listId,
+    required Map<String, String> itemMarketMapping,
+  }) async {
+    try {
+      final batch = _firestore.batch();
+      
+      for (final entry in itemMarketMapping.entries) {
+        final listItemId = entry.key;
+        final marketId = entry.value;
+        
+        final docRef = _listItemsRef(groupId, listId).doc(listItemId);
+        batch.update(docRef, {'selectedMarketId': marketId});
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Erro ao aplicar estratégia: $e');
+    }
+  }
 }
+

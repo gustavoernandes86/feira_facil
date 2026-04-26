@@ -1,3 +1,4 @@
+import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'price_tier.dart';
 
 /// Representa um registro de preço de um item em um mercado específico
@@ -6,6 +7,7 @@ class Price {
   final String itemId;
   final String marketId;
   final List<PriceTier> tiers;
+  final ItemUnit unit; // Unidade de medida (un, kg, bandeja, etc)
   final String? observation;
   final String? photoUrl; // URL da foto da etiqueta (evidência)
   final String sourceType; // 'manual' ou 'ocr'
@@ -18,6 +20,7 @@ class Price {
     required this.itemId,
     required this.marketId,
     required this.tiers,
+    this.unit = ItemUnit.un,
     this.observation,
     this.photoUrl,
     this.sourceType = 'manual',
@@ -27,7 +30,7 @@ class Price {
   });
 
   /// Calcula o melhor preço (faixa mais vantajosa) para uma quantidade
-  double calculateBestPrice(int quantity) {
+  double calculateBestPrice(double quantity) {
     // Ordena as faixas por quantidade mínima DESC e encontra a primeira aplicável
     final applicableTiers = tiers
         .where((tier) => tier.quantityMinimum <= quantity)
@@ -46,7 +49,7 @@ class Price {
   }
 
   /// Encontra a melhor faixa aplicável para uma quantidade
-  PriceTier? getBestTier(int quantity) {
+  PriceTier? getBestTier(double quantity) {
     final applicableTiers = tiers
         .where((tier) => tier.quantityMinimum <= quantity)
         .toList();
@@ -60,7 +63,7 @@ class Price {
   }
 
   /// Calcula a economia em relação à primeira faixa
-  double calculateSavings(int quantity) {
+  double calculateSavings(double quantity) {
     final baseTier = tiers.isNotEmpty ? tiers.first : null;
     final bestTier = getBestTier(quantity);
 
@@ -81,6 +84,7 @@ class Price {
       tiers: (json['tiers'] as List<dynamic>? ?? [])
           .map((tier) => PriceTier.fromJson(tier as Map<String, dynamic>))
           .toList(),
+      unit: ItemUnit.fromString(json['unit'] as String?),
       observation: json['observation'] as String?,
       photoUrl: json['photoUrl'] as String?,
       sourceType: json['sourceType'] as String? ?? 'manual',
@@ -97,6 +101,7 @@ class Price {
     'itemId': itemId,
     'marketId': marketId,
     'tiers': tiers.map((tier) => tier.toJson()).toList(),
+    'unit': unit.name,
     if (observation != null) 'observation': observation,
     if (photoUrl != null) 'photoUrl': photoUrl,
     'sourceType': sourceType,
@@ -110,6 +115,7 @@ class Price {
     String? itemId,
     String? marketId,
     List<PriceTier>? tiers,
+    ItemUnit? unit,
     String? observation,
     String? photoUrl,
     String? sourceType,
@@ -122,6 +128,7 @@ class Price {
       itemId: itemId ?? this.itemId,
       marketId: marketId ?? this.marketId,
       tiers: tiers ?? this.tiers,
+      unit: unit ?? this.unit,
       observation: observation ?? this.observation,
       photoUrl: photoUrl ?? this.photoUrl,
       sourceType: sourceType ?? this.sourceType,

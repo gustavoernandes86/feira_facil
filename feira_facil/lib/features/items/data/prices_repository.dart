@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 import '../domain/price.dart';
 import '../domain/price_tier.dart';
 
@@ -22,6 +23,7 @@ class PricesRepository {
     required String itemId,
     required String marketId,
     required List<PriceTier> tiers,
+    required ItemUnit unit,
     required String userId,
     String? observation,
     String? photoUrl,
@@ -35,6 +37,7 @@ class PricesRepository {
         'itemId': itemId,
         'marketId': marketId,
         'tiers': tiers.map((tier) => tier.toJson()).toList(),
+        'unit': unit.name,
         'observation': observation,
         'photoUrl': photoUrl,
         'brand': brand,
@@ -214,6 +217,18 @@ class PricesRepository {
       return mapByMarket;
     } catch (e) {
       throw Exception('Erro ao buscar menores preços: $e');
+    }
+  }
+
+  /// Obtém TODOS os preços de todos os itens do grupo (usado no motor de comparação)
+  Future<List<Price>> getAllPrices(String groupId) async {
+    try {
+      final snapshot = await _pricesRef(groupId).get();
+      return snapshot.docs
+          .map((doc) => Price.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      throw Exception('Erro ao buscar todos os preços do grupo: $e');
     }
   }
 }

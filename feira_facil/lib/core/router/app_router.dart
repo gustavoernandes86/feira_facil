@@ -12,7 +12,9 @@ import '../../features/markets/presentation/market_detail_screen.dart';
 import '../../features/markets/domain/market.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/lists/presentation/list_items_screen.dart';
+import '../../features/lists/presentation/list_comparison_screen.dart';
 import '../../features/lists/domain/fair_list.dart';
+import '../../features/lists/domain/list_item.dart';
 import 'router_notifier.dart';
 
 // Constantes de rota
@@ -26,6 +28,7 @@ class RouteNames {
   static const marketDetails = 'marketDetails';
   static const lists = 'lists';
   static const listDetails = 'listDetails';
+  static const listCompare = 'listCompare';
 }
 
 class RoutePaths {
@@ -140,6 +143,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final list = state.extra as FairList?;
               return ListItemsScreen(listId: id, listContext: list);
             },
+            routes: [
+              GoRoute(
+                path: 'compare',
+                name: RouteNames.listCompare,
+                builder: (context, state) {
+                  final data = state.extra as Map<String, dynamic>;
+                  return ListComparisonScreen(
+                    fairList: data['fairList'] as FairList,
+                    items: data['items'] as List<ListItem>,
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),

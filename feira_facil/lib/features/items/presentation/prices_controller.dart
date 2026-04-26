@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/price.dart';
 import '../domain/price_tier.dart';
@@ -51,6 +52,7 @@ class PricesController extends AsyncNotifier<void> {
     required String itemId,
     required String marketId,
     required List<PriceTier> tiers,
+    required ItemUnit unit,
     required String userId,
     String? observation,
     String? photoUrl,
@@ -64,6 +66,7 @@ class PricesController extends AsyncNotifier<void> {
         itemId: itemId,
         marketId: marketId,
         tiers: tiers,
+        unit: unit,
         userId: userId,
         observation: observation,
         photoUrl: photoUrl,
@@ -124,7 +127,7 @@ class PricesController extends AsyncNotifier<void> {
   /// Calcula o preço total para uma quantidade com aplicação automática de melhor faixa
   static double calculateBestPrice({
     required List<PriceTier> tiers,
-    required int quantity,
+    required double quantity,
   }) {
     if (tiers.isEmpty) return 0.0;
 
@@ -146,7 +149,7 @@ class PricesController extends AsyncNotifier<void> {
   /// Encontra a próxima faixa disponível para sugerir economia
   static PriceTier? getNextTierSuggestion({
     required List<PriceTier> tiers,
-    required int currentQuantity,
+    required double currentQuantity,
   }) {
     if (tiers.isEmpty) return null;
 
@@ -165,7 +168,7 @@ class PricesController extends AsyncNotifier<void> {
   /// Calcula a economia ao atingir a próxima faixa
   static double calculatePotentialSavings({
     required List<PriceTier> tiers,
-    required int currentQuantity,
+    required double currentQuantity,
   }) {
     final currentTierPrice = calculateBestPrice(
       tiers: tiers,
