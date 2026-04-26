@@ -85,5 +85,24 @@ class GroupController extends AsyncNotifier<void> {
     final group = await repository.getGroup(groupId);
     return group?.inviteCode;
   }
-}
 
+  /// Admin: exclui o grupo inteiro
+  Future<void> deleteGroup(String groupId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final user = ref.read(currentUserProvider);
+      if (user == null) throw Exception('Usuário não autenticado');
+      await ref.read(groupRepositoryProvider).deleteGroup(groupId);
+      ref.invalidate(userGroupsStreamProvider);
+    });
+  }
+
+  /// Admin: remove um membro específico do grupo
+  Future<void> removeMember(String groupId, String memberId) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(groupRepositoryProvider).removeMemberFromGroup(groupId, memberId);
+      ref.invalidate(userGroupsStreamProvider);
+    });
+  }
+}

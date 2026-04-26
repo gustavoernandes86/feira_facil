@@ -75,10 +75,25 @@ class GroupRepository {
       'memberIds': FieldValue.arrayRemove([userId]),
     });
 
-    // Também remove o grupo da lista do usuário
-    await _firestore.collection('users').doc(userId).update({
+    // Remove o grupo da lista do usuário.
+    // Também limpa o lastGroupId se ele apontava para esse grupo,
+    // assim o provider vai cair no próximo grupo disponível.
+    final userRef = _firestore.collection('users').doc(userId);
+    final userDoc = await userRef.get();
+    final lastGroupId = userDoc.data()?['lastGroupId'] as String?;
+
+    final Map<String, dynamic> updates = {
       'groupIds': FieldValue.arrayRemove([groupId]),
-    });
+    };
+
+    if (lastGroupId == groupId) {
+      // Pega o próximo grupo disponível
+      final currentGroupIds = List<String>.from(userDoc.data()?['groupIds'] ?? []);
+      currentGroupIds.remove(groupId);
+      updates['lastGroupId'] = currentGroupIds.isNotEmpty ? currentGroupIds.first : FieldValue.delete();
+    }
+
+    await userRef.update(updates);
   }
 
   /// Obtém um grupo por ID (leitura única)
@@ -124,6 +139,36 @@ class GroupRepository {
     await _firestore.collection('users').doc(userId).update({
       'lastGroupId': groupId,
     });
+  }
+
+  /// Exclui um grupo e remove todos os membros
+  Future<void> deleteGroup(String groupId) async {
+    final groupDoc = await _groups.doc(groupId).get();
+    if (!groupDoc.exists) return;
+
+    final memberIds = List<String>.from(groupDoc.data()?['memberIds'] ?? []);
+
+    // Remove o grupo da lista de cada membro
+    final batch = _firestore.batch();
+    for (final memberId in memberIds) {
+      final userRef = _firestore.collection('users').doc(memberId);
+      final userDoc = await userRef.get();
+      final lastGroupId = userDoc.data()?['lastGroupId'] as String?;
+
+      final updates = <String, dynamic>{
+        'groupIds': FieldValue.arrayRemove([groupId]),
+      };
+      if (lastGroupId == groupId) {
+        final currentGroupIds = List<String>.from(userDoc.data()?['groupIds'] ?? []);
+        currentGroupIds.remove(groupId);
+        updates['lastGroupId'] = currentGroupIds.isNotEmpty ? currentGroupIds.first : FieldValue.delete();
+      }
+      batch.update(userRef, updates);
+    }
+
+    // Deleta o documento do grupo
+    batch.delete(_groups.doc(groupId));
+    await batch.commit();
   }
 
   /// Gera um código de convite alfanumérico de 6 dígitos

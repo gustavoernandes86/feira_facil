@@ -18,7 +18,7 @@ class GroupSetupScreen extends ConsumerWidget {
         ).showSnackBar(SnackBar(content: Text(next.error.toString())));
       } else if (!next.isLoading) {
         // GroupController completed (void type), navigate away
-        context.go('/feiras');
+        context.go('/lists');
       }
     });
 
@@ -113,7 +113,7 @@ class GroupSetupScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: color, size: 28),
