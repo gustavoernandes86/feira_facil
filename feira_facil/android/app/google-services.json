@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "638460786906-m52cgctdi6i9k2bjgusm0mld27m1bg6v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.feirafacil.feira_facil",
+            "certificate_hash": "dde6fe21746ac50e187909406e5faea5429c8e0c"
+          }
+        },
+        {
           "client_id": "638460786906-4sqkk8vjf0jsl64nvh1i3lb0nqa5h6sm.apps.googleusercontent.com",
           "client_type": 3
         }
