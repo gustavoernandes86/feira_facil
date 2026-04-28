@@ -7,6 +7,7 @@ class FairList {
   final String status; // 'ativa', 'em_compra', 'concluida'
   final double? budget; // Orçamento opcional
   final String? activeMarketId; // Mercado selecionado para modo compra
+  final bool isSuggested; // Se foi gerada via comparação
   final DateTime createdAt;
   final String createdBy;
   final DateTime? updatedAt;
@@ -18,6 +19,7 @@ class FairList {
     this.status = 'ativa',
     this.budget,
     this.activeMarketId,
+    this.isSuggested = false,
     required this.createdAt,
     required this.createdBy,
     this.updatedAt,
@@ -31,6 +33,7 @@ class FairList {
       status: json['status'] as String? ?? 'ativa',
       budget: (json['budget'] as num?)?.toDouble(),
       activeMarketId: json['activeMarketId'] as String?,
+      isSuggested: json['isSuggested'] as bool? ?? false,
       createdAt: DateTime.parse(
         json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
       ),
@@ -48,6 +51,7 @@ class FairList {
     'status': status,
     if (budget != null) 'budget': budget,
     if (activeMarketId != null) 'activeMarketId': activeMarketId,
+    'isSuggested': isSuggested,
     'createdAt': createdAt.toIso8601String(),
     'createdBy': createdBy,
     if (updatedAt != null) 'updatedAt': updatedAt?.toIso8601String(),
@@ -60,6 +64,7 @@ class FairList {
     String? status,
     double? budget,
     String? activeMarketId,
+    bool? isSuggested,
     DateTime? createdAt,
     String? createdBy,
     DateTime? updatedAt,
@@ -71,6 +76,7 @@ class FairList {
       status: status ?? this.status,
       budget: budget ?? this.budget,
       activeMarketId: activeMarketId ?? this.activeMarketId,
+      isSuggested: isSuggested ?? this.isSuggested,
       createdAt: createdAt ?? this.createdAt,
       createdBy: createdBy ?? this.createdBy,
       updatedAt: updatedAt ?? this.updatedAt,

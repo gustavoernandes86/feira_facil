@@ -32,6 +32,7 @@ class FairListsRepository {
     required Color color,
     double? budget,
     required String userId,
+    bool isSuggested = false,
   }) async {
     try {
       final docRef = _listsRef(groupId).doc();
@@ -42,6 +43,7 @@ class FairListsRepository {
         'status': 'ativa',
         'budget': budget,
         'activeMarketId': null,
+        'isSuggested': isSuggested,
         'createdAt': DateTime.now().toIso8601String(),
         'createdBy': userId,
       });
@@ -418,6 +420,7 @@ class FairListsRepository {
         name: name,
         color: const Color(0xFF4CAF50),
         userId: userId,
+        isSuggested: true,
       );
 
       // 2. Adicionar itens

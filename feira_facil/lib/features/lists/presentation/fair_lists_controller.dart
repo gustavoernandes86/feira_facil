@@ -6,14 +6,25 @@ import '../domain/list_item.dart';
 import 'package:feira_facil/core/utils/unit_utils.dart';
 import '../data/fair_lists_repository.dart';
 
-/// Stream de listas de um grupo
+/// Stream de listas manuais de um grupo
 final fairListsStreamProvider = StreamProvider.family<List<FairList>, String>((
   ref,
   groupId,
 ) {
   final repository = ref.watch(fairListsRepositoryProvider);
-  return repository.listsStream(groupId);
+  return repository.listsStream(groupId).map(
+    (lists) => lists.where((l) => !l.isSuggested).toList(),
+  );
 });
+
+/// Stream de listas sugeridas de um grupo (geradas via comparação)
+final suggestedListsStreamProvider =
+    StreamProvider.family<List<FairList>, String>((ref, groupId) {
+      final repository = ref.watch(fairListsRepositoryProvider);
+      return repository.listsStream(groupId).map(
+        (lists) => lists.where((l) => l.isSuggested).toList(),
+      );
+    });
 
 /// Obtém todos os itens de uma lista
 final listItemsStreamProvider =

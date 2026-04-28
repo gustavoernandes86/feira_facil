@@ -13,6 +13,7 @@ import '../../features/markets/domain/market.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/lists/presentation/list_items_screen.dart';
 import '../../features/lists/presentation/list_comparison_screen.dart';
+import '../../features/lists/presentation/suggested_purchases_screen.dart';
 import '../../features/lists/domain/fair_list.dart';
 import '../../features/lists/domain/list_item.dart';
 import 'router_notifier.dart';
@@ -26,6 +27,7 @@ class RouteNames {
   static const groupManagement = 'groupManagement';
   static const markets = 'markets';
   static const marketDetails = 'marketDetails';
+  static const suggestedPurchases = 'suggestedPurchases';
   static const lists = 'lists';
   static const listDetails = 'listDetails';
   static const listCompare = 'listCompare';
@@ -145,6 +147,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 items: data?['items'] as List<ListItem>?,
               );
             },
+          ),
+          GoRoute(
+            path: 'suggested',
+            name: RouteNames.suggestedPurchases,
+            builder: (context, state) => const SuggestedPurchasesScreen(),
           ),
           GoRoute(
             path: ':id',

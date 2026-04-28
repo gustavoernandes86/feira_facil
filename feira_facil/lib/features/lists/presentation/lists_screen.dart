@@ -75,13 +75,6 @@ class ListsScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateListDialog(context, ref),
-        label: const Text('Nova Lista', style: TextStyle(fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add_shopping_cart),
-        backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
-      ),
     );
   }
 
@@ -110,6 +103,8 @@ class ListsScreen extends ConsumerWidget {
               ),
               Row(
                 children: [
+                  _headerIcon(Icons.analytics_outlined, onTap: () => context.pushNamed(RouteNames.listCompare)),
+                  const SizedBox(width: 12),
                   _headerIcon(Icons.notifications_none_rounded),
                   const SizedBox(width: 12),
                   _headerIcon(Icons.menu_rounded, onTap: () => context.push('/group-management')),
@@ -247,14 +242,15 @@ class ListsScreen extends ConsumerWidget {
               Expanded(
                 child: _actionTile(
                   context, 
-                  '📊', 
-                  'Comparar Preços', 
-                  'Melhor custo-benefício', 
-                  AppColors.cream2, 
-                  () => context.pushNamed(RouteNames.listCompare),
+                  '✨', 
+                  'Compras Sugeridas', 
+                  'Onde está mais barato?', 
+                  const Color(0xFFFFE0B2), // Light Amber/Gold
+                  () => context.pushNamed(RouteNames.suggestedPurchases),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
+              const Expanded(child: SizedBox()), // Placeholder for balance
             ],
           ),
         ],

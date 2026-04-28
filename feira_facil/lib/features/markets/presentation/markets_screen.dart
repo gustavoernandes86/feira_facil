@@ -39,6 +39,10 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
           PremiumHeader(
             title: 'Mercados',
             subtitle: 'Gerencie os locais de compra do seu grupo.',
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => context.pop(),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.analytics_outlined, color: Colors.white),
