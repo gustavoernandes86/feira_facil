@@ -10,6 +10,7 @@ import 'package:feira_facil/features/markets/presentation/widgets/market_list_se
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/groups/presentation/group_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,13 +34,17 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: Text(widget.market.name, style: GoogleFonts.fraunces(fontWeight: FontWeight.bold)),
+        title: Text(widget.market.name, style: GoogleFonts.fraunces(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        )),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.analytics_outlined, color: AppColors.textBody),
+            icon: const Icon(Icons.analytics_outlined, color: Colors.white),
             tooltip: 'Comparar Preços',
             onPressed: () => context.pushNamed(RouteNames.listCompare),
           ),
@@ -180,20 +185,62 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         if (items.isEmpty) {
           return const Center(child: Text('Esta lista está vazia.'));
         }
+
+        // Agrupar itens por categoria
+        final Map<String, List<ListItem>> groupedItems = {};
+        for (final item in items) {
+          final cat = item.category.isEmpty ? 'Outros' : item.category;
+          groupedItems.putIfAbsent(cat, () => []).add(item);
+        }
+        
+        final categories = groupedItems.keys.toList()..sort();
         
         return pricesAsync.when(
           data: (prices) {
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final itemPrices = prices.where((p) => p.itemId == item.itemId).toList();
+              itemCount: categories.length,
+              itemBuilder: (context, catIndex) {
+                final category = categories[catIndex];
+                final categoryItems = groupedItems[category]!;
                 
-                return _ListItemPriceCard(
-                  itemName: item.itemId,
-                  marketId: widget.market.id,
-                  prices: itemPrices,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: AppColors.orange,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            category.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...categoryItems.map((item) {
+                      final itemPrices = prices.where((p) => p.itemId == item.itemId).toList();
+                      return _ListItemPriceCard(
+                        itemName: item.itemId,
+                        marketId: widget.market.id,
+                        prices: itemPrices,
+                      );
+                    }).toList(),
+                  ],
                 );
               },
             );

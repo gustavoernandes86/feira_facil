@@ -39,11 +39,15 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.green,
         foregroundColor: Colors.white,
-        title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(fontWeight: FontWeight.w700)),
+        title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        )),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.analytics_outlined),
+            icon: const Icon(Icons.analytics_outlined, color: Colors.white),
             tooltip: 'Comparar Preços',
             onPressed: () {
               final items = itemsAsync.value ?? [];
@@ -70,7 +74,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
             tooltip: 'Excluir Lista',
             onPressed: () => _confirmDeleteList(context, ref, groupId),
           ),
@@ -262,15 +266,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                 }
               },
             ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: catInfo?.color.withValues(alpha: 0.1) ?? AppColors.cream,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(catInfo?.icon ?? Icons.inventory_2_outlined, color: catInfo?.color ?? AppColors.textTertiary, size: 20),
-            ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

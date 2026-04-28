@@ -4,10 +4,13 @@ import '../../items/domain/price.dart';
 import '../../markets/data/markets_repository.dart';
 import '../domain/list_item.dart';
 
+import '../data/fair_lists_repository.dart';
+
 final listComparisonServiceProvider = Provider<ListComparisonService>((ref) {
   final pricesRepo = ref.read(pricesRepositoryProvider);
   final marketsRepo = ref.read(marketsRepositoryProvider);
-  return ListComparisonService(pricesRepo, marketsRepo);
+  final listsRepo = ref.read(fairListsRepositoryProvider);
+  return ListComparisonService(pricesRepo, marketsRepo, listsRepo);
 });
 
 class StrategyMarketSummary {
@@ -47,10 +50,12 @@ class PurchaseStrategy {
 class ListComparisonService {
   final PricesRepository _pricesRepo;
   final MarketsRepository _marketsRepo;
+  final FairListsRepository _listsRepo;
 
-  ListComparisonService(this._pricesRepo, this._marketsRepo);
+  ListComparisonService(this._pricesRepo, this._marketsRepo, this._listsRepo);
 
   Future<List<PurchaseStrategy>> analyzeList(String groupId, List<ListItem> items) async {
+// ... (rest of analyzeList remains the same)
     if (items.isEmpty) return [];
 
     // 1. Fetch all markets
@@ -211,21 +216,23 @@ class ListComparisonService {
     final allPrices = await _pricesRepo.getAllPrices(groupId);
     if (allPrices.isEmpty) return [];
 
-    // 2. Cria "ListItems" virtuais (quantidade 1.0) para cada item único que possui preço
-    // Usamos o nome do item como ID temporário e a unidade do preço mais recente
+    // 2. Busca o mapeamento de categorias das listas existentes
+    final categoryMapping = await _listsRepo.getCategoryMapping(groupId);
+
+    // 3. Cria "ListItems" virtuais (quantidade 1.0) para cada item único que possui preço
     final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
     final virtualItems = <ListItem>[];
 
     for (final itemId in uniqueItemIds) {
       final itemPrices = allPrices.where((p) => p.itemId == itemId).toList();
-      // Ordena por data decrescente (se disponível) ou apenas pega o primeiro para definir a unidade
       final latestPrice = itemPrices.first; 
       
       virtualItems.add(ListItem(
-        id: itemId, // Usamos o itemId como id da linha para a análise
+        id: itemId, 
         itemId: itemId,
         plannedQuantity: 1.0,
         unit: latestPrice.unit,
+        category: categoryMapping[itemId.toLowerCase()] ?? 'Outros',
       ));
     }
 

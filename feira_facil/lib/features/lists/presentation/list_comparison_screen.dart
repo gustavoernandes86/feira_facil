@@ -57,11 +57,11 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
         title: Text(
           'Comparar Preços',
           style: GoogleFonts.fraunces(
-            color: AppColors.textBody,
+            color: AppColors.orange,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.textBody),
+        iconTheme: const IconThemeData(color: AppColors.orange),
       ),
       body: strategiesAsync.when(
         data: (strategies) {
@@ -322,11 +322,9 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
         // MODO: Gerar nova lista global
         final userId = ref.read(currentUserProfileProvider).value?.id ?? '';
         
-        // Buscamos os itens virtuais que foram analisados
-        final items = await ref.read(listComparisonServiceProvider).analyzeAllPricedItems(groupId);
-        // Precisamos dos itens originais usados na análise. 
-        // Na análise global, uniqueItemIds viraram os ids dos virtualItems.
-        // Vamos criar os listItems virtuais aqui também para o repositório.
+        // Buscamos o mapeamento de categorias para garantir que a nova lista venha organizada
+        final categoryMapping = await ref.read(fairListsRepositoryProvider).getCategoryMapping(groupId);
+        
         final allPrices = await ref.read(pricesRepositoryProvider).getAllPrices(groupId);
         final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
         final virtualItems = uniqueItemIds.map((itemId) {
@@ -336,6 +334,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
             itemId: itemId,
             plannedQuantity: 1.0,
             unit: p.unit,
+            category: categoryMapping[itemId.toLowerCase()] ?? 'Outros',
           );
         }).toList();
 

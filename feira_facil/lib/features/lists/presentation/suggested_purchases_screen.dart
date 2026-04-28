@@ -24,11 +24,14 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'Compras Sugeridas',
-          style: GoogleFonts.fraunces(fontWeight: FontWeight.bold),
+          style: GoogleFonts.fraunces(
+            fontWeight: FontWeight.bold,
+            color: AppColors.orange,
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: AppColors.textBody,
+        foregroundColor: AppColors.orange,
       ),
       body: Column(
         children: [

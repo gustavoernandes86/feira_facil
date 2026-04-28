@@ -44,7 +44,10 @@ class ListsScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Suas Listas', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Suas Listas', style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.orange,
+                    fontWeight: FontWeight.bold,
+                  )),
                 ],
               ),
             ),
@@ -136,9 +139,9 @@ class ListsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
           Text(
-            'Como vamos\neconomizar hoje?',
+            'Como vamos economizar hoje?',
             style: GoogleFonts.fraunces(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
               color: Colors.white,
               height: 1.1,

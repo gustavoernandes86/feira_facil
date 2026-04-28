@@ -437,7 +437,7 @@ class FairListsRepository {
           'unit': item.unit.name,
           'marked': false,
           'selectedMarketId': marketId,
-          'category': 'Outros', // No futuro podemos buscar a categoria real
+          'category': item.category,
         });
       }
 
@@ -445,6 +445,39 @@ class FairListsRepository {
       return listId;
     } catch (e) {
       throw Exception('Erro ao criar lista da estratégia: $e');
+    }
+  }
+
+  /// Busca um mapeamento de itemId -> categoria baseado na Lista Básica do grupo
+  Future<Map<String, String>> getCategoryMapping(String groupId) async {
+    try {
+      print('[DEBUG] getCategoryMapping: Buscando categorias para groupId=$groupId');
+      final listsSnapshot = await _listsRef(groupId).where('name', isEqualTo: 'Lista Básica').limit(1).get();
+      
+      if (listsSnapshot.docs.isEmpty) {
+        print('[DEBUG] getCategoryMapping: Lista Básica não encontrada');
+        return {};
+      }
+
+      final listId = listsSnapshot.docs.first.id;
+      final itemsSnapshot = await _listItemsRef(groupId, listId).get();
+      
+      final mapping = <String, String>{};
+      for (var doc in itemsSnapshot.docs) {
+        final data = doc.data();
+        final itemId = (data['itemId'] as String?)?.trim();
+        final category = data['category'] as String?;
+        
+        if (itemId != null && category != null) {
+          // Guardamos a chave em minúsculo para comparação robusta
+          mapping[itemId.toLowerCase()] = category;
+          print('[DEBUG] getCategoryMapping: Mapeado $itemId -> $category');
+        }
+      }
+      return mapping;
+    } catch (e) {
+      print('[DEBUG] getCategoryMapping: Erro: $e');
+      return {};
     }
   }
 }
