@@ -91,12 +91,24 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => AddPriceModal(marketId: widget.market.id),
-        ),
+        onPressed: () {
+          if (_selectedList == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Selecione uma lista primeiro para adicionar um produto avulso.')),
+            );
+            return;
+          }
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => AddPriceModal(
+              marketId: widget.market.id,
+              groupId: groupId,
+              listId: _selectedList?.id,
+            ),
+          );
+        },
         label: const Text('Registrar Avulso', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add_chart_rounded),
         backgroundColor: AppColors.textBody,
@@ -336,6 +348,7 @@ class _ListItemPriceCard extends ConsumerWidget {
             builder: (context) => AddPriceModal(
               marketId: marketId,
               initialItemName: itemName,
+              initialPrice: bestPriceRecord,
             ),
           ),
         ),

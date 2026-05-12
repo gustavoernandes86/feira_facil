@@ -7,16 +7,25 @@ import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'package:feira_facil/features/items/presentation/providers/item_search_provider.dart';
 import 'package:feira_facil/features/markets/presentation/market_prices_controller.dart';
 import 'package:feira_facil/core/utils/currency_formatter.dart';
+import 'package:feira_facil/core/utils/category_utils.dart';
+import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
+import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:intl/intl.dart';
 
 class AddPriceModal extends ConsumerStatefulWidget {
   final String marketId;
   final String? initialItemName;
+  final String? groupId;
+  final String? listId;
+  final Price? initialPrice;
   
   const AddPriceModal({
     super.key, 
     required this.marketId,
     this.initialItemName,
+    this.groupId,
+    this.listId,
+    this.initialPrice,
   });
 
   @override
@@ -27,6 +36,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
   late final TextEditingController _nameController;
   final _brandController = TextEditingController();
   ItemUnit _selectedUnit = ItemUnit.un;
+  String _selectedCategory = 'Outros';
   final _tiers = <PriceTier>[const PriceTier(quantityMinimum: 1, pricePerUnit: 0.0)];
   final _qtyControllers = <TextEditingController>[];
   final _priceControllers = <TextEditingController>[];
@@ -36,8 +46,30 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialItemName);
-    _qtyControllers.add(TextEditingController(text: '1'));
-    _priceControllers.add(TextEditingController(text: '0,00'));
+    
+    if (widget.initialPrice != null) {
+      _brandController.text = widget.initialPrice!.brand ?? '';
+      _selectedUnit = widget.initialPrice!.unit;
+      
+      _tiers.clear();
+      if (widget.initialPrice!.tiers.isEmpty) {
+        _tiers.add(const PriceTier(quantityMinimum: 1, pricePerUnit: 0.0));
+        _qtyControllers.add(TextEditingController(text: '1'));
+        _priceControllers.add(TextEditingController(text: '0,00'));
+      } else {
+        for (final tier in widget.initialPrice!.tiers) {
+          _tiers.add(tier);
+          final qtyStr = tier.quantityMinimum == tier.quantityMinimum.truncateToDouble() 
+              ? tier.quantityMinimum.toInt().toString() 
+              : tier.quantityMinimum.toString().replaceAll('.', ',');
+          _qtyControllers.add(TextEditingController(text: qtyStr));
+          _priceControllers.add(TextEditingController(text: tier.pricePerUnit.toStringAsFixed(2).replaceAll('.', ',')));
+        }
+      }
+    } else {
+      _qtyControllers.add(TextEditingController(text: '1'));
+      _priceControllers.add(TextEditingController(text: '0,00'));
+    }
   }
 
   @override
@@ -164,6 +196,46 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
             ),
 
             const SizedBox(height: 16),
+            if (widget.initialItemName == null) ...[
+              Text(
+                'CATEGORIA',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textTertiary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                  filled: true,
+                  fillColor: AppColors.cream.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: AppCategories.map((cat) {
+                  return DropdownMenuItem<String>(
+                    value: cat.name,
+                    child: Row(
+                      children: [
+                        Icon(cat.icon, size: 20, color: cat.color),
+                        const SizedBox(width: 12),
+                        Text(cat.name),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedCategory = val);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
             Text(
               'UNIDADE DE MEDIDA',
               style: TextStyle(
@@ -310,6 +382,17 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
         brand: brand.isEmpty ? null : brand,
         unit: _selectedUnit,
       );
+
+      if (widget.initialItemName == null && widget.groupId != null && widget.listId != null) {
+        await ref.read(fairListsControllerProvider(widget.groupId!).notifier).addItemToList(
+          listId: widget.listId!,
+          itemId: name,
+          quantity: 1.0,
+          unit: _selectedUnit,
+          category: _selectedCategory,
+        );
+      }
+
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
