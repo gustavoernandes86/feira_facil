@@ -43,6 +43,17 @@ class GroupManagementScreen extends ConsumerWidget {
               PremiumHeader(
                 title: group?.name ?? 'Meus Grupos',
                 subtitle: isAdmin ? '👑 Você é o administrador' : 'Gerencie membros e grupos da sua família.',
+                leading: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                  ),
+                ),
               ),
               Expanded(
                 child: ListView(

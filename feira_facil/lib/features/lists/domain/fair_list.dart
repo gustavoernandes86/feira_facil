@@ -11,6 +11,8 @@ class FairList {
   final DateTime createdAt;
   final String createdBy;
   final DateTime? updatedAt;
+  final double? totalCost; // Custo total da estratégia escolhida (listas sugeridas)
+  final double? worstCaseCost; // Custo do pior cenário para calcular economia
 
   FairList({
     required this.id,
@@ -23,6 +25,8 @@ class FairList {
     required this.createdAt,
     required this.createdBy,
     this.updatedAt,
+    this.totalCost,
+    this.worstCaseCost,
   });
 
   factory FairList.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,8 @@ class FairList {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
+      totalCost: (json['totalCost'] as num?)?.toDouble(),
+      worstCaseCost: (json['worstCaseCost'] as num?)?.toDouble(),
     );
   }
 
@@ -55,6 +61,8 @@ class FairList {
     'createdAt': createdAt.toIso8601String(),
     'createdBy': createdBy,
     if (updatedAt != null) 'updatedAt': updatedAt?.toIso8601String(),
+    if (totalCost != null) 'totalCost': totalCost,
+    if (worstCaseCost != null) 'worstCaseCost': worstCaseCost,
   };
 
   FairList copyWith({
@@ -68,6 +76,8 @@ class FairList {
     DateTime? createdAt,
     String? createdBy,
     DateTime? updatedAt,
+    double? totalCost,
+    double? worstCaseCost,
   }) {
     return FairList(
       id: id ?? this.id,
@@ -80,6 +90,8 @@ class FairList {
       createdAt: createdAt ?? this.createdAt,
       createdBy: createdBy ?? this.createdBy,
       updatedAt: updatedAt ?? this.updatedAt,
+      totalCost: totalCost ?? this.totalCost,
+      worstCaseCost: worstCaseCost ?? this.worstCaseCost,
     );
   }
 

@@ -3,6 +3,7 @@ import '../../items/data/prices_repository.dart';
 import '../../items/domain/price.dart';
 import '../../markets/data/markets_repository.dart';
 import '../domain/list_item.dart';
+import '../../../core/utils/unit_utils.dart';
 
 import '../data/fair_lists_repository.dart';
 
@@ -54,12 +55,15 @@ class ListComparisonService {
 
   ListComparisonService(this._pricesRepo, this._marketsRepo, this._listsRepo);
 
-  Future<List<PurchaseStrategy>> analyzeList(String groupId, List<ListItem> items) async {
+  Future<List<PurchaseStrategy>> analyzeList(String groupId, List<ListItem> items, {List<String>? marketIds}) async {
 // ... (rest of analyzeList remains the same)
     if (items.isEmpty) return [];
 
-    // 1. Fetch all markets
-    final markets = await _marketsRepo.getMarkets(groupId);
+    // 1. Fetch all markets (optionally filtered)
+    var markets = await _marketsRepo.getMarkets(groupId);
+    if (marketIds != null && marketIds.isNotEmpty) {
+      markets = markets.where((m) => marketIds.contains(m.id)).toList();
+    }
     if (markets.isEmpty) return [];
     
     final marketMap = {for (var m in markets) m.id: m};
@@ -216,10 +220,10 @@ class ListComparisonService {
     final allPrices = await _pricesRepo.getAllPrices(groupId);
     if (allPrices.isEmpty) return [];
 
-    // 2. Busca o mapeamento de categorias das listas existentes
-    final categoryMapping = await _listsRepo.getCategoryMapping(groupId);
+    // 2. Busca informações completas dos itens das listas do usuário (quantidade, unidade, categoria)
+    final itemInfoMapping = await _listsRepo.getItemInfoMapping(groupId);
 
-    // 3. Cria "ListItems" virtuais (quantidade 1.0) para cada item único que possui preço
+    // 3. Cria "ListItems" para cada item único que possui preço, usando quantidades reais
     final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
     final virtualItems = <ListItem>[];
 
@@ -227,12 +231,18 @@ class ListComparisonService {
       final itemPrices = allPrices.where((p) => p.itemId == itemId).toList();
       final latestPrice = itemPrices.first; 
       
+      // Busca informações da lista do usuário (quantidade, unidade, categoria)
+      final itemInfo = itemInfoMapping[itemId.toLowerCase()];
+      final quantity = itemInfo != null ? (itemInfo['quantity'] as num).toDouble() : 1.0;
+      final unit = itemInfo != null ? ItemUnit.fromString(itemInfo['unit'] as String?) : latestPrice.unit;
+      final category = itemInfo != null ? (itemInfo['category'] as String) : 'Outros';
+      
       virtualItems.add(ListItem(
         id: itemId, 
         itemId: itemId,
-        plannedQuantity: 1.0,
-        unit: latestPrice.unit,
-        category: categoryMapping[itemId.toLowerCase()] ?? 'Outros',
+        plannedQuantity: quantity,
+        unit: unit,
+        category: category,
       ));
     }
 

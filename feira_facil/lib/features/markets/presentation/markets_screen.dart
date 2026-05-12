@@ -12,7 +12,8 @@ import '../domain/market.dart';
 import 'package:go_router/go_router.dart';
 import 'market_detail_screen.dart';
 import 'markets_controller.dart';
-import '../../lists/presentation/fair_lists_controller.dart';
+import '../../lists/data/fair_lists_repository.dart';
+import '../../lists/presentation/widgets/comparison_setup_modal.dart';
 import '../../../core/router/app_router.dart';
 
 class MarketsScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,34 @@ class MarketsScreen extends ConsumerStatefulWidget {
 
 class _MarketsScreenState extends ConsumerState<MarketsScreen> {
   String _searchQuery = '';
+
+  Future<void> _showComparisonSetup() async {
+    final result = await showModalBottomSheet<ComparisonSetup>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ComparisonSetupModal(),
+    );
+    
+    if (result == null || !mounted) return;
+    
+    final groupId = ref.read(currentGroupIdProvider);
+    if (groupId == null) return;
+    
+    final repo = ref.read(fairListsRepositoryProvider);
+    final itemsSnapshot = await repo.listItemsStream(groupId, result.selectedList.id).first;
+    
+    if (!mounted) return;
+    
+    context.pushNamed(
+      RouteNames.listCompare,
+      extra: {
+        'fairList': result.selectedList,
+        'items': itemsSnapshot,
+        'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +76,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
               IconButton(
                 icon: const Icon(Icons.analytics_outlined, color: Colors.white),
                 tooltip: 'Comparar Preços',
-                onPressed: () => context.pushNamed(RouteNames.listCompare),
+                onPressed: () => _showComparisonSetup(),
               ),
             ],
           ),

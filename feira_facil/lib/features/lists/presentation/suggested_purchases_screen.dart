@@ -5,12 +5,43 @@ import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/core/providers/user_providers.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
+import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class SuggestedPurchasesScreen extends ConsumerWidget {
   const SuggestedPurchasesScreen({super.key});
+
+  Future<void> _showComparisonSetup(BuildContext context, WidgetRef ref) async {
+    final result = await showModalBottomSheet<ComparisonSetup>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ComparisonSetupModal(),
+    );
+    
+    if (result == null || !context.mounted) return;
+    
+    final groupId = ref.read(currentGroupIdProvider);
+    if (groupId == null) return;
+    
+    // Buscar itens da lista selecionada
+    final repo = ref.read(fairListsRepositoryProvider);
+    final itemsSnapshot = await repo.listItemsStream(groupId, result.selectedList.id).first;
+    
+    if (!context.mounted) return;
+    
+    context.pushNamed(
+      RouteNames.listCompare,
+      extra: {
+        'fairList': result.selectedList,
+        'items': itemsSnapshot,
+        'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,7 +70,7 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: InkWell(
-              onTap: () => context.pushNamed(RouteNames.listCompare),
+              onTap: () => _showComparisonSetup(context, ref),
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(

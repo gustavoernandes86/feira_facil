@@ -14,6 +14,7 @@ import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/items/presentation/prices_controller.dart';
+import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 
 class ListItemsScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -90,7 +91,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
           IconButton(
             icon: const Icon(Icons.analytics_outlined, color: Colors.white),
             tooltip: 'Comparar Preços',
-            onPressed: () {
+            onPressed: () async {
               final items = itemsAsync.value ?? [];
               if (items.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -99,17 +100,22 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                 return;
               }
               
+              // Mostrar modal de seleção de mercados
+              final result = await showModalBottomSheet<ComparisonSetup>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const ComparisonSetupModal(),
+              );
+              
+              if (result == null || !context.mounted) return;
+              
               context.pushNamed(
                 RouteNames.listCompare,
                 extra: {
-                  'fairList': widget.listContext ?? FairList(
-                    id: widget.listId,
-                    name: 'Lista',
-                    color: AppColors.green,
-                    createdAt: DateTime.now(),
-                    createdBy: '',
-                  ),
+                  'fairList': result.selectedList,
                   'items': items,
+                  'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
                 },
               );
             },

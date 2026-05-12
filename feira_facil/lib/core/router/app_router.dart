@@ -14,6 +14,7 @@ import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/lists/presentation/list_items_screen.dart';
 import '../../features/lists/presentation/list_comparison_screen.dart';
 import '../../features/lists/presentation/suggested_purchases_screen.dart';
+import '../../features/lists/presentation/savings_screen.dart';
 import '../../features/lists/domain/fair_list.dart';
 import '../../features/lists/domain/list_item.dart';
 import 'router_notifier.dart';
@@ -31,6 +32,7 @@ class RouteNames {
   static const lists = 'lists';
   static const listDetails = 'listDetails';
   static const listCompare = 'listCompare';
+  static const savings = 'savings';
 }
 
 class RoutePaths {
@@ -145,6 +147,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return ListComparisonScreen(
                 fairList: data?['fairList'] as FairList?,
                 items: data?['items'] as List<ListItem>?,
+                marketIds: data?['marketIds'] as List<String>?,
               );
             },
           ),
@@ -152,6 +155,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'suggested',
             name: RouteNames.suggestedPurchases,
             builder: (context, state) => const SuggestedPurchasesScreen(),
+          ),
+          GoRoute(
+            path: 'savings',
+            name: RouteNames.savings,
+            builder: (context, state) => const SavingsScreen(),
           ),
           GoRoute(
             path: ':id',

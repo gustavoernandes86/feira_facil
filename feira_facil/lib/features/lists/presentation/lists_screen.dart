@@ -6,10 +6,41 @@ import 'package:feira_facil/core/providers/user_providers.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
+import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
+import 'package:feira_facil/features/lists/presentation/savings_screen.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
+
+  Future<void> _showComparisonSetup(BuildContext context, WidgetRef ref) async {
+    final result = await showModalBottomSheet<ComparisonSetup>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ComparisonSetupModal(),
+    );
+    
+    if (result == null || !context.mounted) return;
+    
+    final groupId = ref.read(currentGroupIdProvider);
+    if (groupId == null) return;
+    
+    final repo = ref.read(fairListsRepositoryProvider);
+    final itemsSnapshot = await repo.listItemsStream(groupId, result.selectedList.id).first;
+    
+    if (!context.mounted) return;
+    
+    context.pushNamed(
+      RouteNames.listCompare,
+      extra: {
+        'fairList': result.selectedList,
+        'items': itemsSnapshot,
+        'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,6 +48,9 @@ class ListsScreen extends ConsumerWidget {
     final group = ref.watch(currentGroupStreamProvider).value;
     final groupId = ref.watch(currentGroupIdProvider);
     final listsAsyncValue = groupId != null ? ref.watch(fairListsStreamProvider(groupId)) : const AsyncValue<List<FairList>>.loading();
+    final savingsAsync = groupId != null
+        ? ref.watch(savingsSummaryProvider(groupId))
+        : const AsyncValue<SavingsSummary>.loading();
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -29,7 +63,7 @@ class ListsScreen extends ConsumerWidget {
 
           // Status Cards section
           SliverToBoxAdapter(
-            child: _buildStatusSection(context, listsAsyncValue),
+            child: _buildStatusSection(context, listsAsyncValue, savingsAsync),
           ),
 
           // Quick Actions grid
@@ -106,7 +140,7 @@ class ListsScreen extends ConsumerWidget {
               ),
               Row(
                 children: [
-                  _headerIcon(Icons.analytics_outlined, onTap: () => context.pushNamed(RouteNames.listCompare)),
+                  _headerIcon(Icons.analytics_outlined, onTap: () => _showComparisonSetup(context, ref)),
                   const SizedBox(width: 12),
                   _headerIcon(Icons.notifications_none_rounded),
                   const SizedBox(width: 12),
@@ -167,7 +201,15 @@ class ListsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusSection(BuildContext context, AsyncValue<List<FairList>> listsAsync) {
+  Widget _buildStatusSection(BuildContext context, AsyncValue<List<FairList>> listsAsync, AsyncValue<SavingsSummary> savingsAsync) {
+    final savings = savingsAsync.value;
+    final savingsStr = savings != null && savings.totalSaved > 0
+        ? 'R\$ ${savings.totalSaved.toStringAsFixed(2).replaceAll(".", ",")}'
+        : 'R\$ 0,00';
+    final savingsSub = savings != null && savings.totalSaved > 0
+        ? '${savings.lists.length} compra${savings.lists.length != 1 ? 's' : ''}'
+        : 'Total acumulado';
+
     return Container(
       height: 140,
       margin: const EdgeInsets.only(top: 24),
@@ -176,46 +218,50 @@ class ListsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           _statusCard(
-            context, 
-            '📋 Suas Listas', 
-            listsAsync.value?.length.toString() ?? '0', 
-            'Listas ativas', 
+            context,
+            '📋 Suas Listas',
+            listsAsync.value?.length.toString() ?? '0',
+            'Listas ativas',
             AppColors.green,
-            Icons.format_list_bulleted
+            Icons.format_list_bulleted,
           ),
           _statusCard(
-            context, 
-            '💰 Economia', 
-            'R\$ 42', 
-            'Mês atual', 
+            context,
+            '💰 Economia',
+            savingsStr,
+            savingsSub,
             AppColors.orange,
-            Icons.trending_up
+            Icons.trending_up,
+            onTap: () => context.pushNamed(RouteNames.savings),
           ),
         ],
       ),
     );
   }
 
-  Widget _statusCard(BuildContext context, String label, String val, String sub, Color color, IconData icon) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [AppColors.shadow2],
-        border: Border.all(color: AppColors.cream2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color.withOpacity(0.6), size: 20),
-          const Spacer(),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.bold)),
-          Text(val, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textBody)),
-          Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
-        ],
+  Widget _statusCard(BuildContext context, String label, String val, String sub, Color color, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 14),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [AppColors.shadow2],
+          border: Border.all(color: AppColors.cream2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color.withOpacity(0.6), size: 20),
+            const Spacer(),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.bold)),
+            Text(val, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textBody)),
+            Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
@@ -248,12 +294,21 @@ class ListsScreen extends ConsumerWidget {
                   '✨', 
                   'Compras Sugeridas', 
                   'Onde está mais barato?', 
-                  const Color(0xFFFFE0B2), // Light Amber/Gold
+                  const Color(0xFFFFE0B2),
                   () => context.pushNamed(RouteNames.suggestedPurchases),
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(child: SizedBox()), // Placeholder for balance
+              Expanded(
+                child: _actionTile(
+                  context,
+                  '💚',
+                  'Minha Economia',
+                  'Veja quanto poupou',
+                  AppColors.greenLight,
+                  () => context.pushNamed(RouteNames.savings),
+                ),
+              ),
             ],
           ),
         ],

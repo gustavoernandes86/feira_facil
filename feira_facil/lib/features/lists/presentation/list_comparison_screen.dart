@@ -8,15 +8,33 @@ import 'package:feira_facil/features/lists/domain/list_item.dart';
 import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
-import 'package:feira_facil/features/items/data/prices_repository.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 
-final listComparisonFutureProvider = FutureProvider.autoDispose.family<List<PurchaseStrategy>, List<ListItem>>((ref, items) async {
+/// Parâmetros para o provider de comparação por lista
+class ListComparisonParams {
+  final List<ListItem> items;
+  final List<String>? marketIds;
+
+  ListComparisonParams({required this.items, this.marketIds});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListComparisonParams &&
+          runtimeType == other.runtimeType &&
+          items == other.items &&
+          marketIds.toString() == other.marketIds.toString();
+
+  @override
+  int get hashCode => items.hashCode ^ marketIds.hashCode;
+}
+
+final listComparisonFutureProvider = FutureProvider.autoDispose.family<List<PurchaseStrategy>, ListComparisonParams>((ref, params) async {
   final groupId = ref.watch(currentGroupIdProvider);
   if (groupId == null) return [];
   
   final service = ref.read(listComparisonServiceProvider);
-  return service.analyzeList(groupId, items);
+  return service.analyzeList(groupId, params.items, marketIds: params.marketIds);
 });
 
 final globalComparisonFutureProvider = FutureProvider.autoDispose<List<PurchaseStrategy>>((ref) async {
@@ -30,11 +48,13 @@ final globalComparisonFutureProvider = FutureProvider.autoDispose<List<PurchaseS
 class ListComparisonScreen extends ConsumerStatefulWidget {
   final FairList? fairList;
   final List<ListItem>? items;
+  final List<String>? marketIds;
 
   const ListComparisonScreen({
     super.key,
     this.fairList,
     this.items,
+    this.marketIds,
   });
 
   @override
@@ -43,11 +63,12 @@ class ListComparisonScreen extends ConsumerStatefulWidget {
 
 class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
   bool _isApplying = false;
+  List<PurchaseStrategy> _allStrategies = [];
 
   @override
   Widget build(BuildContext context) {
     final strategiesAsync = widget.fairList != null && widget.items != null
-        ? ref.watch(listComparisonFutureProvider(widget.items!))
+        ? ref.watch(listComparisonFutureProvider(ListComparisonParams(items: widget.items!, marketIds: widget.marketIds)))
         : ref.watch(globalComparisonFutureProvider);
 
     return Scaffold(
@@ -83,8 +104,14 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
             padding: const EdgeInsets.all(20),
             itemCount: strategies.length,
             itemBuilder: (context, index) {
+              // Persist strategies so _applyStrategy can compute worstCaseCost
+              if (_allStrategies.length != strategies.length) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  setState(() => _allStrategies = strategies);
+                });
+              }
               final strategy = strategies[index];
-              final isOptimal = index == 0; // First strategy is generally the best according to sort
+              final isOptimal = index == 0;
               
               return _buildStrategyCard(strategy, isOptimal);
             },
@@ -282,7 +309,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                     child: _isApplying
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : Text(
-                          widget.fairList != null ? 'Aplicar Estratégia' : 'Gerar Lista de Feira',
+                          'Gerar Compra Sugerida',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -303,130 +330,139 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
     final groupId = ref.read(currentGroupIdProvider);
     if (groupId == null) return;
     
+    final userId = ref.read(currentUserProfileProvider).value?.id ?? '';
+    final listName = widget.fairList?.name ?? 'Lista';
+    
+    final baseName = 'Compra Sugerida - $listName - ${DateTime.now().day}/${DateTime.now().month}';
+    
+    final controller = TextEditingController(text: baseName);
+    final chosenName = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Nome da Compra Sugerida', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Nome da lista',
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+              child: const Text('Continuar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (chosenName == null) return;
+    
+    final finalName = chosenName.isEmpty ? baseName : chosenName;
+
     setState(() => _isApplying = true);
     
     try {
-      if (widget.fairList != null) {
-        // MODO: Atualizar lista existente
-        await ref.read(fairListsRepositoryProvider).applyPurchaseStrategy(
-          groupId: groupId,
-          listId: widget.fairList!.id,
-          itemMarketMapping: strategy.itemMarketMapping,
+      final existingLists = await ref.read(fairListsRepositoryProvider).getSuggestedListsByBaseName(groupId, finalName);
+      
+      String nameToCreate = finalName;
+      
+      if (existingLists.isNotEmpty) {
+        if (!mounted) return;
+        final result = await showDialog<String>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Compra Sugerida já existe'),
+              content: const Text('Você já criou uma compra sugerida hoje.\nO que deseja fazer?'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'nova'),
+                  child: const Text('Criar Nova', style: TextStyle(color: AppColors.orange)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'sobrepor'),
+                  child: const Text('Sobrepor', style: TextStyle(color: AppColors.red)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, 'ir'),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+                  child: const Text('Ir para ela', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
         );
 
-        await ref.read(fairListsRepositoryProvider).updateListStatus(
-          groupId: groupId,
-          listId: widget.fairList!.id,
-          status: 'em_compra',
-        );
-      } else {
-        // MODO: Gerar nova lista global
-        final userId = ref.read(currentUserProfileProvider).value?.id ?? '';
-        
-        final baseName = 'Compra Sugerida - ${DateTime.now().day}/${DateTime.now().month}';
-        final existingLists = await ref.read(fairListsRepositoryProvider).getSuggestedListsByBaseName(groupId, baseName);
-        
-        String nameToCreate = baseName;
-        
-        if (existingLists.isNotEmpty) {
-          if (!mounted) return;
-          final result = await showDialog<String>(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Compra Sugerida já existe'),
-                content: const Text('Você já criou uma compra sugerida hoje.\nO que deseja fazer?'),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, 'nova'),
-                    child: const Text('Criar Nova', style: TextStyle(color: AppColors.orange)),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, 'sobrepor'),
-                    child: const Text('Sobrepor', style: TextStyle(color: AppColors.red)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context, 'ir'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
-                    child: const Text('Ir para ela', style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              );
-            },
-          );
-
-          if (result == null) {
-            if (mounted) setState(() => _isApplying = false);
-            return;
-          }
-
-          existingLists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          final latest = existingLists.first;
-
-          if (result == 'ir') {
-            if (mounted) setState(() => _isApplying = false);
-            if (mounted) {
-              context.pushReplacementNamed(
-                RouteNames.listDetails,
-                pathParameters: {'id': latest.id},
-                extra: latest,
-              );
-            }
-            return;
-          } else if (result == 'sobrepor') {
-            await ref.read(fairListsRepositoryProvider).deleteList(groupId: groupId, listId: latest.id);
-            nameToCreate = latest.name;
-          } else if (result == 'nova') {
-            int maxSuffix = 1;
-            for (final l in existingLists) {
-              if (l.name == baseName) {
-                if (1 > maxSuffix) maxSuffix = 1;
-              } else if (l.name.startsWith('$baseName - ')) {
-                final suffixStr = l.name.replaceFirst('$baseName - ', '');
-                final suffix = int.tryParse(suffixStr);
-                if (suffix != null && suffix >= maxSuffix) {
-                  maxSuffix = suffix;
-                }
-              }
-            }
-            nameToCreate = '$baseName - ${maxSuffix + 1}';
-          }
+        if (result == null) {
+          if (mounted) setState(() => _isApplying = false);
+          return;
         }
 
-        // Buscamos o mapeamento de categorias para garantir que a nova lista venha organizada
-        final categoryMapping = await ref.read(fairListsRepositoryProvider).getCategoryMapping(groupId);
-        
-        final allPrices = await ref.read(pricesRepositoryProvider).getAllPrices(groupId);
-        final uniqueItemIds = allPrices.map((p) => p.itemId).toSet();
-        final virtualItems = uniqueItemIds.map((itemId) {
-          final p = allPrices.firstWhere((p) => p.itemId == itemId);
-          return ListItem(
-            id: itemId,
-            itemId: itemId,
-            plannedQuantity: 1.0,
-            unit: p.unit,
-            category: categoryMapping[itemId.toLowerCase()] ?? 'Outros',
-          );
-        }).toList();
+        existingLists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        final latest = existingLists.first;
 
-        await ref.read(fairListsRepositoryProvider).createListFromStrategy(
-          groupId: groupId,
-          name: nameToCreate,
-          userId: userId,
-          itemMarketMapping: strategy.itemMarketMapping,
-          items: virtualItems,
-        );
+        if (result == 'ir') {
+          if (mounted) setState(() => _isApplying = false);
+          if (mounted) {
+            context.pushReplacementNamed(
+              RouteNames.listDetails,
+              pathParameters: {'id': latest.id},
+              extra: latest,
+            );
+          }
+          return;
+        } else if (result == 'sobrepor') {
+          await ref.read(fairListsRepositoryProvider).deleteList(groupId: groupId, listId: latest.id);
+          nameToCreate = latest.name;
+        } else if (result == 'nova') {
+          int maxSuffix = 1;
+          for (final l in existingLists) {
+            if (l.name == finalName) {
+              if (1 > maxSuffix) maxSuffix = 1;
+            } else if (l.name.startsWith('$finalName - ')) {
+              final suffixStr = l.name.replaceFirst('$finalName - ', '');
+              final suffix = int.tryParse(suffixStr);
+              if (suffix != null && suffix >= maxSuffix) {
+                maxSuffix = suffix;
+              }
+            }
+          }
+          nameToCreate = '$finalName - ${maxSuffix + 1}';
+        }
       }
+
+      // Usa os itens da lista selecionada diretamente (preserva quantidades)
+      final items = widget.items ?? [];
+
+      // Calcula o pior cenário (maior custo entre todas as estratégias)
+      final worstCaseCost = _allStrategies.isNotEmpty
+          ? _allStrategies.map((s) => s.totalCost).reduce((a, b) => a > b ? a : b)
+          : null;
+
+      final newListId = await ref.read(fairListsRepositoryProvider).createListFromStrategy(
+        groupId: groupId,
+        name: nameToCreate,
+        userId: userId,
+        itemMarketMapping: strategy.itemMarketMapping,
+        items: items,
+        totalCost: strategy.totalCost,
+        worstCaseCost: worstCaseCost,
+      );
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Estratégia aplicada com sucesso!'),
-            backgroundColor: AppColors.green,
-          ),
-        );
-        context.pop();
+        context.pushReplacementNamed(RouteNames.suggestedPurchases);
       }
     } catch (e) {
       if (mounted) {

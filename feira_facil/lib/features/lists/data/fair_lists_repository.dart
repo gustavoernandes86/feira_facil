@@ -428,16 +428,25 @@ class FairListsRepository {
     required String userId,
     required Map<String, String> itemMarketMapping, // itemId -> marketId (para análise global)
     required List<ListItem> items,
+    double? totalCost,
+    double? worstCaseCost,
   }) async {
     try {
       // 1. Criar a lista
-      final listId = await createList(
-        groupId: groupId,
-        name: name,
-        color: const Color(0xFF4CAF50),
-        userId: userId,
-        isSuggested: true,
-      );
+      final docRef = _listsRef(groupId).doc();
+      await docRef.set({
+        'name': name,
+        'color': const Color(0xFF2E7D32).value,
+        'status': 'ativa',
+        'budget': null,
+        'activeMarketId': null,
+        'isSuggested': true,
+        'createdAt': DateTime.now().toIso8601String(),
+        'createdBy': userId,
+        if (totalCost != null) 'totalCost': totalCost,
+        if (worstCaseCost != null) 'worstCaseCost': worstCaseCost,
+      });
+      final listId = docRef.id;
 
       // 2. Adicionar itens
       final batch = _firestore.batch();
@@ -445,8 +454,8 @@ class FairListsRepository {
         final marketId = itemMarketMapping[item.id];
         if (marketId == null) continue; // Pula itens sem preço na estratégia
 
-        final docRef = _listItemsRef(groupId, listId).doc();
-        batch.set(docRef, {
+        final itemDocRef = _listItemsRef(groupId, listId).doc();
+        batch.set(itemDocRef, {
           'itemId': item.itemId,
           'plannedQuantity': item.plannedQuantity,
           'cartQuantity': 0.0,
@@ -461,6 +470,64 @@ class FairListsRepository {
       return listId;
     } catch (e) {
       throw Exception('Erro ao criar lista da estratégia: $e');
+    }
+  }
+
+  /// Busca informações completas dos itens (quantidade, unidade, categoria)
+  /// de todas as listas manuais do grupo.
+  /// Retorna um mapa de itemId (lowercase) -> {quantity, unit, category}
+  /// Se um item aparece em múltiplas listas, usa a maior quantidade encontrada.
+  Future<Map<String, Map<String, dynamic>>> getItemInfoMapping(String groupId) async {
+    try {
+      // Busca todas as listas não sugeridas
+      final listsSnapshot = await _listsRef(groupId)
+          .where('isSuggested', isEqualTo: false)
+          .get();
+      
+      // Fallback: busca listas que não possuem o campo isSuggested (listas antigas)
+      final allListsSnapshot = await _listsRef(groupId).get();
+      
+      final listIds = <String>{};
+      for (var doc in listsSnapshot.docs) {
+        listIds.add(doc.id);
+      }
+      // Inclui listas que não possuem o campo isSuggested (são manuais por padrão)
+      for (var doc in allListsSnapshot.docs) {
+        if (doc.data()['isSuggested'] != true) {
+          listIds.add(doc.id);
+        }
+      }
+
+      final mapping = <String, Map<String, dynamic>>{};
+      
+      for (final listId in listIds) {
+        final itemsSnapshot = await _listItemsRef(groupId, listId).get();
+        for (var doc in itemsSnapshot.docs) {
+          final data = doc.data();
+          final itemId = (data['itemId'] as String?)?.trim();
+          if (itemId == null) continue;
+          
+          final key = itemId.toLowerCase();
+          final qty = (data['plannedQuantity'] as num?)?.toDouble() ?? 1.0;
+          final unit = data['unit'] as String? ?? 'un';
+          final category = data['category'] as String? ?? 'Outros';
+          
+          // Se já existe, usa a maior quantidade
+          if (mapping.containsKey(key)) {
+            final existingQty = (mapping[key]!['quantity'] as num).toDouble();
+            if (qty > existingQty) {
+              mapping[key] = {'quantity': qty, 'unit': unit, 'category': category};
+            }
+          } else {
+            mapping[key] = {'quantity': qty, 'unit': unit, 'category': category};
+          }
+        }
+      }
+      
+      return mapping;
+    } catch (e) {
+      print('[DEBUG] getItemInfoMapping: Erro: $e');
+      return {};
     }
   }
 

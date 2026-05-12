@@ -11,6 +11,8 @@ import 'package:feira_facil/features/lists/presentation/fair_lists_controller.da
 import 'package:feira_facil/features/groups/presentation/group_controller.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:feira_facil/features/lists/domain/list_item.dart';
+import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
+import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,6 +26,34 @@ class MarketDetailScreen extends ConsumerStatefulWidget {
 
 class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
   FairList? _selectedList;
+
+  Future<void> _showComparisonSetup() async {
+    final result = await showModalBottomSheet<ComparisonSetup>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ComparisonSetupModal(),
+    );
+    
+    if (result == null || !mounted) return;
+    
+    final groupId = ref.read(currentGroupIdProvider);
+    if (groupId == null) return;
+    
+    final repo = ref.read(fairListsRepositoryProvider);
+    final itemsSnapshot = await repo.listItemsStream(groupId, result.selectedList.id).first;
+    
+    if (!mounted) return;
+    
+    context.pushNamed(
+      RouteNames.listCompare,
+      extra: {
+        'fairList': result.selectedList,
+        'items': itemsSnapshot,
+        'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +76,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
           IconButton(
             icon: const Icon(Icons.analytics_outlined, color: Colors.white),
             tooltip: 'Comparar Preços',
-            onPressed: () => context.pushNamed(RouteNames.listCompare),
+            onPressed: () => _showComparisonSetup(),
           ),
         ],
       ),
