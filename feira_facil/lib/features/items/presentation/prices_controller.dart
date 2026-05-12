@@ -185,3 +185,9 @@ class PricesController extends AsyncNotifier<void> {
     return currentTierPrice - nextTierPrice;
   }
 }
+
+/// Obtém todos os preços do grupo para otimização de consultas em lote
+final allPricesProvider = FutureProvider.family<List<Price>, String>((ref, groupId) {
+  final repository = ref.watch(pricesRepositoryProvider);
+  return repository.getAllPrices(groupId);
+});

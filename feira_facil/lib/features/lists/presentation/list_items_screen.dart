@@ -12,6 +12,8 @@ import 'package:feira_facil/features/markets/presentation/markets_controller.dar
 import 'package:feira_facil/features/markets/domain/market.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/utils/unit_utils.dart';
+import 'package:feira_facil/features/items/domain/price.dart';
+import 'package:feira_facil/features/items/presentation/prices_controller.dart';
 
 class ListItemsScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -25,6 +27,8 @@ class ListItemsScreen extends ConsumerStatefulWidget {
 
 class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
   String _searchQuery = '';
+  final Set<String> _collapsedGroups = {};
+  final Set<String> _collapsedCategories = {};
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +37,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
     final itemsAsync = ref.watch(listItemsStreamProvider((groupId: groupId, listId: widget.listId)));
     final marketsAsync = ref.watch(marketsStreamProvider(groupId));
+    final allPricesAsync = ref.watch(allPricesProvider(groupId));
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -120,64 +125,184 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
           if (filteredItems.isEmpty) return _buildEmptyState();
 
-          // Agrupar itens por categoria
+          final isSuggested = widget.listContext?.isSuggested ?? false;
+          final uniqueMarketIds = filteredItems
+              .map((i) => i.selectedMarketId)
+              .where((id) => id != null && id.isNotEmpty)
+              .toSet();
+          final groupByMarket = isSuggested && uniqueMarketIds.length > 1;
+
+          // Agrupar itens
           final groupedItems = <String, List<ListItem>>{};
-          for (final item in filteredItems) {
-            final cat = item.category;
-            if (!groupedItems.containsKey(cat)) {
-              groupedItems[cat] = [];
+          
+          if (groupByMarket) {
+            for (final item in filteredItems) {
+              final marketId = item.selectedMarketId;
+              final marketName = marketId != null && marketId.isNotEmpty
+                  ? (marketsAsync.value?.firstWhere((m) => m.id == marketId, orElse: () => Market(id: '', name: 'Desconhecido', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now())).name ?? 'Desconhecido')
+                  : 'Sem Mercado';
+                  
+              if (!groupedItems.containsKey(marketName)) {
+                groupedItems[marketName] = [];
+              }
+              groupedItems[marketName]!.add(item);
             }
-            groupedItems[cat]!.add(item);
+          } else {
+            for (final item in filteredItems) {
+              final cat = item.category;
+              if (!groupedItems.containsKey(cat)) {
+                groupedItems[cat] = [];
+              }
+              groupedItems[cat]!.add(item);
+            }
           }
 
-          // Ordernar as categorias pela ordem do AppCategories
-          final sortedCategories = groupedItems.keys.toList()..sort((a, b) {
-            final indexA = AppCategories.indexWhere((c) => c.name == a);
-            final indexB = AppCategories.indexWhere((c) => c.name == b);
-            if (indexA != -1 && indexB != -1) return indexA.compareTo(indexB);
-            if (indexA != -1) return -1;
-            if (indexB != -1) return 1;
-            return a.compareTo(b);
-          });
+          final sortedGroups = groupedItems.keys.toList();
+          sortedGroups.sort();
 
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-            itemCount: sortedCategories.length,
+            itemCount: sortedGroups.length,
             itemBuilder: (context, index) {
-              final categoryName = sortedCategories[index];
-              final categoryItems = groupedItems[categoryName]!;
-              final catInfo = AppCategories.firstWhere(
-                (c) => c.name == categoryName, 
-                orElse: () => AppCategories.last,
-              );
+              final groupName = sortedGroups[index];
+              final groupItems = groupedItems[groupName]!;
+              
+              // Ordena os itens alfabeticamente dentro do grupo
+              groupItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
+              
+              IconData headerIcon;
+              Color headerColor;
+
+              if (groupByMarket) {
+                headerIcon = Icons.storefront;
+                headerColor = AppColors.orange;
+              } else {
+                final catInfo = AppCategories.firstWhere(
+                  (c) => c.name == groupName, 
+                  orElse: () => AppCategories.last,
+                );
+                headerIcon = catInfo.icon;
+                headerColor = catInfo.color;
+              }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 12, left: 4),
-                    child: Row(
-                      children: [
-                        Icon(catInfo.icon, size: 20, color: catInfo.color),
-                        const SizedBox(width: 8),
-                        Text(
-                          categoryName,
-                          style: GoogleFonts.fraunces(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textBody,
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (_collapsedGroups.contains(groupName)) {
+                          _collapsedGroups.remove(groupName);
+                        } else {
+                          _collapsedGroups.add(groupName);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 12, left: 4, right: 8),
+                      child: Row(
+                        children: [
+                          Icon(headerIcon, size: 20, color: headerColor),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              groupName,
+                              style: GoogleFonts.fraunces(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textBody,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          Icon(
+                            _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
+                            color: AppColors.textTertiary,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  ...categoryItems.map((item) {
-                    final market = marketsAsync.value?.firstWhere(
-                      (m) => m.id == item.selectedMarketId,
-                      orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
-                    );
-                    return _buildItemCard(context, item, groupId, catInfo, market);
-                  }),
+                  if (!_collapsedGroups.contains(groupName))
+                    if (groupByMarket)
+                      ...(() {
+                        final catGroups = <String, List<ListItem>>{};
+                        for (final item in groupItems) {
+                          catGroups.putIfAbsent(item.category, () => []).add(item);
+                        }
+                        
+                        final sortedCats = catGroups.keys.toList()..sort();
+                        
+                        return sortedCats.expand((catName) {
+                          final catItems = catGroups[catName]!;
+                          catItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
+                          final catInfo = AppCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.last);
+                          
+                          final catKey = '${groupName}_$catName';
+                          final isCatCollapsed = _collapsedCategories.contains(catKey);
+
+                          return [
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isCatCollapsed) {
+                                    _collapsedCategories.remove(catKey);
+                                  } else {
+                                    _collapsedCategories.add(catKey);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(catInfo.icon, size: 16, color: catInfo.color),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        catName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      isCatCollapsed ? Icons.expand_more : Icons.expand_less,
+                                      size: 18,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (!isCatCollapsed)
+                              ...catItems.map((item) {
+                                final market = marketsAsync.value?.firstWhere(
+                                  (m) => m.id == item.selectedMarketId,
+                                  orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
+                                );
+                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value);
+                              }),
+                          ];
+                        });
+                      })()
+                    else
+                      ...groupItems.map((item) {
+                        final market = marketsAsync.value?.firstWhere(
+                          (m) => m.id == item.selectedMarketId,
+                          orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
+                        );
+                        
+                        final catInfo = AppCategories.firstWhere(
+                          (c) => c.name == item.category, 
+                          orElse: () => AppCategories.last,
+                        );
+
+                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value);
+                      }),
                 ],
               );
             },
@@ -221,7 +346,8 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market) {
+  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market, bool groupByMarket, List<Price>? allPrices) {
+
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.endToStart,
@@ -280,7 +406,46 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                       decoration: item.marked ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  if (market != null && market.id.isNotEmpty)
+                  Builder(
+                    builder: (context) {
+                      Price? itemPrice;
+                      if (allPrices != null) {
+                        final pricesForItem = allPrices.where((p) => p.itemId == item.itemId).toList();
+                        if (item.selectedMarketId != null && item.selectedMarketId!.isNotEmpty) {
+                          final marketPrices = pricesForItem.where((p) => p.marketId == item.selectedMarketId).toList();
+                          if (marketPrices.isNotEmpty) {
+                            marketPrices.sort((a, b) => b.registeredAt.compareTo(a.registeredAt));
+                            itemPrice = marketPrices.first;
+                          }
+                        }
+                        
+                        if (itemPrice == null && pricesForItem.isNotEmpty) {
+                          pricesForItem.sort((a, b) {
+                            if (a.tiers.isEmpty) return 1;
+                            if (b.tiers.isEmpty) return -1;
+                            return a.tiers.first.pricePerUnit.compareTo(b.tiers.first.pricePerUnit);
+                          });
+                          itemPrice = pricesForItem.first;
+                        }
+                      }
+
+                      if (itemPrice != null) {
+                        final cost = itemPrice!.calculateBestPrice(item.plannedQuantity);
+                        final unitPrice = itemPrice!.tiers.isNotEmpty ? itemPrice!.tiers.first.pricePerUnit : 0.0;
+                        final unitPriceStr = unitPrice.toStringAsFixed(2).replaceAll('.', ',');
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'R\$ ${cost.toStringAsFixed(2).replaceAll('.', ',')} (R\$ $unitPriceStr / ${itemPrice!.unit.abbreviation})',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.green),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                  if (market != null && market.id.isNotEmpty && !groupByMarket)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
@@ -293,11 +458,6 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                           ),
                         ],
                       ),
-                    )
-                  else
-                    Text(
-                      item.category,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
                     ),
                 ],
               ),

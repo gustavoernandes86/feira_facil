@@ -324,6 +324,22 @@ class FairListsRepository {
     }
   }
 
+  /// Busca listas sugeridas por nome base
+  Future<List<FairList>> getSuggestedListsByBaseName(String groupId, String baseName) async {
+    try {
+      final snapshot = await _listsRef(groupId)
+          .where('isSuggested', isEqualTo: true)
+          .get();
+          
+      return snapshot.docs
+          .map((doc) => FairList.fromJson({...doc.data(), 'id': doc.id}))
+          .where((list) => list.name.startsWith(baseName))
+          .toList();
+    } catch (e) {
+      throw Exception('Erro ao buscar listas sugeridas: $e');
+    }
+  }
+
   /// Atualiza a quantidade no carrinho
   Future<void> updateCartQuantity({
     required String groupId,

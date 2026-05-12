@@ -29,7 +29,7 @@ class FairList {
     return FairList(
       id: json['id'] as String,
       name: json['name'] as String,
-      color: Color(json['color'] as int? ?? 0xFFFFF8F2),
+      color: Color((json['color'] as num?)?.toInt() ?? 0xFFFFF8F2),
       status: json['status'] as String? ?? 'ativa',
       budget: (json['budget'] as num?)?.toDouble(),
       activeMarketId: json['activeMarketId'] as String?,

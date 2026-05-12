@@ -9,6 +9,7 @@ import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feira_facil/features/items/data/prices_repository.dart';
+import 'package:feira_facil/core/router/app_router.dart';
 
 final listComparisonFutureProvider = FutureProvider.autoDispose.family<List<PurchaseStrategy>, List<ListItem>>((ref, items) async {
   final groupId = ref.watch(currentGroupIdProvider);
@@ -322,6 +323,77 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
         // MODO: Gerar nova lista global
         final userId = ref.read(currentUserProfileProvider).value?.id ?? '';
         
+        final baseName = 'Compra Sugerida - ${DateTime.now().day}/${DateTime.now().month}';
+        final existingLists = await ref.read(fairListsRepositoryProvider).getSuggestedListsByBaseName(groupId, baseName);
+        
+        String nameToCreate = baseName;
+        
+        if (existingLists.isNotEmpty) {
+          if (!mounted) return;
+          final result = await showDialog<String>(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Compra Sugerida já existe'),
+                content: const Text('Você já criou uma compra sugerida hoje.\nO que deseja fazer?'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'nova'),
+                    child: const Text('Criar Nova', style: TextStyle(color: AppColors.orange)),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'sobrepor'),
+                    child: const Text('Sobrepor', style: TextStyle(color: AppColors.red)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, 'ir'),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+                    child: const Text('Ir para ela', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (result == null) {
+            if (mounted) setState(() => _isApplying = false);
+            return;
+          }
+
+          existingLists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          final latest = existingLists.first;
+
+          if (result == 'ir') {
+            if (mounted) setState(() => _isApplying = false);
+            if (mounted) {
+              context.pushReplacementNamed(
+                RouteNames.listDetails,
+                pathParameters: {'id': latest.id},
+                extra: latest,
+              );
+            }
+            return;
+          } else if (result == 'sobrepor') {
+            await ref.read(fairListsRepositoryProvider).deleteList(groupId: groupId, listId: latest.id);
+            nameToCreate = latest.name;
+          } else if (result == 'nova') {
+            int maxSuffix = 1;
+            for (final l in existingLists) {
+              if (l.name == baseName) {
+                if (1 > maxSuffix) maxSuffix = 1;
+              } else if (l.name.startsWith('$baseName - ')) {
+                final suffixStr = l.name.replaceFirst('$baseName - ', '');
+                final suffix = int.tryParse(suffixStr);
+                if (suffix != null && suffix >= maxSuffix) {
+                  maxSuffix = suffix;
+                }
+              }
+            }
+            nameToCreate = '$baseName - ${maxSuffix + 1}';
+          }
+        }
+
         // Buscamos o mapeamento de categorias para garantir que a nova lista venha organizada
         final categoryMapping = await ref.read(fairListsRepositoryProvider).getCategoryMapping(groupId);
         
@@ -340,7 +412,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
 
         await ref.read(fairListsRepositoryProvider).createListFromStrategy(
           groupId: groupId,
-          name: 'Compra Sugerida - ${DateTime.now().day}/${DateTime.now().month}',
+          name: nameToCreate,
           userId: userId,
           itemMarketMapping: strategy.itemMarketMapping,
           items: virtualItems,
