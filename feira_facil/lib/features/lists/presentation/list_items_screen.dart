@@ -30,6 +30,42 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
   final Set<String> _collapsedGroups = {};
   final Set<String> _collapsedCategories = {};
 
+  Price? _getItemPrice(ListItem item, List<Price>? allPrices) {
+    if (allPrices == null) return null;
+    Price? itemPrice;
+    final pricesForItem = allPrices.where((p) => p.itemId == item.itemId).toList();
+    if (item.selectedMarketId != null && item.selectedMarketId!.isNotEmpty) {
+      final marketPrices = pricesForItem.where((p) => p.marketId == item.selectedMarketId).toList();
+      if (marketPrices.isNotEmpty) {
+        marketPrices.sort((a, b) => b.registeredAt.compareTo(a.registeredAt));
+        itemPrice = marketPrices.first;
+      }
+    }
+    
+    if (itemPrice == null && pricesForItem.isNotEmpty) {
+      pricesForItem.sort((a, b) {
+        if (a.tiers.isEmpty) return 1;
+        if (b.tiers.isEmpty) return -1;
+        return a.tiers.first.pricePerUnit.compareTo(b.tiers.first.pricePerUnit);
+      });
+      itemPrice = pricesForItem.first;
+    }
+    return itemPrice;
+  }
+
+  double _calculateTotalCost(List<ListItem> items, List<Price>? allPrices) {
+    double total = 0.0;
+    for (final item in items) {
+      if (item.marked) {
+        final price = _getItemPrice(item, allPrices);
+        if (price != null) {
+          total += price.calculateBestPrice(item.plannedQuantity);
+        }
+      }
+    }
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupId = ref.watch(currentGroupIdProvider);
@@ -215,6 +251,15 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                               ),
                             ),
                           ),
+                          Text(
+                            'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Icon(
                             _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
                             color: AppColors.textTertiary,
@@ -269,6 +314,15 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                                         ),
                                       ),
                                     ),
+                                    Text(
+                                      'R\$ ${_calculateTotalCost(catItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.green,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
                                     Icon(
                                       isCatCollapsed ? Icons.expand_more : Icons.expand_less,
                                       size: 18,
@@ -408,26 +462,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                   ),
                   Builder(
                     builder: (context) {
-                      Price? itemPrice;
-                      if (allPrices != null) {
-                        final pricesForItem = allPrices.where((p) => p.itemId == item.itemId).toList();
-                        if (item.selectedMarketId != null && item.selectedMarketId!.isNotEmpty) {
-                          final marketPrices = pricesForItem.where((p) => p.marketId == item.selectedMarketId).toList();
-                          if (marketPrices.isNotEmpty) {
-                            marketPrices.sort((a, b) => b.registeredAt.compareTo(a.registeredAt));
-                            itemPrice = marketPrices.first;
-                          }
-                        }
-                        
-                        if (itemPrice == null && pricesForItem.isNotEmpty) {
-                          pricesForItem.sort((a, b) {
-                            if (a.tiers.isEmpty) return 1;
-                            if (b.tiers.isEmpty) return -1;
-                            return a.tiers.first.pricePerUnit.compareTo(b.tiers.first.pricePerUnit);
-                          });
-                          itemPrice = pricesForItem.first;
-                        }
-                      }
+                      final itemPrice = _getItemPrice(item, allPrices);
 
                       if (itemPrice != null) {
                         final cost = itemPrice!.calculateBestPrice(item.plannedQuantity);
