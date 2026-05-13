@@ -7,6 +7,7 @@ import 'package:feira_facil/features/lists/presentation/fair_lists_controller.da
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:feira_facil/features/markets/presentation/markets_controller.dart';
 import 'package:feira_facil/features/markets/domain/market.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 /// Resultado da seleção do modal de configuração da comparação
 class ComparisonSetup {
@@ -39,9 +40,9 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
         : const AsyncValue<List<Market>>.loading();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.colorBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
@@ -58,12 +59,12 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.1),
+                    color: context.colorOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.analytics_outlined, color: AppColors.orange, size: 24),
+                  child: Icon(Icons.analytics_outlined, color: context.colorOrange, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -77,9 +78,9 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Escolha a lista e os mercados para comparar',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.colorTextSecondary),
                       ),
                     ],
                   ),
@@ -94,7 +95,7 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
@@ -103,23 +104,23 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
               data: (lists) {
                 if (lists.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cream,
+                      color: context.colorBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Nenhuma lista encontrada. Crie uma lista primeiro.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.colorTextSecondary),
                     ),
                   );
                 }
                 return DropdownButtonFormField<String>(
                   initialValue: _selectedList?.id,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.list_alt_rounded, size: 20, color: AppColors.green),
+                    prefixIcon: Icon(Icons.list_alt_rounded, size: 20, color: context.colorGreen),
                     filled: true,
-                    fillColor: AppColors.cream.withValues(alpha: 0.5),
+                    fillColor: context.colorBackground.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -153,14 +154,14 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Selecione os mercados que deseja incluir na comparação',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: context.colorTextSecondary),
             ),
             const SizedBox(height: 10),
             marketsAsync.when(
@@ -169,12 +170,12 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cream,
+                      color: context.colorBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Nenhum mercado cadastrado. Cadastre mercados primeiro.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.colorTextSecondary),
                     ),
                   );
                 }
@@ -200,7 +201,7 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                             Checkbox(
                               value: _selectedMarketIds.length == markets.length && markets.isNotEmpty,
                               tristate: true,
-                              activeColor: AppColors.orange,
+                              activeColor: context.colorOrange,
                               onChanged: (_) {
                                 setState(() {
                                   if (_selectedMarketIds.length == markets.length) {
@@ -217,7 +218,7 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: context.colorTextSecondary,
                               ),
                             ),
                           ],
@@ -244,7 +245,7 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                             children: [
                               Checkbox(
                                 value: isSelected,
-                                activeColor: AppColors.orange,
+                                activeColor: context.colorOrange,
                                 onChanged: (val) {
                                   setState(() {
                                     if (val == true) {
@@ -259,13 +260,13 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.orange.withValues(alpha: 0.1) : AppColors.cream,
+                                  color: isSelected ? context.colorOrange.withValues(alpha: 0.1) : context.colorBackground,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
                                   Icons.storefront,
                                   size: 18,
-                                  color: isSelected ? AppColors.orange : AppColors.textTertiary,
+                                  color: isSelected ? context.colorOrange : context.colorTextTertiary,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -278,13 +279,13 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
-                                        color: isSelected ? AppColors.textBody : AppColors.textSecondary,
+                                        color: isSelected ? context.colorTextBody : context.colorTextSecondary,
                                       ),
                                     ),
                                     if (market.address.isNotEmpty)
                                       Text(
                                         market.address,
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                                        style: TextStyle(fontSize: 11, color: context.colorTextTertiary),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                   ],
@@ -322,11 +323,11 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.green,
+                backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                disabledBackgroundColor: AppColors.cream2,
+                disabledBackgroundColor: context.colorBorder,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -346,11 +347,11 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
             // Resumo da seleção
             if (_selectedList != null || _selectedMarketIds.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: EdgeInsets.only(top: 4),
                 child: Text(
                   _buildSummaryText(marketsAsync),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                  style: TextStyle(fontSize: 11, color: context.colorTextTertiary),
                 ),
               ),
           ],

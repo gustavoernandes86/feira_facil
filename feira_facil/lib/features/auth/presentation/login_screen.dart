@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -21,7 +22,7 @@ class LoginScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao fazer login: ${next.error}'),
-            backgroundColor: AppColors.red,
+            backgroundColor: context.colorRed,
           ),
         );
       }
@@ -53,7 +54,7 @@ class LoginScreen extends ConsumerWidget {
                   Text(
                     'Bem-vindo ao Feira Fácil!',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.colorTextSecondary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -63,7 +64,7 @@ class LoginScreen extends ConsumerWidget {
                     'Organize suas compras e compare preços\ncom sua família de forma inteligente',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: context.colorTextTertiary,
                       height: 1.5,
                     ),
                   ),
@@ -81,10 +82,10 @@ class LoginScreen extends ConsumerWidget {
                                 .read(authControllerProvider.notifier)
                                 .signInWithGoogle(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.white,
-                        foregroundColor: AppColors.textBody,
-                        side: const BorderSide(
-                          color: AppColors.cream2,
+                        backgroundColor: context.colorCard,
+                        foregroundColor: context.colorTextBody,
+                        side: BorderSide(
+                          color: context.colorBorder,
                           width: 2,
                         ),
                         shape: RoundedRectangleBorder(
@@ -120,7 +121,7 @@ class LoginScreen extends ConsumerWidget {
                     'Fazemos login apenas com sua conta Google\npara maior segurança e privacidade',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textTertiary,
+                      color: context.colorTextTertiary,
                       height: 1.4,
                     ),
                   ),
@@ -129,18 +130,21 @@ class LoginScreen extends ConsumerWidget {
 
                   // Features preview
                   _buildFeatureItem(
+                    context: context,
                     icon: '🛒',
                     title: 'Listas Inteligentes',
                     description: 'Organize suas compras por categoria',
                   ),
                   const SizedBox(height: 20),
                   _buildFeatureItem(
+                    context: context,
                     icon: '💰',
                     title: 'Compare Preços',
                     description: 'Encontre as melhores ofertas',
                   ),
                   const SizedBox(height: 20),
                   _buildFeatureItem(
+                    context: context,
                     icon: '👨‍👩‍👧‍👦',
                     title: 'Compartilhe',
                     description: 'Sincronize com sua família',
@@ -158,9 +162,9 @@ class LoginScreen extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(bottom: 28),
-      decoration: const BoxDecoration(
-        color: AppColors.green,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorGreenDark : context.colorGreen,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
@@ -193,6 +197,7 @@ class LoginScreen extends ConsumerWidget {
   }
 
   Widget _buildFeatureItem({
+    required BuildContext context,
     required String icon,
     required String title,
     required String description,
@@ -207,18 +212,18 @@ class LoginScreen extends ConsumerWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textBody,
+                  color: context.colorTextBody,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textTertiary,
+                  color: context.colorTextTertiary,
                 ),
               ),
             ],

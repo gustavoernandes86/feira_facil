@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 40.0),
@@ -34,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 8,
                     margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: isCurrent ? AppColors.orange : AppColors.cream2,
+                      color: isCurrent ? context.colorOrange : context.colorBorder,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   );
@@ -125,9 +126,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               TextSpan(text: title),
               TextSpan(
                 text: titleEmphasis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontStyle: FontStyle.italic,
-                  color: AppColors.orange,
+                  color: context.colorOrange,
                 ),
               ),
             ],
@@ -138,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           sub,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.colorTextSecondary,
                 height: 1.5,
               ),
         ),
@@ -157,14 +158,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.cream2,
+        color: context.colorBorder,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
-          color: AppColors.textSecondary,
+          color: context.colorTextSecondary,
           fontWeight: FontWeight.w500,
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class PremiumHeader extends StatelessWidget {
   final String title;
@@ -23,9 +24,9 @@ class PremiumHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: height + MediaQuery.of(context).padding.top,
-      decoration: const BoxDecoration(
-        color: AppColors.green,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorGreenDark : context.colorGreen,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),

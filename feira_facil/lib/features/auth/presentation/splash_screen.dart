@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/router/app_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -51,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.green,
+      backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
       body: Stack(
         children: [
           // Dot Pattern Background
@@ -69,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
               width: 200,
               height: 200,
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.15),
+                color: context.colorOrange.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
             ),

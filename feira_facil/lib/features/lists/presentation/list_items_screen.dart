@@ -15,6 +15,7 @@ import 'package:feira_facil/core/utils/unit_utils.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/items/presentation/prices_controller.dart';
 import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class ListItemsScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -77,9 +78,9 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     final allPricesAsync = ref.watch(allPricesProvider(groupId));
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.green,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
         foregroundColor: Colors.white,
         title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(
           fontWeight: FontWeight.w700,
@@ -217,7 +218,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
               if (groupByMarket) {
                 headerIcon = Icons.storefront;
-                headerColor = AppColors.orange;
+                headerColor = context.colorOrange;
               } else {
                 final catInfo = AppCategories.firstWhere(
                   (c) => c.name == groupName, 
@@ -253,22 +254,22 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                               style: GoogleFonts.fraunces(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textBody,
+                                color: context.colorTextBody,
                               ),
                             ),
                           ),
                           Text(
                             'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.green,
+                              color: context.colorGreen,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Icon(
                             _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
-                            color: AppColors.textTertiary,
+                            color: context.colorTextTertiary,
                           ),
                         ],
                       ),
@@ -313,26 +314,26 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                                     Expanded(
                                       child: Text(
                                         catName,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.textSecondary,
+                                          color: context.colorTextSecondary,
                                         ),
                                       ),
                                     ),
                                     Text(
                                       'R\$ ${_calculateTotalCost(catItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.green,
+                                        color: context.colorGreen,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Icon(
                                       isCatCollapsed ? Icons.expand_more : Icons.expand_less,
                                       size: 18,
-                                      color: AppColors.textTertiary,
+                                      color: context.colorTextTertiary,
                                     ),
                                   ],
                                 ),
@@ -375,7 +376,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         onPressed: () => _showAddItemModal(context, ref, groupId),
         label: const Text('Adicionar Produto', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add),
-        backgroundColor: AppColors.textBody,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
         foregroundColor: Colors.white,
       ),
     );
@@ -395,10 +396,10 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
               style: GoogleFonts.fraunces(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Adicione produtos que você costuma comprar nesta lista.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colorTextSecondary),
             ),
           ],
         ),
@@ -431,16 +432,16 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [AppColors.shadow1],
-          border: Border.all(color: AppColors.cream2),
+          boxShadow: context.shadow1,
+          border: Border.all(color: context.colorBorder),
         ),
         child: Row(
           children: [
             Checkbox(
               value: item.marked,
-              activeColor: AppColors.green,
+              activeColor: context.colorGreen,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               onChanged: (val) {
                 if (val != null) {
@@ -462,7 +463,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                     style: TextStyle(
                       fontSize: 15, 
                       fontWeight: FontWeight.bold, 
-                      color: item.marked ? AppColors.textTertiary : AppColors.textBody,
+                      color: item.marked ? context.colorTextTertiary : context.colorTextBody,
                       decoration: item.marked ? TextDecoration.lineThrough : null,
                     ),
                   ),
@@ -476,10 +477,10 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                         final unitPriceStr = unitPrice.toStringAsFixed(2).replaceAll('.', ',');
                         
                         return Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: EdgeInsets.only(top: 2),
                           child: Text(
                             'R\$ ${cost.toStringAsFixed(2).replaceAll('.', ',')} (R\$ $unitPriceStr / ${itemPrice!.unit.abbreviation})',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.green),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.colorGreen),
                           ),
                         );
                       }
@@ -488,14 +489,14 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                   ),
                   if (market != null && market.id.isNotEmpty && !groupByMarket)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.storefront, size: 12, color: AppColors.orange),
-                          const SizedBox(width: 4),
+                          Icon(Icons.storefront, size: 12, color: context.colorOrange),
+                          SizedBox(width: 4),
                           Text(
                             'Comprar no ${market.name}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.orange),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colorOrange),
                           ),
                         ],
                       ),
@@ -505,7 +506,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.cream,
+                color: context.colorBackground,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -547,7 +548,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
-        child: Icon(icon, size: 16, color: AppColors.textSecondary),
+        child: Icon(icon, size: 16, color: context.colorTextSecondary),
       ),
     );
   }
@@ -566,9 +567,9 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              decoration: BoxDecoration(
+                color: context.colorBackground,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,

@@ -15,6 +15,7 @@ import 'markets_controller.dart';
 import '../../lists/data/fair_lists_repository.dart';
 import '../../lists/presentation/widgets/comparison_setup_modal.dart';
 import '../../../core/router/app_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class MarketsScreen extends ConsumerStatefulWidget {
   const MarketsScreen({super.key});
@@ -62,7 +63,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
         : const AsyncValue<List<Market>>.loading();
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       body: Column(
         children: [
           PremiumHeader(
@@ -117,7 +118,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         icon: const Icon(Icons.storefront),
-        backgroundColor: AppColors.textBody,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
         foregroundColor: Colors.white,
       ),
     );
@@ -129,19 +130,19 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cream2),
-          boxShadow: [AppColors.shadow1],
+          border: Border.all(color: context.colorBorder),
+          boxShadow: context.shadow1,
         ),
         child: TextField(
           onChanged: (val) => setState(() => _searchQuery = val),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Pesquisar mercados...',
-            hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 14),
+            hintStyle: TextStyle(color: context.colorTextTertiary, fontSize: 14),
             prefixIcon: Icon(
               Icons.search,
-              color: AppColors.textTertiary,
+              color: context.colorTextTertiary,
               size: 20,
             ),
             border: InputBorder.none,
@@ -168,10 +169,10 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Cadastre seus mercados favoritos para comparar preços.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.colorTextSecondary),
         ),
       ],
     );
@@ -231,7 +232,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textTertiary,
+                  color: context.colorTextTertiary,
                   letterSpacing: 1.1,
                 ),
               ),
@@ -272,21 +273,21 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                       elevation: 4,
                       borderRadius: BorderRadius.circular(12),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
+                        constraints: BoxConstraints(maxHeight: 220),
                         child: ListView.separated(
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           itemCount: options.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.cream2),
+                          separatorBuilder: (_, __) => Divider(height: 1, color: context.colorBorder),
                           itemBuilder: (context, index) {
                             final pred = options.elementAt(index);
                             return InkWell(
                               onTap: () => onSelected(pred),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.location_pin, color: AppColors.orange, size: 18),
+                                    Icon(Icons.location_pin, color: context.colorOrange, size: 18),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
@@ -294,12 +295,12 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                                         children: [
                                           Text(
                                             pred.mainText,
-                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                                           ),
                                           if (pred.secondaryText.isNotEmpty)
                                             Text(
                                               pred.secondaryText,
-                                              style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                                              style: TextStyle(fontSize: 12, color: context.colorTextTertiary),
                                             ),
                                         ],
                                       ),
@@ -319,15 +320,15 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
               // Confirmação de endereço selecionado
               if (selectedLat != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: EdgeInsets.only(top: 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle, color: AppColors.green, size: 16),
+                      Icon(Icons.check_circle, color: context.colorGreen, size: 16),
                       const SizedBox(width: 6),
-                      const Text(
+                      Text(
                         'Localização confirmada',
                         style: TextStyle(
-                          color: AppColors.green,
+                          color: context.colorGreen,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -383,10 +384,10 @@ class _MarketListItem extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [AppColors.shadow1],
-        border: Border.all(color: AppColors.cream2),
+        boxShadow: context.shadow1,
+        border: Border.all(color: context.colorBorder),
       ),
       child: InkWell(
         onTap: () => Navigator.push(
@@ -402,11 +403,11 @@ class _MarketListItem extends ConsumerWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: AppColors.cream,
+              color: context.colorBackground,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(
-              child: Icon(Icons.storefront, color: AppColors.orange, size: 28),
+            child: Center(
+              child: Icon(Icons.storefront, color: context.colorOrange, size: 28),
             ),
           ),
           title: Text(
@@ -416,9 +417,9 @@ class _MarketListItem extends ConsumerWidget {
           subtitle: market.address.isNotEmpty
               ? Text(
                   market.address,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textTertiary,
+                    color: context.colorTextTertiary,
                   ),
                 )
               : null,

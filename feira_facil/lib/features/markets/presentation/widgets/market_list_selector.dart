@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class MarketListSelector extends ConsumerWidget {
   final List<FairList> lists;
@@ -18,11 +19,11 @@ class MarketListSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (lists.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
           'Nenhuma lista encontrada. Crie uma para começar a registrar preços.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.colorTextSecondary),
         ),
       );
     }
@@ -39,17 +40,17 @@ class MarketListSelector extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cream2),
-        boxShadow: const [AppColors.shadow1],
+        border: Border.all(color: context.colorBorder),
+        boxShadow: context.shadow1,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: currentSelected?.id,
-          hint: const Text('Selecione uma lista...'),
+          hint: Text('Selecione uma lista...'),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.orange),
+          icon: Icon(Icons.keyboard_arrow_down, color: context.colorOrange),
           items: lists.map((list) {
             return DropdownMenuItem<String>(
               value: list.id,

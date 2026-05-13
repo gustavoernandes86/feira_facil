@@ -7,6 +7,7 @@ import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 String _fmtBRL(double? value) {
   if (value == null) return '—';
@@ -78,11 +79,11 @@ class SavingsScreen extends ConsumerWidget {
         : const AsyncValue<SavingsSummary>.loading();
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       body: summaryAsync.when(
         data: (summary) => _buildBody(context, summary),
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.green)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.colorGreen)),
         error: (e, _) => Center(child: Text('Erro: $e')),
       ),
     );
@@ -108,8 +109,8 @@ class SavingsScreen extends ConsumerWidget {
           sliver: SliverToBoxAdapter(
             child: Row(
               children: [
-                const Icon(Icons.history_rounded,
-                    size: 16, color: AppColors.textSecondary),
+                Icon(Icons.history_rounded,
+                    size: 16, color: context.colorTextSecondary),
                 const SizedBox(width: 8),
                 Text(
                   'HISTÓRICO DE COMPRAS',
@@ -117,14 +118,14 @@ class SavingsScreen extends ConsumerWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: AppColors.textSecondary,
+                    color: context.colorTextSecondary,
                   ),
                 ),
                 const Spacer(),
                 Text(
                   '${summary.lists.length} compra${summary.lists.length != 1 ? 's' : ''}',
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textTertiary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.colorTextTertiary),
                 ),
               ],
             ),
@@ -256,7 +257,7 @@ class SavingsScreen extends ConsumerWidget {
           Expanded(
             child: _SummaryCard(
               icon: Icons.shopping_bag_outlined,
-              iconColor: AppColors.orange,
+              iconColor: context.colorOrange,
               label: 'Compras\nRealizadas',
               value: '${summary.lists.length}',
               sub: '${summary.purchasesWithData} com dados',
@@ -266,7 +267,7 @@ class SavingsScreen extends ConsumerWidget {
           Expanded(
             child: _SummaryCard(
               icon: Icons.savings_outlined,
-              iconColor: AppColors.green,
+              iconColor: context.colorGreen,
               label: 'Economia\nMédia',
               value: summary.purchasesWithData > 0
                   ? _fmtBRL(summary.avgSavingsPerPurchase)
@@ -288,11 +289,11 @@ class SavingsScreen extends ConsumerWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.greenLight,
+              color: context.colorGreenLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.savings_outlined,
-                size: 40, color: AppColors.green),
+            child: Icon(Icons.savings_outlined,
+                size: 40, color: context.colorGreen),
           ),
           const SizedBox(height: 20),
           Text(
@@ -302,11 +303,11 @@ class SavingsScreen extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Gere uma Compra Sugerida na tela de Comparação para começar a acompanhar sua economia.',
             textAlign: TextAlign.center,
             style:
-                TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.5),
+                TextStyle(color: context.colorTextSecondary, fontSize: 14, height: 1.5),
           ),
         ],
       ),
@@ -338,8 +339,8 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [AppColors.shadow2],
-        border: Border.all(color: AppColors.cream2),
+        boxShadow: context.shadow2,
+        border: Border.all(color: context.colorBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,20 +355,20 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textTertiary,
+                  color: context.colorTextTertiary,
                   fontWeight: FontWeight.bold,
                   height: 1.3)),
           const SizedBox(height: 4),
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textBody)),
+                  color: context.colorTextBody)),
           Text(sub,
-              style: const TextStyle(
-                  fontSize: 10, color: AppColors.textSecondary)),
+              style: TextStyle(
+                  fontSize: 10, color: context.colorTextSecondary)),
         ],
       ),
     );
@@ -405,8 +406,8 @@ class _PurchaseCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: const [AppColors.shadow2],
-          border: Border.all(color: AppColors.cream2),
+          boxShadow: context.shadow2,
+          border: Border.all(color: context.colorBorder),
         ),
         child: Padding(
           padding: const EdgeInsets.all(18),
@@ -421,15 +422,15 @@ class _PurchaseCard extends ConsumerWidget {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: hasSavings
-                          ? AppColors.greenLight
-                          : AppColors.cream,
+                          ? context.colorGreenLight
+                          : context.colorBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       hasSavings
                           ? Icons.savings_outlined
                           : Icons.shopping_cart_outlined,
-                      color: hasSavings ? AppColors.green : AppColors.textTertiary,
+                      color: hasSavings ? context.colorGreen : context.colorTextTertiary,
                       size: 20,
                     ),
                   ),
@@ -442,18 +443,18 @@ class _PurchaseCard extends ConsumerWidget {
                       children: [
                         Text(
                           list.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: AppColors.textBody),
+                              color: context.colorTextBody),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           dateStr,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.textTertiary),
+                          style: TextStyle(
+                              fontSize: 12, color: context.colorTextTertiary),
                         ),
                       ],
                     ),
@@ -465,7 +466,7 @@ class _PurchaseCard extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.greenLight,
+                        color: context.colorGreenLight,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -473,15 +474,15 @@ class _PurchaseCard extends ConsumerWidget {
                         children: [
                           Text(
                             '− ${_fmtBRL(savings)}',
-                            style: const TextStyle(
-                                color: AppColors.green,
+                            style: TextStyle(
+                                color: context.colorGreen,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13),
                           ),
                           Text(
                             '${pct.toStringAsFixed(0)}% off',
-                            style: const TextStyle(
-                                color: AppColors.green,
+                            style: TextStyle(
+                                color: context.colorGreen,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600),
                           ),
@@ -493,13 +494,13 @@ class _PurchaseCard extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.cream2.withOpacity(0.5),
+                        color: context.colorBorder.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Sem dados',
                         style: TextStyle(
-                            color: AppColors.textTertiary, fontSize: 11),
+                            color: context.colorTextTertiary, fontSize: 11),
                       ),
                     ),
                 ],
@@ -517,7 +518,7 @@ class _PurchaseCard extends ConsumerWidget {
                       child: _CostPill(
                         label: 'Você pagou',
                         value: _fmtBRL(list.totalCost),
-                        color: AppColors.green,
+                        color: context.colorGreen,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -525,7 +526,7 @@ class _PurchaseCard extends ConsumerWidget {
                       child: _CostPill(
                         label: 'Pior cenário',
                         value: _fmtBRL(list.worstCaseCost),
-                        color: AppColors.textTertiary,
+                        color: context.colorTextTertiary,
                         muted: true,
                       ),
                     ),
@@ -558,7 +559,7 @@ class _CostPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: muted ? AppColors.cream : color.withOpacity(0.08),
+        color: muted ? context.colorBackground : color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -567,14 +568,14 @@ class _CostPill extends StatelessWidget {
           Text(label,
               style: TextStyle(
                   fontSize: 10,
-                  color: muted ? AppColors.textTertiary : color,
+                  color: muted ? context.colorTextTertiary : color,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
           Text(value,
               style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: muted ? AppColors.textSecondary : color)),
+                  color: muted ? context.colorTextSecondary : color)),
         ],
       ),
     );

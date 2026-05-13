@@ -10,6 +10,7 @@ import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class SuggestedPurchasesScreen extends ConsumerWidget {
   const SuggestedPurchasesScreen({super.key});
@@ -51,18 +52,18 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
         : const AsyncValue<List<FairList>>.loading();
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       appBar: AppBar(
         title: Text(
           'Compras Sugeridas',
           style: GoogleFonts.fraunces(
             fontWeight: FontWeight.bold,
-            color: AppColors.orange,
+            color: context.colorOrange,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: context.colorBackground,
         elevation: 0,
-        foregroundColor: AppColors.orange,
+        foregroundColor: context.colorOrange,
       ),
       body: Column(
         children: [
@@ -74,19 +75,20 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: context.isDark ? null : const LinearGradient(
                     colors: [Color(0xFFFFE0B2), Color(0xFFFFCC80)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
+                  color: context.isDark ? context.colorOrange.withValues(alpha: 0.15) : null,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [AppColors.shadow1],
+                  boxShadow: context.shadow1,
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.analytics_outlined, color: Colors.orange),
+                    CircleAvatar(
+                      backgroundColor: context.colorBackground,
+                      child: const Icon(Icons.analytics_outlined, color: Colors.orange),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -98,28 +100,28 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
                             style: GoogleFonts.fraunces(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.brown[900],
+                              color: context.isDark ? context.colorOrange : Colors.brown[900],
                             ),
                           ),
                           Text(
                             'Analise preços e economize agora',
-                            style: TextStyle(color: Colors.brown[700]),
+                            style: TextStyle(color: context.isDark ? context.colorOrange.withValues(alpha: 0.7) : Colors.brown[700]),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.brown),
+                    Icon(Icons.chevron_right, color: context.isDark ? context.colorOrange : Colors.brown),
                   ],
                 ),
               ),
             ),
           ),
 
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
-                Icon(Icons.history, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.history, size: 16, color: context.colorTextSecondary),
                 SizedBox(width: 8),
                 Text(
                   'HISTÓRICO DE SUGESTÕES',
@@ -127,7 +129,7 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: AppColors.textSecondary,
+                    color: context.colorTextSecondary,
                   ),
                 ),
               ],
@@ -144,13 +146,13 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
                       children: [
                         Icon(Icons.auto_awesome_outlined, size: 64, color: Colors.orange.withOpacity(0.3)),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Nenhuma compra sugerida ainda.',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: context.colorTextSecondary),
                         ),
-                        const Text(
+                        Text(
                           'Comece uma comparação acima!',
-                          style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                          style: TextStyle(color: context.colorTextTertiary, fontSize: 12),
                         ),
                       ],
                     ),

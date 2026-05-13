@@ -9,6 +9,7 @@ import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feira_facil/core/router/app_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 /// Parâmetros para o provider de comparação por lista
 class ListComparisonParams {
@@ -72,29 +73,29 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
         : ref.watch(globalComparisonFutureProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.cream,
+        backgroundColor: context.colorBackground,
         elevation: 0,
         title: Text(
           'Comparar Preços',
           style: GoogleFonts.fraunces(
-            color: AppColors.orange,
+            color: context.colorOrange,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.orange),
+        iconTheme: IconThemeData(color: context.colorOrange),
       ),
       body: strategiesAsync.when(
         data: (strategies) {
           if (strategies.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(32.0),
                 child: Text(
                   'Não há dados suficientes para gerar estratégias. Cadastre mais preços nos mercados.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textTertiary, fontSize: 16),
+                  style: TextStyle(color: context.colorTextTertiary, fontSize: 16),
                 ),
               ),
             );
@@ -117,7 +118,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.orange)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.colorOrange)),
         error: (err, stack) => Center(child: Text('Erro ao analisar: $err')),
       ),
     );
@@ -127,16 +128,10 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: isOptimal ? Border.all(color: AppColors.orange, width: 2) : null,
+        boxShadow: context.shadow2,
+        border: isOptimal ? Border.all(color: context.colorOrange, width: 2) : Border.all(color: context.colorBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,8 +139,8 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
           if (isOptimal)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                color: AppColors.orange,
+              decoration: BoxDecoration(
+                color: context.colorOrange,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: const Text(
@@ -169,15 +164,15 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                   style: GoogleFonts.fraunces(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textBody,
+                    color: context.colorTextBody,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   strategy.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textSecondary,
+                    color: context.colorTextSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -196,7 +191,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textTertiary,
+                            color: context.colorTextTertiary,
                             letterSpacing: 1.1,
                           ),
                         ),
@@ -206,28 +201,28 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                           style: GoogleFonts.fraunces(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.green,
+                            color: context.colorGreen,
                           ),
                         ),
                       ],
                     ),
                     if (strategy.missingItemsCount > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.red.withValues(alpha: 0.1),
+                          color: context.colorRed.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.red),
+                            Icon(Icons.warning_amber_rounded, size: 16, color: context.colorRed),
                             const SizedBox(width: 4),
                             Text(
                               'Faltam ${strategy.missingItemsCount}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.red,
+                                color: context.colorRed,
                               ),
                             ),
                           ],
@@ -247,24 +242,24 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textTertiary,
+                    color: context.colorTextTertiary,
                     letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(height: 12),
                 
                 ...strategy.marketSummaries.map((ms) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.cream,
+                          color: context.colorBackground,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.storefront, color: AppColors.orange, size: 20),
+                        child: Icon(Icons.storefront, color: context.colorOrange, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -273,20 +268,20 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                           children: [
                             Text(
                               ms.marketName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
                               '${ms.itemsCount} itens',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 12, color: context.colorTextSecondary),
                             ),
                           ],
                         ),
                       ),
                       Text(
                         'R\$ ${ms.cost.toStringAsFixed(2).replaceAll('.', ',')}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textBody,
+                          color: context.colorTextBody,
                         ),
                       ),
                     ],
@@ -301,7 +296,9 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                     onPressed: _isApplying ? null : () => _applyStrategy(strategy),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: isOptimal ? AppColors.green : AppColors.textBody,
+                      backgroundColor: isOptimal 
+                          ? (context.isDark ? context.colorGreenDark : context.colorGreen) 
+                          : (context.isDark ? context.colorBackground : context.colorTextBody),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -343,7 +340,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
           title: const Text('Nome da Compra Sugerida', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Nome da lista',
               border: OutlineInputBorder(),
             ),
@@ -354,11 +351,11 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Cancelar', style: TextStyle(color: context.colorTextSecondary)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, controller.text.trim()),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen),
               child: const Text('Continuar', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -383,21 +380,21 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Compra Sugerida já existe'),
-              content: const Text('Você já criou uma compra sugerida hoje.\nO que deseja fazer?'),
+              title: Text('Compra Sugerida já existe'),
+              content: Text('Você já criou uma compra sugerida hoje.\nO que deseja fazer?'),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, 'nova'),
-                  child: const Text('Criar Nova', style: TextStyle(color: AppColors.orange)),
+                  child: Text('Criar Nova', style: TextStyle(color: context.colorOrange)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, 'sobrepor'),
-                  child: const Text('Sobrepor', style: TextStyle(color: AppColors.red)),
+                  child: Text('Sobrepor', style: TextStyle(color: context.colorRed)),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, 'ir'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+                  style: ElevatedButton.styleFrom(backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen),
                   child: const Text('Ir para ela', style: TextStyle(color: Colors.white)),
                 ),
               ],
@@ -469,7 +466,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro: $e'),
-            backgroundColor: AppColors.red,
+            backgroundColor: context.colorRed,
           ),
         );
       }

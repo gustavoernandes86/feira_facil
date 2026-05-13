@@ -11,6 +11,7 @@ import '../../auth/domain/app_user.dart';
 import '../data/group_repository.dart';
 import '../domain/family_group.dart';
 import 'group_controller.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class GroupManagementScreen extends ConsumerWidget {
   const GroupManagementScreen({super.key});
@@ -25,14 +26,14 @@ class GroupManagementScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro: ${next.error}'),
-            backgroundColor: AppColors.red,
+            backgroundColor: context.colorRed,
           ),
         );
       }
     });
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       body: groupAsync.when(
         data: (group) {
           final user = userProfileAsync.value;
@@ -78,21 +79,23 @@ class GroupManagementScreen extends ConsumerWidget {
                     ],
 
                     // Actions section
-                    _buildSectionHeader('AÇÕES DE GRUPO'),
+                    _buildSectionHeader(context, 'AÇÕES DE GRUPO'),
                     const SizedBox(height: 12),
                     _buildActionCard(
+                      context: context,
                       icon: Icons.add_home_work_rounded,
                       title: 'Criar Novo Grupo',
                       desc: 'Crie um novo grupo e convide sua família.',
-                      color: AppColors.orange,
+                      color: context.colorOrange,
                       onTap: () => _showCreateGroupDialog(context, ref),
                     ),
                     const SizedBox(height: 12),
                     _buildActionCard(
+                      context: context,
                       icon: Icons.group_add_rounded,
                       title: 'Entrar em um Grupo',
                       desc: 'Tem um código de convite? Entre agora.',
-                      color: AppColors.green,
+                      color: context.colorGreen,
                       onTap: () => _showJoinGroupDialog(context, ref),
                     ),
 
@@ -100,10 +103,11 @@ class GroupManagementScreen extends ConsumerWidget {
                     if (isAdmin) ...[
                       const SizedBox(height: 12),
                       _buildActionCard(
+                        context: context,
                         icon: Icons.delete_forever_rounded,
                         title: 'Excluir Grupo "${group.name}"',
                         desc: 'Remove todos os membros e apaga o grupo permanentemente.',
-                        color: AppColors.red,
+                        color: context.colorRed,
                         onTap: () => _confirmDeleteGroup(context, ref, group),
                       ),
                     ],
@@ -119,19 +123,20 @@ class GroupManagementScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.5,
-        color: AppColors.textTertiary,
+        color: context.colorTextTertiary,
       ),
     );
   }
 
   Widget _buildActionCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String desc,
@@ -144,10 +149,10 @@ class GroupManagementScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cream2),
-          boxShadow: const [AppColors.shadow1],
+          border: Border.all(color: context.colorBorder),
+          boxShadow: context.shadow1,
         ),
         child: Row(
           children: [
@@ -159,14 +164,14 @@ class GroupManagementScreen extends ConsumerWidget {
               ),
               child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textBody)),
-                  const SizedBox(height: 2),
-                  Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colorTextBody)),
+                  SizedBox(height: 2),
+                  Text(desc, style: TextStyle(fontSize: 12, color: context.colorTextSecondary)),
                 ],
               ),
             ),
@@ -181,17 +186,17 @@ class GroupManagementScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [AppColors.shadow1],
-        border: Border.all(color: AppColors.cream2),
+        boxShadow: context.shadow1,
+        border: Border.all(color: context.colorBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Código de Convite',
-            style: TextStyle(fontSize: 12, color: AppColors.textTertiary, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 12, color: context.colorTextTertiary, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -200,16 +205,16 @@ class GroupManagementScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.cream,
+                    color: context.colorBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     code,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 4,
-                      color: AppColors.textBody,
+                      color: context.colorTextBody,
                     ),
                   ),
                 ),
@@ -225,7 +230,7 @@ class GroupManagementScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.orange,
+                    color: context.colorOrange,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.copy, color: Colors.white, size: 20),
@@ -234,9 +239,9 @@ class GroupManagementScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Compartilhe este código com quem você quer no grupo.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.colorTextSecondary),
           ),
         ],
       ),
@@ -256,48 +261,48 @@ class GroupManagementScreen extends ConsumerWidget {
             final isSelf = currentUser?.id == user.id;
             final isCreator = user.id == group.createdBy;
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.colorCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cream2),
+                border: Border.all(color: context.colorBorder),
               ),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.cream,
+                  backgroundColor: context.colorBackground,
                   child: Text(
                     user.name?[0].toUpperCase() ?? '?',
-                    style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: context.colorOrange, fontWeight: FontWeight.bold),
                   ),
                 ),
                 title: Row(
                   children: [
                     Text(user.name ?? 'Membro', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     if (isCreator) ...[
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                        child: const Text('👑 Admin', style: TextStyle(color: AppColors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: context.colorOrange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                        child: Text('👑 Admin', style: TextStyle(color: context.colorOrange, fontSize: 9, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ],
                 ),
-                subtitle: Text(user.email, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                subtitle: Text(user.email, style: TextStyle(fontSize: 11, color: context.colorTextTertiary)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isSelf)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppColors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                        child: const Text('Você', style: TextStyle(color: AppColors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: context.colorGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                        child: Text('Você', style: TextStyle(color: context.colorGreen, fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
                     // Admin can remove any member except themselves
                     if (isAdmin && !isSelf)
                       IconButton(
                         icon: const Icon(Icons.person_remove_rounded, size: 20),
-                        color: AppColors.red,
+                        color: context.colorRed,
                         tooltip: 'Remover membro',
                         onPressed: () => _confirmRemoveMember(context, ref, group, user),
                       ),
@@ -326,30 +331,30 @@ class GroupManagementScreen extends ConsumerWidget {
           children: groups.map((group) {
             final isActive = group.id == activeGroup?.id;
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.greenLT : AppColors.white,
+                color: isActive ? context.colorGreenLight : context.colorCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isActive ? AppColors.green : AppColors.cream2, width: isActive ? 2 : 1),
+                border: Border.all(color: isActive ? context.colorGreen : context.colorBorder, width: isActive ? 2 : 1),
               ),
               child: ListTile(
                 leading: Icon(
                   isActive ? Icons.check_circle : Icons.group_outlined,
-                  color: isActive ? AppColors.green : AppColors.textTertiary,
+                  color: isActive ? context.colorGreen : context.colorTextTertiary,
                 ),
-                title: Text(group.name, style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? AppColors.green : AppColors.textBody)),
-                subtitle: Text('${group.memberIds.length} membro(s)', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                title: Text(group.name, style: TextStyle(fontWeight: FontWeight.bold, color: isActive ? context.colorGreen : context.colorTextBody)),
+                subtitle: Text('${group.memberIds.length} membro(s)', style: TextStyle(fontSize: 11, color: context.colorTextTertiary)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isActive)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.green.withValues(alpha: 0.1),
+                          color: context.colorGreen.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text('Ativo', style: TextStyle(color: AppColors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+                        child: Text('Ativo', style: TextStyle(color: context.colorGreen, fontSize: 11, fontWeight: FontWeight.bold)),
                       )
                     else
                       TextButton(
@@ -365,7 +370,7 @@ class GroupManagementScreen extends ConsumerWidget {
                       ),
                     IconButton(
                       icon: const Icon(Icons.exit_to_app_rounded, size: 20),
-                      color: AppColors.red,
+                      color: context.colorRed,
                       tooltip: 'Sair do grupo',
                       onPressed: () => _confirmLeaveGroup(context, ref, group),
                     ),
@@ -451,7 +456,7 @@ class GroupManagementScreen extends ConsumerWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: context.colorRed),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Sair do Grupo', style: TextStyle(color: Colors.white)),
           ),
@@ -475,7 +480,7 @@ class GroupManagementScreen extends ConsumerWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: context.colorRed),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Remover', style: TextStyle(color: Colors.white)),
           ),
@@ -499,7 +504,7 @@ class GroupManagementScreen extends ConsumerWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: context.colorRed),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Excluir Grupo', style: TextStyle(color: Colors.white)),
           ),

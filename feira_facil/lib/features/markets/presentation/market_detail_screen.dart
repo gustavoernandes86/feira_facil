@@ -15,6 +15,7 @@ import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class MarketDetailScreen extends ConsumerStatefulWidget {
   final Market market;
@@ -62,19 +63,19 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     final pricesAsync = ref.watch(marketPricesStreamProvider(widget.market.id));
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       appBar: AppBar(
         title: Text(widget.market.name, style: GoogleFonts.fraunces(
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: context.colorTextBody,
         )),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: Colors.white,
+        foregroundColor: context.colorTextBody,
         actions: [
           IconButton(
-            icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+            icon: Icon(Icons.analytics_outlined, color: context.colorTextBody),
             tooltip: 'Comparar Preços',
             onPressed: () => _showComparisonSetup(),
           ),
@@ -141,8 +142,8 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         },
         label: const Text('Registrar Avulso', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add_chart_rounded),
-        backgroundColor: AppColors.textBody,
-        foregroundColor: Colors.white,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
+        foregroundColor: context.isDark ? Colors.white : Colors.white,
       ),
     );
   }
@@ -151,23 +152,23 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.textBody,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [AppColors.shadow2],
+        boxShadow: context.shadow2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.location_on, color: AppColors.orange, size: 20),
+              Icon(Icons.location_on, color: context.colorOrange, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   widget.market.address.isNotEmpty ? widget.market.address : 'Endereço não informado',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(color: context.colorTextSecondary, fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 2,
                 ),
@@ -175,19 +176,19 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'CATÁLOGO DE PREÇOS',
             style: TextStyle(
-              color: AppColors.orange,
+              color: context.colorOrange,
               fontWeight: FontWeight.bold,
               fontSize: 10,
               letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Estes valores serão usados para sugerir onde comprar cada item da sua lista.',
-            style: TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+            style: TextStyle(color: context.colorTextSecondary, fontSize: 13, height: 1.4),
           ),
         ],
       ),
@@ -206,12 +207,12 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             style: GoogleFonts.fraunces(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               'Selecione ou crie uma lista para registrar os preços neste mercado.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colorTextSecondary),
             ),
           ),
         ],
@@ -257,18 +258,18 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
                             width: 4,
                             height: 16,
                             decoration: BoxDecoration(
-                              color: AppColors.orange,
+                              color: context.colorOrange,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             category.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
-                              color: AppColors.textSecondary,
+                              color: context.colorTextSecondary,
                             ),
                           ),
                         ],
@@ -321,10 +322,10 @@ class _ListItemPriceCard extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: hasPrice ? AppColors.green.withOpacity(0.05) : AppColors.white,
+        color: hasPrice ? context.colorGreen.withOpacity(0.05) : context.colorCard,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [AppColors.shadow1],
-        border: Border.all(color: hasPrice ? AppColors.green.withOpacity(0.3) : AppColors.cream2),
+        boxShadow: context.shadow1,
+        border: Border.all(color: hasPrice ? context.colorGreen.withOpacity(0.3) : context.colorBorder),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
@@ -332,35 +333,35 @@ class _ListItemPriceCard extends ConsumerWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: hasPrice ? AppColors.green.withOpacity(0.1) : AppColors.cream,
+            color: hasPrice ? context.colorGreen.withOpacity(0.1) : context.colorBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Icon(
               hasPrice ? Icons.check_circle : Icons.shopping_bag_outlined, 
-              color: hasPrice ? AppColors.green : AppColors.textBody
+              color: hasPrice ? context.colorGreen : context.colorTextBody
             )
           ),
         ),
-        title: Text(itemName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(itemName, style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             if (hasPrice) ...[
               Text(
                 'R\$ ${basePrice.toStringAsFixed(2)}',
-                style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(color: context.colorOrange, fontWeight: FontWeight.bold, fontSize: 16),
               ),
               if (brand != null && brand.isNotEmpty)
                 Text(
                   'Marca: $brand',
-                  style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                  style: TextStyle(color: context.colorTextTertiary, fontSize: 12),
                 ),
             ] else ...[
-              const Text(
+              Text(
                 'Sem preço registrado',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontStyle: FontStyle.italic),
+                style: TextStyle(color: context.colorTextSecondary, fontSize: 13, fontStyle: FontStyle.italic),
               ),
             ]
           ],
@@ -368,7 +369,7 @@ class _ListItemPriceCard extends ConsumerWidget {
         trailing: IconButton(
           icon: Icon(
             hasPrice ? Icons.edit : Icons.add_circle, 
-            color: hasPrice ? AppColors.textBody : AppColors.orange, 
+            color: hasPrice ? context.colorTextBody : context.colorOrange, 
             size: 28
           ),
           onPressed: () => showModalBottomSheet(

@@ -11,6 +11,7 @@ import 'package:feira_facil/core/utils/category_utils.dart';
 import 'package:feira_facil/features/lists/presentation/fair_lists_controller.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:intl/intl.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class AddPriceModal extends ConsumerStatefulWidget {
   final String marketId;
@@ -90,9 +91,9 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
     final itemNamesAsync = ref.watch(groupItemNamesProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.colorBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
@@ -107,7 +108,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
           children: [
             Row(
               children: [
-                const Icon(Icons.add_chart_rounded, color: AppColors.orange, size: 28),
+                Icon(Icons.add_chart_rounded, color: context.colorOrange, size: 28),
                 const SizedBox(width: 12),
                 Text(
                   'Registrar Preço',
@@ -126,20 +127,20 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             if (widget.initialItemName != null && widget.initialItemName!.isNotEmpty)
               TextField(
                 controller: _nameController,
                 readOnly: true,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textBody),
+                style: TextStyle(fontWeight: FontWeight.bold, color: context.colorTextBody),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.check_circle, size: 20, color: AppColors.green),
+                  prefixIcon: Icon(Icons.check_circle, size: 20, color: context.colorGreen),
                   filled: true,
-                  fillColor: AppColors.cream,
+                  fillColor: context.colorBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -182,7 +183,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
@@ -202,7 +203,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textTertiary,
+                  color: context.colorTextTertiary,
                   letterSpacing: 1.1,
                 ),
               ),
@@ -212,7 +213,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.category_outlined, size: 20),
                   filled: true,
-                  fillColor: AppColors.cream.withValues(alpha: 0.5),
+                  fillColor: context.colorBackground.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -241,7 +242,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
@@ -251,7 +252,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.scale_outlined, size: 20),
                 filled: true,
-                fillColor: AppColors.cream.withValues(alpha: 0.5),
+                fillColor: context.colorBackground.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -276,7 +277,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textTertiary,
+                color: context.colorTextTertiary,
                 letterSpacing: 1.1,
               ),
             ),
@@ -327,10 +328,10 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               },
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             '${_selectedUnit.abbreviation} =', 
-            style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)
+            style: TextStyle(color: context.colorTextTertiary, fontSize: 12)
           ),
           const SizedBox(width: 8),
           Expanded(

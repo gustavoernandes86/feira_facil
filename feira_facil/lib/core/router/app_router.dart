@@ -6,7 +6,7 @@ import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/groups/presentation/group_setup_screen.dart';
-import '../../features/groups/presentation/group_management_screen.dart';
+import '../../features/groups/presentation/settings_screen.dart';
 import '../../features/markets/presentation/markets_screen.dart';
 import '../../features/markets/presentation/market_detail_screen.dart';
 import '../../features/markets/domain/market.dart';
@@ -25,7 +25,8 @@ class RouteNames {
   static const onboarding = 'onboarding';
   static const login = 'login';
   static const groupSetup = 'groupSetup';
-  static const groupManagement = 'groupManagement';
+  static const groupManagement = 'groupManagement'; // kept for legacy nav
+  static const settings = 'settings';
   static const markets = 'markets';
   static const marketDetails = 'marketDetails';
   static const suggestedPurchases = 'suggestedPurchases';
@@ -41,6 +42,7 @@ class RoutePaths {
   static const login = '/login';
   static const groupSetup = '/group-setup';
   static const groupManagement = '/group-management';
+  static const settings = '/settings';
   static const markets = '/markets';
   static const lists = '/lists';
 }
@@ -115,9 +117,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const GroupSetupScreen(),
       ),
       GoRoute(
+        path: RoutePaths.settings,
+        name: RouteNames.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      // Legacy alias: /group-management => /settings
+      GoRoute(
         path: RoutePaths.groupManagement,
         name: RouteNames.groupManagement,
-        builder: (context, state) => const GroupManagementScreen(),
+        redirect: (context, state) => RoutePaths.settings,
       ),
       GoRoute(
         path: RoutePaths.markets,

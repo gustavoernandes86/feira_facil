@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/premium_header.dart';
 import '../../auth/presentation/auth_controller.dart';
 import 'group_controller.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class GroupSetupScreen extends ConsumerWidget {
   const GroupSetupScreen({super.key});
@@ -48,7 +49,7 @@ class GroupSetupScreen extends ConsumerWidget {
                     'Para usar o Feira Fácil, você precisa fazer parte de um grupo.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.colorTextSecondary,
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -60,7 +61,7 @@ class GroupSetupScreen extends ConsumerWidget {
                     desc:
                         'Crie um espaço para sua família e convide outros membros.',
                     onTap: () => _showCreateGroupDialog(context, ref),
-                    color: AppColors.orange,
+                    color: context.colorOrange,
                   ),
 
                   const SizedBox(height: 16),
@@ -72,7 +73,7 @@ class GroupSetupScreen extends ConsumerWidget {
                     desc:
                         'Já tem um convite? Cole o código para entrar no grupo.',
                     onTap: () => _showJoinGroupDialog(context, ref),
-                    color: AppColors.green,
+                    color: context.colorGreen,
                   ),
 
                   if (groupState.isLoading)
@@ -103,10 +104,10 @@ class GroupSetupScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(AppColors.radiusLarge),
-          boxShadow: const [AppColors.shadow2],
-          border: Border.all(color: AppColors.cream2),
+          boxShadow: context.shadow2,
+          border: Border.all(color: context.colorBorder),
         ),
         child: Row(
           children: [
@@ -125,24 +126,24 @@ class GroupSetupScreen extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textBody,
+                      color: context.colorTextBody,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     desc,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: context.colorTextSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+            Icon(Icons.chevron_right, color: context.colorTextTertiary),
           ],
         ),
       ),

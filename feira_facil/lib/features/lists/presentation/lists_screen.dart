@@ -10,6 +10,7 @@ import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 import 'package:feira_facil/features/lists/presentation/savings_screen.dart';
 import 'package:feira_facil/core/router/app_router.dart';
+import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -53,7 +54,7 @@ class ListsScreen extends ConsumerWidget {
         : const AsyncValue<SavingsSummary>.loading();
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.colorBackground,
       body: CustomScrollView(
         slivers: [
           // Custom Dashboard Header
@@ -79,7 +80,7 @@ class ListsScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Suas Listas', style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.orange,
+                    color: context.colorOrange,
                     fontWeight: FontWeight.bold,
                   )),
                 ],
@@ -119,9 +120,9 @@ class ListsScreen extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 20, 20, 30),
-      decoration: const BoxDecoration(
-        color: AppColors.green,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorGreenDark : context.colorGreen,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -222,7 +223,7 @@ class ListsScreen extends ConsumerWidget {
             '📋 Suas Listas',
             listsAsync.value?.length.toString() ?? '0',
             'Listas ativas',
-            AppColors.green,
+            context.colorGreen,
             Icons.format_list_bulleted,
           ),
           _statusCard(
@@ -230,7 +231,7 @@ class ListsScreen extends ConsumerWidget {
             '💰 Economia',
             savingsStr,
             savingsSub,
-            AppColors.orange,
+            context.colorOrange,
             Icons.trending_up,
             onTap: () => context.pushNamed(RouteNames.savings),
           ),
@@ -245,20 +246,20 @@ class ListsScreen extends ConsumerWidget {
       child: Container(
         width: 160,
         margin: const EdgeInsets.only(right: 14),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: const [AppColors.shadow2],
-          border: Border.all(color: AppColors.cream2),
+          boxShadow: context.shadow2,
+          border: Border.all(color: context.colorBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: color.withOpacity(0.6), size: 20),
-            const Spacer(),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.bold)),
-            Text(val, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textBody)),
+            Spacer(),
+            Text(label, style: TextStyle(fontSize: 11, color: context.colorTextTertiary, fontWeight: FontWeight.bold)),
+            Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colorTextBody)),
             Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
           ],
         ),
@@ -277,11 +278,25 @@ class ListsScreen extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: _actionTile(context, '🏷️', 'Nova Lista', 'Criar lista agora', AppColors.orangeLT, () => _showCreateListDialog(context, ref)),
+                child: _actionTile(
+                  context, 
+                  '🏷️', 
+                  'Nova Lista', 
+                  'Criar lista agora', 
+                  context.isDark ? context.colorGreenDark : context.colorOrangeLight, 
+                  () => _showCreateListDialog(context, ref)
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _actionTile(context, '🏪', 'Mercados', 'Catálogo de preços', AppColors.greenLT, () => context.push('/markets')),
+                child: _actionTile(
+                  context, 
+                  '🏪', 
+                  'Mercados', 
+                  'Catálogo de preços', 
+                  context.isDark ? context.colorGreenDark : context.colorGreenLight, 
+                  () => context.push('/markets')
+                ),
               ),
             ],
           ),
@@ -294,7 +309,7 @@ class ListsScreen extends ConsumerWidget {
                   '✨', 
                   'Compras Sugeridas', 
                   'Onde está mais barato?', 
-                  const Color(0xFFFFE0B2),
+                  context.isDark ? context.colorGreenDark : const Color(0xFFFFE0B2),
                   () => context.pushNamed(RouteNames.suggestedPurchases),
                 ),
               ),
@@ -305,7 +320,7 @@ class ListsScreen extends ConsumerWidget {
                   '💚',
                   'Minha Economia',
                   'Veja quanto poupou',
-                  AppColors.greenLight,
+                  context.isDark ? context.colorGreenDark : context.colorGreenLight,
                   () => context.pushNamed(RouteNames.savings),
                 ),
               ),
@@ -331,10 +346,10 @@ class ListsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textBody)),
-            Text(sub, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            Text(emoji, style: TextStyle(fontSize: 20)),
+            SizedBox(height: 4),
+            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colorTextBody)),
+            Text(sub, style: TextStyle(fontSize: 11, color: context.colorTextSecondary)),
           ],
         ),
       ),
@@ -365,25 +380,25 @@ class ListsScreen extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: const [AppColors.shadow2],
-          border: Border.all(color: AppColors.cream2),
+          boxShadow: context.shadow2,
+          border: Border.all(color: context.colorBorder),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.all(16),
+          contentPadding: EdgeInsets.all(16),
           onTap: () => context.push('/lists/${list.id}', extra: list),
           leading: Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.greenLight,
+              color: context.colorGreenLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.shopping_basket_rounded, color: AppColors.green),
+            child: Icon(Icons.shopping_basket_rounded, color: context.colorGreen),
           ),
-          title: Text(list.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: const Text('Toque para gerenciar itens', style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
-          trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+          title: Text(list.name, style: TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text('Toque para gerenciar itens', style: TextStyle(color: context.colorTextTertiary, fontSize: 12)),
+          trailing: Icon(Icons.chevron_right, color: context.colorTextTertiary),
         ),
       ),
     );
@@ -439,7 +454,7 @@ class ListsScreen extends ConsumerWidget {
                             copyFromBaseList = val ?? true;
                           });
                         },
-                        activeColor: AppColors.green,
+                        activeColor: context.colorGreen,
                       ),
                       const Expanded(
                         child: Text(
@@ -461,7 +476,7 @@ class ListsScreen extends ConsumerWidget {
                     
                     await ref.read(fairListsControllerProvider(groupId).notifier).createList(
                       name: listName.trim(),
-                      color: AppColors.green,
+                      color: context.colorGreen,
                       userId: userId,
                       copyFromBaseList: copyFromBaseList,
                     );
@@ -491,10 +506,10 @@ class ListsScreen extends ConsumerWidget {
               style: GoogleFonts.fraunces(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Crie uma lista (ex: "Compra do Mês", "Churrasco") para começar.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colorTextSecondary),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -508,7 +523,7 @@ class ListsScreen extends ConsumerWidget {
               icon: const Icon(Icons.auto_awesome),
               label: const Text('Gerar Lista Essencial'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.green,
+                backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
