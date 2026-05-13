@@ -198,7 +198,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildThemeCard(
     BuildContext context,
     WidgetRef ref,
-    ThemeMode themeMode,
+    AppThemeMode themeMode,
     bool isDark,
     Color cardColor,
     Color borderColor,
@@ -243,37 +243,37 @@ class SettingsScreen extends ConsumerWidget {
           Row(
             children: [
               _themeOption(
-                label: 'Claro',
-                icon: Icons.light_mode_rounded,
-                selected: themeMode == ThemeMode.light,
+                label: 'Sistema / Claro',
+                icon: Icons.brightness_auto_rounded,
+                selected: themeMode == AppThemeMode.system,
                 color: context.colorOrange,
                 textColor: textColor,
                 subtleColor: subtleColor,
-                onTap: () => ref.read(themeModeProvider.notifier).setMode(ThemeMode.light),
+                onTap: () => ref.read(themeModeProvider.notifier).setMode(AppThemeMode.system),
               ),
               const SizedBox(width: 10),
               _themeOption(
                 label: 'Escuro',
                 icon: Icons.dark_mode_rounded,
-                selected: themeMode == ThemeMode.dark,
+                selected: themeMode == AppThemeMode.dark,
                 color: isDark ? DraculaColors.purple : context.colorGreen,
                 textColor: textColor,
                 subtleColor: subtleColor,
-                onTap: () => ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark),
+                onTap: () => ref.read(themeModeProvider.notifier).setMode(AppThemeMode.dark),
               ),
               const SizedBox(width: 10),
               _themeOption(
-                label: 'Sistema',
-                icon: Icons.brightness_auto_rounded,
-                selected: themeMode == ThemeMode.system,
-                color: subtleColor,
+                label: 'Daltônico',
+                icon: Icons.visibility_rounded,
+                selected: themeMode == AppThemeMode.colorblind,
+                color: const Color(0xFF0072B2), // ColorblindColors.blue
                 textColor: textColor,
                 subtleColor: subtleColor,
-                onTap: () => ref.read(themeModeProvider.notifier).setMode(ThemeMode.system),
+                onTap: () => ref.read(themeModeProvider.notifier).setMode(AppThemeMode.colorblind),
               ),
             ],
           ),
-          if (themeMode == ThemeMode.dark) ...[
+          if (themeMode == AppThemeMode.dark) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),

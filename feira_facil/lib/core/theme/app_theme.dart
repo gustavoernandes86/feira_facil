@@ -17,6 +17,11 @@ class DraculaColors {
   static const surface1    = Color(0xFF343746);
 }
 
+// ─── Colorblind Palette (Okabe-Ito) ──────────────────────────────────────────
+class ColorblindColors {
+  static const blue    = Color(0xFF0072B2); // Positive / Success
+  static const orange  = Color(0xFFD55E00); // Negative / Error / Warning
+}
 
 class AppTheme {
   static ThemeData get lightTheme {
@@ -141,6 +146,16 @@ class AppTheme {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+    );
+  }
+
+  static ThemeData get colorblindTheme {
+    final base = lightTheme;
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        secondary: ColorblindColors.blue,
+        error: ColorblindColors.orange,
       ),
     );
   }

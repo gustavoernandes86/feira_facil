@@ -5,33 +5,39 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
+enum AppThemeMode {
+  system,
+  dark,
+  colorblind,
+}
+
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {
   return ThemeModeNotifier();
 });
 
 // ─── Notifier ────────────────────────────────────────────────────────────────
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
   static const _key = 'feira_facil_theme_mode';
 
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  ThemeModeNotifier() : super(AppThemeMode.system) {
     _load();
   }
 
   Future<void> _load() async {
     try {
       final saved = kIsWeb ? _webRead() : await _nativeRead();
-      if (saved == 'light') {
-        state = ThemeMode.light;
-      } else if (saved == 'dark') {
-        state = ThemeMode.dark;
+      if (saved == 'dark') {
+        state = AppThemeMode.dark;
+      } else if (saved == 'colorblind') {
+        state = AppThemeMode.colorblind;
       } else {
-        state = ThemeMode.system;
+        state = AppThemeMode.system;
       }
     } catch (_) {
-      state = ThemeMode.system;
+      state = AppThemeMode.system;
     }
   }
 
@@ -62,12 +68,12 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
-  Future<void> setMode(ThemeMode mode) async {
+  Future<void> setMode(AppThemeMode mode) async {
     state = mode;
     final value = switch (mode) {
-      ThemeMode.light  => 'light',
-      ThemeMode.dark   => 'dark',
-      ThemeMode.system => 'system',
+      AppThemeMode.dark       => 'dark',
+      AppThemeMode.colorblind => 'colorblind',
+      AppThemeMode.system     => 'system',
     };
     try {
       if (kIsWeb) {
@@ -79,6 +85,6 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   void toggle() {
-    setMode(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+    setMode(state == AppThemeMode.dark ? AppThemeMode.system : AppThemeMode.dark);
   }
 }

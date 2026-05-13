@@ -4,6 +4,7 @@ import 'app_theme.dart';
 
 extension ThemeColorsExt on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  bool get isColorblind => Theme.of(this).colorScheme.secondary == ColorblindColors.blue;
 
   Color get colorOrange => Theme.of(this).colorScheme.primary;
   Color get colorOrangeDark => isDark ? DraculaColors.orange : AppColors.orangeDark;
@@ -12,7 +13,7 @@ extension ThemeColorsExt on BuildContext {
   Color get colorOrangeUltraLight => Theme.of(this).colorScheme.primary.withValues(alpha: 0.1);
 
   Color get colorGreen => Theme.of(this).colorScheme.secondary;
-  Color get colorGreenDark => isDark ? colorGreenLight : AppColors.greenDark;
+  Color get colorGreenDark => isDark ? colorGreenLight : (isColorblind ? const Color(0xFF005A8C) : AppColors.greenDark);
   Color get colorGreenLight => Theme.of(this).colorScheme.secondary.withValues(alpha: 0.1);
   Color get colorGreenMedium => Theme.of(this).colorScheme.secondary.withValues(alpha: 0.5);
 

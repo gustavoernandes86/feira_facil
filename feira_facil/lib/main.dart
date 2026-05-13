@@ -26,13 +26,23 @@ class FeiraFacilApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final themeMode = ref.watch(themeModeProvider);
+    final appThemeMode = ref.watch(themeModeProvider);
+
+    final flutterThemeMode = switch (appThemeMode) {
+      AppThemeMode.dark => ThemeMode.dark,
+      AppThemeMode.system => ThemeMode.system,
+      AppThemeMode.colorblind => ThemeMode.light,
+    };
+
+    final lightTheme = appThemeMode == AppThemeMode.colorblind 
+        ? AppTheme.colorblindTheme 
+        : AppTheme.lightTheme;
 
     return MaterialApp.router(
       title: 'Feira Fácil',
-      theme: AppTheme.lightTheme,
+      theme: lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      themeMode: flutterThemeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
