@@ -11,6 +11,7 @@ import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup
 import 'package:feira_facil/features/lists/presentation/savings_screen.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/features/notifications/presentation/notifications_controller.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -45,6 +46,32 @@ class ListsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Escutar notificações não lidas para mostrar um toast
+    ref.listen(unreadNotificationsProvider, (previous, next) {
+      if (next.hasValue && next.value != null && next.value!.isNotEmpty) {
+        final currentCount = next.value!.length;
+        final previousCount = previous?.value?.length ?? 0;
+        
+        if (currentCount > previousCount) {
+          final latest = next.value!.first;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${latest.title}: ${latest.body}'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: context.colorGreenDark,
+              action: SnackBarAction(
+                label: 'Ver',
+                textColor: Colors.white,
+                onPressed: () {
+                  context.push('/notifications');
+                },
+              ),
+            ),
+          );
+        }
+      }
+    });
+
     final userProfile = ref.watch(currentUserProfileProvider).value;
     final group = ref.watch(currentGroupStreamProvider).value;
     final groupId = ref.watch(currentGroupIdProvider);
@@ -143,7 +170,7 @@ class ListsScreen extends ConsumerWidget {
                 children: [
                   _headerIcon(Icons.analytics_outlined, onTap: () => _showComparisonSetup(context, ref)),
                   const SizedBox(width: 12),
-                  _headerIcon(Icons.notifications_none_rounded),
+                  _notificationIcon(context, ref),
                   const SizedBox(width: 12),
                   _headerIcon(Icons.menu_rounded, onTap: () => context.push('/group-management')),
                 ],
@@ -199,6 +226,37 @@ class ListsScreen extends ConsumerWidget {
         ),
         child: Icon(icon, color: Colors.white, size: 24),
       ),
+    );
+  }
+
+  Widget _notificationIcon(BuildContext context, WidgetRef ref) {
+    final unreadAsync = ref.watch(unreadNotificationsProvider);
+    final unreadCount = unreadAsync.value?.length ?? 0;
+
+    return Stack(
+      children: [
+        _headerIcon(Icons.notifications_none_rounded, onTap: () => context.push('/notifications')),
+        if (unreadCount > 0)
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                unreadCount > 9 ? '9+' : unreadCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 

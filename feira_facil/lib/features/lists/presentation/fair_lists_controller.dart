@@ -5,6 +5,9 @@ import '../domain/fair_list.dart';
 import '../domain/list_item.dart';
 import 'package:feira_facil/core/utils/unit_utils.dart';
 import '../data/fair_lists_repository.dart';
+import '../../groups/data/group_repository.dart';
+import '../../../core/providers/user_providers.dart';
+import '../../notifications/data/notification_repository.dart';
 
 /// Stream de listas manuais de um grupo
 final fairListsStreamProvider = StreamProvider.family<List<FairList>, String>((
@@ -75,6 +78,25 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
           targetListId: newListId,
         );
       }
+
+      // Enviar Notificação
+      try {
+        final groupRepo = ref.read(groupRepositoryProvider);
+        final group = await groupRepo.getGroup(groupId);
+        final userProfile = ref.read(currentUserProfileProvider).value;
+        if (group != null && userProfile != null) {
+          await ref.read(notificationRepositoryProvider).sendNotificationToUsers(
+            targetUserIds: group.memberIds,
+            title: 'Nova Lista de Compras',
+            body: '${userProfile.name ?? 'Um membro'} criou a lista "$name"',
+            type: 'list_created',
+            relatedGroupId: groupId,
+            relatedListId: newListId,
+            senderId: userId,
+            senderName: userProfile.name,
+          );
+        }
+      } catch (_) {}
 
       ref.invalidate(fairListsStreamProvider(groupId));
     });
