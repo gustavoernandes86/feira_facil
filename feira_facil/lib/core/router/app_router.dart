@@ -7,6 +7,7 @@ import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/groups/presentation/group_setup_screen.dart';
 import '../../features/groups/presentation/settings_screen.dart';
+import '../../features/groups/presentation/group_management_screen.dart';
 import '../../features/markets/presentation/markets_screen.dart';
 import '../../features/markets/presentation/market_detail_screen.dart';
 import '../../features/markets/domain/market.dart';
@@ -124,12 +125,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
-      // Legacy alias: /group-management => /settings
       GoRoute(
-        path: RoutePaths.groupManagement,
-        name: RouteNames.groupManagement,
-        redirect: (context, state) => RoutePaths.settings,
+        path: '/group-management',
+        name: 'group-management',
+        builder: (context, state) => const GroupManagementScreen(),
       ),
+
       GoRoute(
         path: RoutePaths.markets,
         name: RouteNames.markets,

@@ -173,7 +173,7 @@ class ListsScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   _notificationIcon(context, ref),
                   const SizedBox(width: 12),
-                  _headerIcon(Icons.menu_rounded, onTap: () => context.push('/group-management')),
+                  _headerIcon(Icons.settings_outlined, onTap: () => context.push('/settings')),
                 ],
               ),
             ],
@@ -198,9 +198,18 @@ class ListsScreen extends ConsumerWidget {
                   Text('Olá, ${user?.name?.split(' ').first ?? 'visitante'}', style: const TextStyle(
                     fontSize: 14, color: Colors.white70
                   )),
-                  Text(group?.name ?? 'Sua Família', style: GoogleFonts.fraunces(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white
-                  )),
+                  GestureDetector(
+                    onTap: () => context.push('/group-management'),
+                    child: Row(
+                      children: [
+                        Text(group?.name ?? 'Sua Família', style: GoogleFonts.fraunces(
+                          fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white
+                        )),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_drop_down_rounded, color: Colors.white70),
+                      ],
+                    ),
+                  ),
                 ],
               )
             ],
