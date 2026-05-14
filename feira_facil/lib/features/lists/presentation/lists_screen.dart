@@ -12,6 +12,7 @@ import 'package:feira_facil/features/lists/presentation/savings_screen.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/features/notifications/presentation/notifications_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -182,8 +183,13 @@ class ListsScreen extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.white.withOpacity(0.15),
-                child: const Text('👤', style: TextStyle(fontSize: 24)),
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                backgroundImage: FirebaseAuth.instance.currentUser?.photoURL != null 
+                    ? NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!) 
+                    : null,
+                child: FirebaseAuth.instance.currentUser?.photoURL == null 
+                    ? const Text('👤', style: TextStyle(fontSize: 24)) 
+                    : null,
               ),
               const SizedBox(width: 12),
               Column(

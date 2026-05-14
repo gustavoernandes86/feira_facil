@@ -160,14 +160,10 @@ class SavingsScreen extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(24, topPadding + 20, 24, 40),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF388E3C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius:
-            BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorGreenDark : context.colorGreen,
+        borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +176,7 @@ class SavingsScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child:
@@ -224,7 +220,7 @@ class SavingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -337,7 +333,7 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colorCard,
         borderRadius: BorderRadius.circular(20),
         boxShadow: context.shadow2,
         border: Border.all(color: context.colorBorder),
@@ -348,7 +344,7 @@ class _SummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -404,7 +400,7 @@ class _PurchaseCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
           boxShadow: context.shadow2,
           border: Border.all(color: context.colorBorder),
@@ -494,7 +490,7 @@ class _PurchaseCard extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: context.colorBorder.withOpacity(0.5),
+                        color: context.colorBorder.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -559,7 +555,7 @@ class _CostPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: muted ? context.colorBackground : color.withOpacity(0.08),
+        color: muted ? context.colorBackground : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
