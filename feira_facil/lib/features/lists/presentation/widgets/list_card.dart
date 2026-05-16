@@ -8,6 +8,8 @@ import '../../../../core/providers/user_providers.dart';
 import '../../domain/fair_list.dart';
 import '../../domain/list_item.dart';
 import '../fair_lists_controller.dart';
+import 'package:feira_facil/features/items/domain/price.dart';
+import 'package:feira_facil/features/items/presentation/prices_controller.dart';
 
 class ListCard extends ConsumerWidget {
   final FairList list;
@@ -16,6 +18,42 @@ class ListCard extends ConsumerWidget {
     super.key,
     required this.list,
   });
+
+  Price? _getItemPrice(ListItem item, List<Price>? allPrices) {
+    if (allPrices == null) return null;
+    Price? itemPrice;
+    final pricesForItem = allPrices.where((p) => p.itemId == item.itemId).toList();
+    if (item.selectedMarketId != null && item.selectedMarketId!.isNotEmpty) {
+      final marketPrices = pricesForItem.where((p) => p.marketId == item.selectedMarketId).toList();
+      if (marketPrices.isNotEmpty) {
+        marketPrices.sort((a, b) => b.registeredAt.compareTo(a.registeredAt));
+        itemPrice = marketPrices.first;
+      }
+    }
+    
+    if (itemPrice == null && pricesForItem.isNotEmpty) {
+      pricesForItem.sort((a, b) {
+        if (a.tiers.isEmpty) return 1;
+        if (b.tiers.isEmpty) return -1;
+        return a.tiers.first.pricePerUnit.compareTo(b.tiers.first.pricePerUnit);
+      });
+      itemPrice = pricesForItem.first;
+    }
+    return itemPrice;
+  }
+
+  double _calculateTotalCost(List<ListItem> items, List<Price>? allPrices, {bool markedOnly = true}) {
+    double total = 0.0;
+    for (final item in items) {
+      if (!markedOnly || item.marked) {
+        final price = _getItemPrice(item, allPrices);
+        if (price != null) {
+          total += price.calculateBestPrice(item.plannedQuantity);
+        }
+      }
+    }
+    return total;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,6 +64,11 @@ class ListCard extends ConsumerWidget {
     final itemsAsync = ref.watch(
       listItemsStreamProvider((groupId: groupId, listId: list.id)),
     );
+
+    // Watch prices if the list is suggested to show cost accumulation re-actively
+    final allPricesAsync = list.isSuggested
+        ? ref.watch(allPricesProvider(groupId))
+        : const AsyncValue<List<Price>>.data([]);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -56,7 +99,9 @@ class ListCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          Icons.shopping_basket_rounded,
+                          list.isSuggested
+                              ? Icons.local_grocery_store_rounded
+                              : Icons.shopping_basket_rounded,
                           color: _getLeadingIconColor(context),
                           size: 22,
                         ),
@@ -86,7 +131,10 @@ class ListCard extends ConsumerWidget {
                   
                   // Progress indicator section
                   itemsAsync.when(
-                    data: (items) => _buildProgressSection(context, items),
+                    data: (items) {
+                      final allPrices = allPricesAsync.value;
+                      return _buildProgressSection(context, items, allPrices);
+                    },
                     loading: () => const LinearProgressIndicator(minHeight: 2),
                     error: (_, __) => _buildErrorProgress(context),
                   ),
@@ -100,6 +148,9 @@ class ListCard extends ConsumerWidget {
   }
 
   Color _getLeadingBgColor(BuildContext context) {
+    if (list.isSuggested) {
+      return context.isDark ? context.colorOrange.withValues(alpha: 0.15) : const Color(0xFFFFE0B2);
+    }
     switch (list.status) {
       case 'em_compra':
         return context.colorOrangeLight;
@@ -113,6 +164,9 @@ class ListCard extends ConsumerWidget {
   }
 
   Color _getLeadingIconColor(BuildContext context) {
+    if (list.isSuggested) {
+      return context.colorOrange;
+    }
     switch (list.status) {
       case 'em_compra':
         return context.colorOrange;
@@ -126,7 +180,29 @@ class ListCard extends ConsumerWidget {
   Widget _buildBudgetAndInfo(BuildContext context) {
     final List<Widget> details = [];
 
-    if (list.budget != null && list.budget! > 0) {
+    if (list.isSuggested && list.totalCost != null && list.worstCaseCost != null) {
+      final savings = list.worstCaseCost! - list.totalCost!;
+      if (savings > 0) {
+        final formattedSavings = savings.toStringAsFixed(2).replaceAll('.', ',');
+        details.add(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.trending_down_rounded, size: 14, color: context.colorOrange),
+              const SizedBox(width: 4),
+              Text(
+                'Economia: R\$ $formattedSavings',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: context.colorOrange,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } else if (list.budget != null && list.budget! > 0) {
       final formattedBudget = list.budget!.toStringAsFixed(2).replaceAll('.', ',');
       details.add(
         Row(
@@ -170,6 +246,12 @@ class ListCard extends ConsumerWidget {
     Color bg = context.colorGreenLight;
     Color fg = context.colorGreen;
 
+    if (list.isSuggested) {
+      text = 'Feira';
+      bg = context.isDark ? context.colorOrange.withValues(alpha: 0.15) : const Color(0xFFFFE0B2);
+      fg = context.colorOrange;
+    }
+
     switch (list.status) {
       case 'em_compra':
         text = 'No Mercado';
@@ -202,7 +284,11 @@ class ListCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildProgressSection(BuildContext context, List<ListItem> items) {
+  Widget _buildProgressSection(
+    BuildContext context,
+    List<ListItem> items,
+    List<Price>? allPrices,
+  ) {
     if (items.isEmpty) {
       return Text(
         'Nenhum item adicionado ainda',
@@ -226,6 +312,17 @@ class ListCard extends ConsumerWidget {
       progressColor = context.colorTextSecondary;
     }
 
+    String progressText;
+    if (list.isSuggested) {
+      final markedCost = _calculateTotalCost(items, allPrices, markedOnly: true);
+      final totalCost = _calculateTotalCost(items, allPrices, markedOnly: false);
+      final formattedMarked = markedCost.toStringAsFixed(2).replaceAll('.', ',');
+      final formattedTotal = totalCost.toStringAsFixed(2).replaceAll('.', ',');
+      progressText = 'R\$ $formattedMarked de R\$ $formattedTotal';
+    } else {
+      progressText = '$markedItems de $totalItems itens pegos';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,7 +330,7 @@ class ListCard extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '$markedItems de $totalItems itens pegos',
+              progressText,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,

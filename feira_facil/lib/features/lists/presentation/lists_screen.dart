@@ -81,6 +81,7 @@ class ListsScreen extends ConsumerWidget {
     final savingsAsync = groupId != null
         ? ref.watch(savingsSummaryProvider(groupId))
         : const AsyncValue<SavingsSummary>.loading();
+    final activeFeira = groupId != null ? ref.watch(activeFeiraProvider(groupId)) : null;
 
     return Scaffold(
       backgroundColor: context.colorBackground,
@@ -100,6 +101,35 @@ class ListsScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: _buildQuickActions(context, ref),
           ),
+
+          // Active Shopping Trip (Feira em andamento)
+          if (activeFeira != null) ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    Icon(Icons.local_grocery_store_rounded, color: context.colorOrange, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Feira em andamento',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorOrange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverToBoxAdapter(
+                child: ListCard(list: activeFeira.list),
+              ),
+            ),
+          ],
 
           // Recent Lists Header
           SliverPadding(

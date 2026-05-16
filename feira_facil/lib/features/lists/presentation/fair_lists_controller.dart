@@ -39,6 +39,58 @@ final listItemsStreamProvider =
       return repository.listItemsStream(params.groupId, params.listId);
     });
 
+/// Representa uma feira ativa (compra sugerida em andamento)
+class ActiveFeira {
+  final FairList list;
+  final List<ListItem> items;
+
+  ActiveFeira({required this.list, required this.items});
+}
+
+/// Provedor para obter a feira ativa em andamento (compra sugerida)
+final activeFeiraProvider = Provider.family<ActiveFeira?, String>((ref, groupId) {
+  final suggestedListsAsync = ref.watch(suggestedListsStreamProvider(groupId));
+  final suggestedLists = suggestedListsAsync.value ?? [];
+
+  debugPrint('[DEBUG] activeFeiraProvider: groupId=$groupId, suggestedLists.length=${suggestedLists.length}');
+  for (final l in suggestedLists) {
+    debugPrint('[DEBUG]   list: ${l.id}, name: ${l.name}, status: ${l.status}, isSuggested: ${l.isSuggested}');
+  }
+
+  FairList? activeList;
+  for (final l in suggestedLists) {
+    if (l.status != 'concluida') {
+      activeList = l;
+      break;
+    }
+  }
+
+  if (activeList == null) {
+    debugPrint('[DEBUG] activeFeiraProvider: activeList is null');
+    return null;
+  }
+
+  final itemsAsync = ref.watch(
+    listItemsStreamProvider((groupId: groupId, listId: activeList.id)),
+  );
+  final items = itemsAsync.value ?? [];
+  debugPrint('[DEBUG] activeFeiraProvider: activeList=${activeList.name}, items.length=${items.length}');
+  for (final item in items) {
+    if (item.marked) {
+      debugPrint('[DEBUG]   item marked: ${item.itemId}');
+    }
+  }
+
+  final hasMarked = items.any((item) => item.marked);
+  if (hasMarked || activeList.status == 'em_compra') {
+    debugPrint('[DEBUG] activeFeiraProvider: RETURNING ActiveFeira for ${activeList.name}');
+    return ActiveFeira(list: activeList, items: items);
+  }
+
+  debugPrint('[DEBUG] activeFeiraProvider: hasMarked=$hasMarked, status=${activeList.status} -> returning null');
+  return null;
+});
+
 /// Controller para gerenciar listas de compras
 final fairListsControllerProvider =
     AsyncNotifierProvider.family<FairListsController, void, String>(

@@ -77,6 +77,10 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     final marketsAsync = ref.watch(marketsStreamProvider(groupId));
     final allPricesAsync = ref.watch(allPricesProvider(groupId));
 
+    final suggestedLists = ref.watch(suggestedListsStreamProvider(groupId)).value ?? [];
+    final isSuggested = widget.listContext?.isSuggested ??
+        suggestedLists.any((l) => l.id == widget.listId);
+
     return Scaffold(
       backgroundColor: context.colorBackground,
       appBar: AppBar(
@@ -168,7 +172,6 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
           if (filteredItems.isEmpty) return _buildEmptyState();
 
-          final isSuggested = widget.listContext?.isSuggested ?? false;
           final uniqueMarketIds = filteredItems
               .map((i) => i.selectedMarketId)
               .where((id) => id != null && id.isNotEmpty)
@@ -258,14 +261,15 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                               ),
                             ),
                           ),
-                          Text(
-                            'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: context.colorGreen,
+                          if (isSuggested)
+                            Text(
+                              'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: context.colorGreen,
+                              ),
                             ),
-                          ),
                           const SizedBox(width: 8),
                           Icon(
                             _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
@@ -345,7 +349,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                                   (m) => m.id == item.selectedMarketId,
                                   orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
                                 );
-                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value);
+                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested);
                               }),
                           ];
                         });
@@ -362,7 +366,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                           orElse: () => AppCategories.last,
                         );
 
-                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value);
+                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested);
                       }),
                 ],
               );
@@ -407,7 +411,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market, bool groupByMarket, List<Price>? allPrices) {
+  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market, bool groupByMarket, List<Price>? allPrices, bool isSuggested) {
 
     return Dismissible(
       key: ValueKey(item.id),
@@ -467,26 +471,27 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                       decoration: item.marked ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  Builder(
-                    builder: (context) {
-                      final itemPrice = _getItemPrice(item, allPrices);
+                  if (isSuggested)
+                    Builder(
+                      builder: (context) {
+                        final itemPrice = _getItemPrice(item, allPrices);
 
-                      if (itemPrice != null) {
-                        final cost = itemPrice!.calculateBestPrice(item.plannedQuantity);
-                        final unitPrice = itemPrice!.tiers.isNotEmpty ? itemPrice!.tiers.first.pricePerUnit : 0.0;
-                        final unitPriceStr = unitPrice.toStringAsFixed(2).replaceAll('.', ',');
-                        
-                        return Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Text(
-                            'R\$ ${cost.toStringAsFixed(2).replaceAll('.', ',')} (R\$ $unitPriceStr / ${itemPrice!.unit.abbreviation})',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.colorGreen),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                        if (itemPrice != null) {
+                          final cost = itemPrice.calculateBestPrice(item.plannedQuantity);
+                          final unitPrice = itemPrice.tiers.isNotEmpty ? itemPrice.tiers.first.pricePerUnit : 0.0;
+                          final unitPriceStr = unitPrice.toStringAsFixed(2).replaceAll('.', ',');
+                          
+                          return Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Text(
+                              'R\$ ${cost.toStringAsFixed(2).replaceAll('.', ',')} (R\$ $unitPriceStr / ${itemPrice.unit.abbreviation})',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.colorGreen),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   if (market != null && market.id.isNotEmpty && !groupByMarket)
                     Padding(
                       padding: EdgeInsets.only(top: 2),
