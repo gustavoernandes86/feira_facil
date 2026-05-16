@@ -1,7 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-const _apiKey = 'AIzaSyCGU9sIQlRMPVSGi0lHUbjy-t0Ju9yolWU';
+// Chaves de API separadas para segurança e restrições de plataforma
+const _apiKeyWeb = 'AIzaSyCGU9sIQlRMPVSGi0lHUbjy-t0Ju9yolWU';
+const _apiKeyMobile = 'AIzaSyCGU9sIQlRMPVSGi0lHUbjy-t0Ju9yolWU'; // Recomenda-se criar uma chave separada no console
+
+String get _apiKey => kIsWeb ? _apiKeyWeb : _apiKeyMobile;
 
 class PlacePrediction {
   final String placeId;
