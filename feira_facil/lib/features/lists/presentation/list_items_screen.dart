@@ -254,7 +254,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                               style: GoogleFonts.fraunces(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: context.colorTextBody,
+                                color: context.colorTextPrimary,
                               ),
                             ),
                           ),
@@ -376,7 +376,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         onPressed: () => _showAddItemModal(context, ref, groupId),
         label: const Text('Adicionar Produto', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add),
-        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextPrimary,
         foregroundColor: Colors.white,
       ),
     );
@@ -463,7 +463,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                     style: TextStyle(
                       fontSize: 15, 
                       fontWeight: FontWeight.bold, 
-                      color: item.marked ? context.colorTextTertiary : context.colorTextBody,
+                      color: item.marked ? context.colorTextTertiary : context.colorTextPrimary,
                       decoration: item.marked ? TextDecoration.lineThrough : null,
                     ),
                   ),

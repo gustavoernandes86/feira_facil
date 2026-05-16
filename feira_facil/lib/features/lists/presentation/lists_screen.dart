@@ -344,7 +344,7 @@ class ListsScreen extends ConsumerWidget {
             Icon(icon, color: color.withOpacity(0.6), size: 20),
             Spacer(),
             Text(label, style: TextStyle(fontSize: 11, color: context.colorTextTertiary, fontWeight: FontWeight.bold)),
-            Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colorTextBody)),
+            Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colorTextPrimary)),
             Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
           ],
         ),
@@ -433,7 +433,7 @@ class ListsScreen extends ConsumerWidget {
           children: [
             Text(emoji, style: TextStyle(fontSize: 20)),
             SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colorTextBody)),
+            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colorTextPrimary)),
             Text(sub, style: TextStyle(fontSize: 11, color: context.colorTextSecondary)),
           ],
         ),

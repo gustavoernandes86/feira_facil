@@ -361,7 +361,7 @@ class _SummaryCard extends StatelessWidget {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: context.colorTextBody)),
+                  color: context.colorTextPrimary)),
           Text(sub,
               style: TextStyle(
                   fontSize: 10, color: context.colorTextSecondary)),
@@ -442,7 +442,7 @@ class _PurchaseCard extends ConsumerWidget {
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: context.colorTextBody),
+                              color: context.colorTextPrimary),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),

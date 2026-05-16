@@ -36,7 +36,7 @@ class LegalScreen extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: context.colorTextBody,
+                color: context.colorTextPrimary,
               ),
             ),
             const SizedBox(height: 16),

@@ -54,26 +54,26 @@ class LoginScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
 
                   Text(
-                    'Bem-vindo ao Feira Fácil!',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: context.colorTextSecondary,
+                    'Compare preços.\nEconomize toda semana.',
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: context.colorTextPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
                   Text(
-                    'Organize suas compras e compare preços\ncom sua família de forma inteligente',
+                    'O app que transforma sua feira\nem economia inteligente.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colorTextTertiary,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: context.colorTextSecondary,
                       height: 1.5,
                     ),
                   ),
 
                   const SizedBox(height: 60),
 
-                  // Google Sign-In Button
+                  // Google Sign-In Button (SaaS Style)
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -84,29 +84,22 @@ class LoginScreen extends ConsumerWidget {
                                 .read(authControllerProvider.notifier)
                                 .signInWithGoogle(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorCard,
-                        foregroundColor: context.colorTextBody,
-                        side: BorderSide(
-                          color: context.colorBorder,
-                          width: 2,
-                        ),
+                        backgroundColor: context.colorGreen,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppColors.radiusLg),
                         ),
                       ),
                       icon: isLoading
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
                               ),
-                            ),
+                            )
+                          : const Icon(Icons.g_mobiledata_rounded, size: 32),
                       label: Text(
                         isLoading ? 'Conectando...' : 'Entrar com Google',
                         style: const TextStyle(
@@ -259,12 +252,12 @@ class LoginScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+                  Text(
                 title,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: context.colorTextBody,
+                  color: context.colorTextPrimary,
                 ),
               ),
               const SizedBox(height: 4),

@@ -100,12 +100,12 @@ class GroupSetupScreen extends ConsumerWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppColors.radiusLarge),
+      borderRadius: BorderRadius.circular(AppColors.radiusLg),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: context.colorCard,
-          borderRadius: BorderRadius.circular(AppColors.radiusLarge),
+          borderRadius: BorderRadius.circular(AppColors.radiusLg),
           boxShadow: context.shadow2,
           border: Border.all(color: context.colorBorder),
         ),
@@ -129,7 +129,7 @@ class GroupSetupScreen extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: context.colorTextBody,
+                      color: context.colorTextPrimary,
                     ),
                   ),
                   SizedBox(height: 4),

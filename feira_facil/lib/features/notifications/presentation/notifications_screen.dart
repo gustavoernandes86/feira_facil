@@ -19,12 +19,12 @@ class NotificationsScreen extends ConsumerWidget {
           'Notificações',
           style: GoogleFonts.fraunces(
             fontWeight: FontWeight.bold,
-            color: context.colorTextBody,
+            color: context.colorTextPrimary,
           ),
         ),
         backgroundColor: context.colorBackground,
         elevation: 0,
-        iconTheme: IconThemeData(color: context.colorTextBody),
+        iconTheme: IconThemeData(color: context.colorTextPrimary),
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
@@ -116,7 +116,7 @@ class NotificationsScreen extends ConsumerWidget {
                                     notification.title,
                                     style: TextStyle(
                                       fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                                      color: context.colorTextBody,
+                                      color: context.colorTextPrimary,
                                       fontSize: 15,
                                     ),
                                   ),

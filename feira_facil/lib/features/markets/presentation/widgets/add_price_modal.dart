@@ -136,7 +136,7 @@ class _AddPriceModalState extends ConsumerState<AddPriceModal> {
               TextField(
                 controller: _nameController,
                 readOnly: true,
-                style: TextStyle(fontWeight: FontWeight.bold, color: context.colorTextBody),
+                style: TextStyle(fontWeight: FontWeight.bold, color: context.colorTextPrimary),
                 decoration: InputDecoration(
                   prefixIcon: Icon(Icons.check_circle, size: 20, color: context.colorGreen),
                   filled: true,

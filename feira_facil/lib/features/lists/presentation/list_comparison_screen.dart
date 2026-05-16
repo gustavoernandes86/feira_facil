@@ -164,7 +164,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                   style: GoogleFonts.fraunces(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: context.colorTextBody,
+                    color: context.colorTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -281,7 +281,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                         'R\$ ${ms.cost.toStringAsFixed(2).replaceAll('.', ',')}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: context.colorTextBody,
+                          color: context.colorTextPrimary,
                         ),
                       ),
                     ],
@@ -298,7 +298,7 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: isOptimal 
                           ? (context.isDark ? context.colorGreenDark : context.colorGreen) 
-                          : (context.isDark ? context.colorBackground : context.colorTextBody),
+                          : (context.isDark ? context.colorBackground : context.colorTextPrimary),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

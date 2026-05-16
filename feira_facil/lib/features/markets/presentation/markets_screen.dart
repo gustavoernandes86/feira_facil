@@ -118,7 +118,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         icon: const Icon(Icons.storefront),
-        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextPrimary,
         foregroundColor: Colors.white,
       ),
     );

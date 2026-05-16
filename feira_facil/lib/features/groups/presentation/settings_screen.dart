@@ -21,7 +21,7 @@ class SettingsScreen extends ConsumerWidget {
     final bgColor = isDark ? DraculaColors.background : context.colorBackground;
     final cardColor = isDark ? DraculaColors.currentLine : context.colorCard;
     final borderColor = isDark ? DraculaColors.comment.withValues(alpha: 0.2) : context.colorBorder;
-    final textColor = isDark ? DraculaColors.foreground : context.colorTextBody;
+    final textColor = isDark ? DraculaColors.foreground : context.colorTextPrimary;
     final subtleColor = isDark ? DraculaColors.comment : context.colorTextSecondary;
     final accentColor = isDark ? DraculaColors.orange : context.colorOrange;
 

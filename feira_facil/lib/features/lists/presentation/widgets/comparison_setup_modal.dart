@@ -279,7 +279,7 @@ class _ComparisonSetupModalState extends ConsumerState<ComparisonSetupModal> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
-                                        color: isSelected ? context.colorTextBody : context.colorTextSecondary,
+                                        color: isSelected ? context.colorTextPrimary : context.colorTextSecondary,
                                       ),
                                     ),
                                     if (market.address.isNotEmpty)

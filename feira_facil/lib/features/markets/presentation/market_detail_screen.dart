@@ -67,15 +67,15 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
       appBar: AppBar(
         title: Text(widget.market.name, style: GoogleFonts.fraunces(
           fontWeight: FontWeight.bold,
-          color: context.colorTextBody,
+          color: context.colorTextPrimary,
         )),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: context.colorTextBody,
+        foregroundColor: context.colorTextPrimary,
         actions: [
           IconButton(
-            icon: Icon(Icons.analytics_outlined, color: context.colorTextBody),
+            icon: Icon(Icons.analytics_outlined, color: context.colorTextPrimary),
             tooltip: 'Comparar Preços',
             onPressed: () => _showComparisonSetup(),
           ),
@@ -142,7 +142,7 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
         },
         label: const Text('Registrar Avulso', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.add_chart_rounded),
-        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextBody,
+        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextPrimary,
         foregroundColor: context.isDark ? Colors.white : Colors.white,
       ),
     );
@@ -339,7 +339,7 @@ class _ListItemPriceCard extends ConsumerWidget {
           child: Center(
             child: Icon(
               hasPrice ? Icons.check_circle : Icons.shopping_bag_outlined, 
-              color: hasPrice ? context.colorGreen : context.colorTextBody
+              color: hasPrice ? context.colorGreen : context.colorTextPrimary
             )
           ),
         ),
@@ -369,7 +369,7 @@ class _ListItemPriceCard extends ConsumerWidget {
         trailing: IconButton(
           icon: Icon(
             hasPrice ? Icons.edit : Icons.add_circle, 
-            color: hasPrice ? context.colorTextBody : context.colorOrange, 
+            color: hasPrice ? context.colorTextPrimary : context.colorOrange, 
             size: 28
           ),
           onPressed: () => showModalBottomSheet(
