@@ -64,4 +64,11 @@ class AuthRepository {
     }
     await _auth.signOut();
   }
+
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.delete();
+    }
+  }
 }

@@ -4,6 +4,7 @@ import '../providers/user_providers.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/presentation/onboarding_screen.dart';
+import '../../features/auth/presentation/legal_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/groups/presentation/group_setup_screen.dart';
 import '../../features/groups/presentation/settings_screen.dart';
@@ -37,6 +38,8 @@ class RouteNames {
   static const listCompare = 'listCompare';
   static const savings = 'savings';
   static const notifications = 'notifications';
+  static const privacyPolicy = 'privacyPolicy';
+  static const termsOfUse = 'termsOfUse';
 }
 
 class RoutePaths {
@@ -49,6 +52,8 @@ class RoutePaths {
   static const markets = '/markets';
   static const lists = '/lists';
   static const notifications = '/notifications';
+  static const privacyPolicy = '/privacy-policy';
+  static const termsOfUse = '/terms-of-use';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -188,6 +193,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.notifications,
         name: RouteNames.notifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.privacyPolicy,
+        name: RouteNames.privacyPolicy,
+        builder: (context, state) => const LegalScreen(type: LegalType.privacyPolicy),
+      ),
+      GoRoute(
+        path: RoutePaths.termsOfUse,
+        name: RouteNames.termsOfUse,
+        builder: (context, state) => const LegalScreen(type: LegalType.termsOfUse),
       ),
     ],
   );

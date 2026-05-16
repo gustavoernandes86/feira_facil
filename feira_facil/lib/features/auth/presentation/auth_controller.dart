@@ -36,4 +36,20 @@ class AuthController extends AsyncNotifier<void> {
       return ref.read(authRepositoryProvider).signOut();
     });
   }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final authRepo = ref.read(authRepositoryProvider);
+      final userRepo = ref.read(userRepositoryProvider);
+      final userId = authRepo.currentUser?.uid;
+
+      if (userId != null) {
+        // 1. Delete Firestore data first
+        await userRepo.deleteUserData(userId);
+        // 2. Delete Auth account
+        await authRepo.deleteAccount();
+      }
+    });
+  }
 }

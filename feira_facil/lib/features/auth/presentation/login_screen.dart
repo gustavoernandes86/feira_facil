@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/router/app_router.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -149,11 +151,58 @@ class LoginScreen extends ConsumerWidget {
                     title: 'Compartilhe',
                     description: 'Sincronize com sua família',
                   ),
+
+                  const SizedBox(height: 50),
+
+                  // Legal Links
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 12,
+                    children: [
+                      _buildLegalLink(
+                        context,
+                        'Termos de Uso',
+                        () => context.push(RoutePaths.termsOfUse),
+                      ),
+                      Text(
+                        '•',
+                        style: TextStyle(color: context.colorTextTertiary),
+                      ),
+                      _buildLegalLink(
+                        context,
+                        'Política de Privacidade',
+                        () => context.push(RoutePaths.privacyPolicy),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ao entrar, você concorda com nossos termos.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.colorTextTertiary,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLegalLink(BuildContext context, String text, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: context.colorGreen,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.underline,
+        ),
       ),
     );
   }

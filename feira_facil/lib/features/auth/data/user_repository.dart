@@ -47,4 +47,8 @@ class UserRepository {
       
     return snapshot.docs.map((doc) => AppUser.fromJson({'id': doc.id, ...doc.data()})).toList();
   }
+
+  Future<void> deleteUserData(String userId) async {
+    await _firestore.collection('users').doc(userId).delete();
+  }
 }

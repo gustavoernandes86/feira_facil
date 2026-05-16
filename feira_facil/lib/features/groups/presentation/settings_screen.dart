@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/theme_provider.dart';
+import '../../../core/router/app_router.dart';
+import '../../auth/presentation/auth_controller.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -56,9 +58,101 @@ class SettingsScreen extends ConsumerWidget {
                   subtleColor: subtleColor,
                   onTap: () => context.push('/group-management'),
                 ),
+
+                const SizedBox(height: 32),
+
+                // ── Seção: Conta e Privacidade ───────────────────────────
+                _buildSectionHeader('CONTA E PRIVACIDADE', subtleColor),
+                const SizedBox(height: 12),
+
+                _buildActionCard(
+                  icon: Icons.description_outlined,
+                  title: 'Termos de Uso',
+                  desc: 'Leia nossas regras de utilização.',
+                  color: accentColor,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  textColor: textColor,
+                  subtleColor: subtleColor,
+                  onTap: () => context.push(RoutePaths.termsOfUse),
+                ),
+                const SizedBox(height: 12),
+                _buildActionCard(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Política de Privacidade',
+                  desc: 'Como cuidamos dos seus dados.',
+                  color: isDark ? DraculaColors.cyan : context.colorGreen,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  textColor: textColor,
+                  subtleColor: subtleColor,
+                  onTap: () => context.push(RoutePaths.privacyPolicy),
+                ),
+                const SizedBox(height: 24),
                 
+                // Delete Account Button
+                _buildDeleteAccountButton(context, ref, isDark),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeleteAccountButton(BuildContext context, WidgetRef ref, bool isDark) {
+    return InkWell(
+      onTap: () => _showDeleteConfirmation(context, ref),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(color: context.colorRed.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_forever_rounded, color: context.colorRed, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Excluir Minha Conta',
+              style: TextStyle(
+                color: context.colorRed,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir conta?'),
+        content: const Text(
+          'Esta ação é permanente. Todos os seus dados pessoais serão removidos dos nossos servidores de acordo com a LGPD.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: TextStyle(color: context.colorTextTertiary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(authControllerProvider.notifier).deleteAccount();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colorRed,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Sim, excluir tudo'),
           ),
         ],
       ),
