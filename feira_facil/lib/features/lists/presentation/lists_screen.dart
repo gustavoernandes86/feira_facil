@@ -249,24 +249,36 @@ class ListsScreen extends ConsumerWidget {
     final unreadCount = unreadAsync.value?.length ?? 0;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        _headerIcon(Icons.notifications_none_rounded, onTap: () => context.push('/notifications')),
+        _headerIcon(Icons.notifications_none_rounded,
+            onTap: () => context.push('/notifications')),
         if (unreadCount > 0)
           Positioned(
-            right: 0,
-            top: 0,
+            right: -2,
+            top: -2,
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
               ),
-              child: Text(
-                unreadCount > 9 ? '9+' : unreadCount.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+              decoration: BoxDecoration(
+                color: context.colorRed,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.isDark ? context.colorGreenDark : context.colorGreen,
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  unreadCount > 9 ? '9+' : unreadCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

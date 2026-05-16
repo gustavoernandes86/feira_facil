@@ -4,17 +4,27 @@ import '../data/notification_repository.dart';
 import '../domain/app_notification.dart';
 
 final userNotificationsProvider = StreamProvider<List<AppNotification>>((ref) {
-  final user = ref.watch(currentUserProfileProvider).value;
-  if (user == null) return Stream.value([]);
-  
-  return ref.read(notificationRepositoryProvider).watchUserNotifications(user.id);
+  final profileAsync = ref.watch(currentUserProfileProvider);
+  return profileAsync.when(
+    data: (user) {
+      if (user == null) return Stream.value([]);
+      return ref.read(notificationRepositoryProvider).watchUserNotifications(user.id);
+    },
+    loading: () => const Stream.empty(),
+    error: (err, stack) => Stream.error(err, stack),
+  );
 });
 
 final unreadNotificationsProvider = StreamProvider<List<AppNotification>>((ref) {
-  final user = ref.watch(currentUserProfileProvider).value;
-  if (user == null) return Stream.value([]);
-  
-  return ref.read(notificationRepositoryProvider).watchUnreadNotifications(user.id);
+  final profileAsync = ref.watch(currentUserProfileProvider);
+  return profileAsync.when(
+    data: (user) {
+      if (user == null) return Stream.value([]);
+      return ref.read(notificationRepositoryProvider).watchUnreadNotifications(user.id);
+    },
+    loading: () => const Stream.empty(),
+    error: (err, stack) => Stream.error(err, stack),
+  );
 });
 
 final notificationControllerProvider = Provider<NotificationController>((ref) {
