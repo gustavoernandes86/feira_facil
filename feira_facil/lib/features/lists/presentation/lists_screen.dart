@@ -13,6 +13,7 @@ import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/features/notifications/presentation/notifications_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'widgets/list_card.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -462,30 +463,7 @@ class ListsScreen extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: context.colorCard,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: context.shadow2,
-          border: Border.all(color: context.colorBorder),
-        ),
-        child: ListTile(
-          contentPadding: EdgeInsets.all(16),
-          onTap: () => context.push('/lists/${list.id}', extra: list),
-          leading: Container(
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: context.colorGreenLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.shopping_basket_rounded, color: context.colorGreen),
-          ),
-          title: Text(list.name, style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text('Toque para gerenciar itens', style: TextStyle(color: context.colorTextTertiary, fontSize: 12)),
-          trailing: Icon(Icons.chevron_right, color: context.colorTextTertiary),
-        ),
-      ),
+      child: ListCard(list: list),
     );
   }
 
