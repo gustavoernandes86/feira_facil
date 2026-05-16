@@ -303,6 +303,7 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
       );
 
       ref.invalidate(fairListsStreamProvider(groupId));
+      ref.invalidate(suggestedListsStreamProvider(groupId));
     });
   }
 

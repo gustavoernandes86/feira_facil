@@ -68,6 +68,45 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     return total;
   }
 
+  Future<void> _finalizeFeira(BuildContext context, WidgetRef ref, String groupId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Finalizar Feira?', style: GoogleFonts.fraunces(fontWeight: FontWeight.bold)),
+        content: const Text('Isso salvará esta feira no seu histórico de Compras Finalizadas e concluirá o processo.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancelar', style: TextStyle(color: context.colorTextSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: context.colorGreenDark),
+            child: const Text('Finalizar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Finalizando feira...')),
+      );
+      
+      await ref.read(fairListsControllerProvider(groupId).notifier).completeList(widget.listId);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Feira finalizada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop(); // Volta para a tela inicial
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupId = ref.watch(currentGroupIdProvider);
@@ -78,8 +117,33 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     final allPricesAsync = ref.watch(allPricesProvider(groupId));
 
     final suggestedLists = ref.watch(suggestedListsStreamProvider(groupId)).value ?? [];
-    final isSuggested = widget.listContext?.isSuggested ??
+    final manualLists = ref.watch(fairListsStreamProvider(groupId)).value ?? [];
+
+    FairList? currentList;
+    for (final l in suggestedLists) {
+      if (l.id == widget.listId) {
+        currentList = l;
+        break;
+      }
+    }
+    if (currentList == null) {
+      for (final l in manualLists) {
+        if (l.id == widget.listId) {
+          currentList = l;
+          break;
+        }
+      }
+    }
+    currentList ??= widget.listContext;
+
+    final isSuggested = currentList?.isSuggested ??
         suggestedLists.any((l) => l.id == widget.listId);
+    final isCompleted = currentList?.status == 'concluida';
+
+    final items = itemsAsync.value ?? [];
+    final totalItems = items.length;
+    final markedItems = items.where((i) => i.marked).length;
+    final is100Percent = totalItems > 0 && markedItems == totalItems;
 
     return Scaffold(
       backgroundColor: context.colorBackground,
@@ -231,51 +295,63 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                 headerColor = catInfo.color;
               }
 
-              return Column(
+              final marketWidget = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        if (_collapsedGroups.contains(groupName)) {
-                          _collapsedGroups.remove(groupName);
-                        } else {
-                          _collapsedGroups.add(groupName);
-                        }
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 12, left: 4, right: 8),
-                      child: Row(
-                        children: [
-                          Icon(headerIcon, size: 20, color: headerColor),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              groupName,
-                              style: GoogleFonts.fraunces(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: context.colorTextPrimary,
+                  Container(
+                    decoration: groupByMarket
+                        ? BoxDecoration(
+                            color: context.colorOrange.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: context.colorOrange.withValues(alpha: 0.15)),
+                          )
+                        : null,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (_collapsedGroups.contains(groupName)) {
+                            _collapsedGroups.remove(groupName);
+                          } else {
+                            _collapsedGroups.add(groupName);
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: groupByMarket ? 12.0 : 4.0,
+                          vertical: groupByMarket ? 10.0 : 8.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(headerIcon, size: 20, color: headerColor),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                groupName,
+                                style: GoogleFonts.fraunces(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.colorTextPrimary,
+                                ),
                               ),
                             ),
-                          ),
-                          if (isSuggested)
-                            Text(
-                              'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: context.colorGreen,
+                            if (isSuggested)
+                              Text(
+                                'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.colorGreen,
+                                ),
                               ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
+                              color: context.colorTextTertiary,
                             ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
-                            color: context.colorTextTertiary,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -310,7 +386,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                               },
                               borderRadius: BorderRadius.circular(6),
                               child: Padding(
-                                padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8, right: 8),
+                                padding: const EdgeInsets.only(left: 16.0, top: 8, bottom: 8, right: 8),
                                 child: Row(
                                   children: [
                                     Icon(catInfo.icon, size: 16, color: catInfo.color),
@@ -349,7 +425,7 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                                   (m) => m.id == item.selectedMarketId,
                                   orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
                                 );
-                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested);
+                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
                               }),
                           ];
                         });
@@ -366,23 +442,77 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                           orElse: () => AppCategories.last,
                         );
 
-                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested);
+                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
                       }),
                 ],
               );
+
+              if (groupByMarket) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.colorCard.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: context.colorBorder.withValues(alpha: 0.8),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: marketWidget,
+                );
+              }
+              return marketWidget;
             },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Erro: $err')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddItemModal(context, ref, groupId),
-        label: const Text('Adicionar Produto', style: TextStyle(fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add),
-        backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextPrimary,
-        foregroundColor: Colors.white,
-      ),
+      floatingActionButton: isCompleted
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddItemModal(context, ref, groupId),
+              label: const Text('Adicionar Produto', style: TextStyle(fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.add),
+              backgroundColor: context.isDark ? context.colorGreenDark : context.colorTextPrimary,
+              foregroundColor: Colors.white,
+            ),
+      bottomNavigationBar: (isSuggested && is100Percent && !isCompleted)
+          ? Container(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+              decoration: BoxDecoration(
+                color: context.colorBackground,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => _finalizeFeira(context, ref, groupId),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colorGreenDark,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.check_circle_outline, size: 24),
+                label: Text(
+                  'Finalizar Feira',
+                  style: GoogleFonts.fraunces(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -411,13 +541,16 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market, bool groupByMarket, List<Price>? allPrices, bool isSuggested) {
+  Widget _buildItemCard(BuildContext context, ListItem item, String groupId, CategoryInfo? catInfo, Market? market, bool groupByMarket, List<Price>? allPrices, bool isSuggested, bool isCompleted) {
 
     return Dismissible(
       key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
+      direction: isCompleted ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(
+          left: groupByMarket ? 32.0 : 16.0,
+          bottom: 12,
+        ),
         padding: const EdgeInsets.only(right: 20),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
@@ -433,7 +566,10 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(
+          left: groupByMarket ? 32.0 : 16.0,
+          bottom: 12,
+        ),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: context.colorCard,
@@ -447,15 +583,17 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
               value: item.marked,
               activeColor: context.colorGreen,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-              onChanged: (val) {
-                if (val != null) {
-                  ref.read(fairListsControllerProvider(groupId).notifier).toggleItemMarked(
-                    listId: widget.listId,
-                    listItemId: item.id,
-                    marked: val,
-                  );
-                }
-              },
+              onChanged: isCompleted
+                  ? null
+                  : (val) {
+                      if (val != null) {
+                        ref.read(fairListsControllerProvider(groupId).notifier).toggleItemMarked(
+                          listId: widget.listId,
+                          listItemId: item.id,
+                          marked: val,
+                        );
+                      }
+                    },
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -509,39 +647,51 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
                 ],
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: context.colorBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  _qtyBtn(Icons.remove, () {
-                    if (item.plannedQuantity > 1) {
-                      ref.read(fairListsControllerProvider(groupId).notifier).updateItemQuantity(
-                        listId: widget.listId, 
-                        listItemId: item.id,
-                        newQuantity: item.plannedQuantity - 1
-                      );
-                    }
-                  }),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+            isCompleted
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       '${item.plannedQuantity.toString().replaceAll('.0', '')} ${item.unit.abbreviation}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: context.colorTextSecondary,
+                      ),
+                    ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      color: context.colorBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        _qtyBtn(Icons.remove, () {
+                          if (item.plannedQuantity > 1) {
+                            ref.read(fairListsControllerProvider(groupId).notifier).updateItemQuantity(
+                              listId: widget.listId, 
+                              listItemId: item.id,
+                              newQuantity: item.plannedQuantity - 1
+                            );
+                          }
+                        }),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '${item.plannedQuantity.toString().replaceAll('.0', '')} ${item.unit.abbreviation}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                        _qtyBtn(Icons.add, () {
+                          ref.read(fairListsControllerProvider(groupId).notifier).updateItemQuantity(
+                            listId: widget.listId, 
+                            listItemId: item.id,
+                            newQuantity: item.plannedQuantity + 1
+                          );
+                        }),
+                      ],
                     ),
                   ),
-                  _qtyBtn(Icons.add, () {
-                    ref.read(fairListsControllerProvider(groupId).notifier).updateItemQuantity(
-                      listId: widget.listId, 
-                      listItemId: item.id,
-                      newQuantity: item.plannedQuantity + 1
-                    );
-                  }),
-                ],
-              ),
-            ),
           ],
         ),
       ),

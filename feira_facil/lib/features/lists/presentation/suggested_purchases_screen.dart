@@ -117,25 +117,6 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
             ),
           ),
 
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              children: [
-                Icon(Icons.history, size: 16, color: context.colorTextSecondary),
-                SizedBox(width: 8),
-                Text(
-                  'HISTÓRICO DE SUGESTÕES',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: context.colorTextSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           Expanded(
             child: suggestedListsAsync.when(
               data: (lists) {
@@ -144,7 +125,7 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.auto_awesome_outlined, size: 64, color: Colors.orange.withOpacity(0.3)),
+                        Icon(Icons.auto_awesome_outlined, size: 64, color: Colors.orange.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
                         Text(
                           'Nenhuma compra sugerida ainda.',
@@ -159,13 +140,64 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
                   );
                 }
 
-                return ListView.builder(
+                final activeSuggested = lists.where((l) => l.status != 'concluida').toList();
+                final finishedSuggested = lists.where((l) => l.status == 'concluida').toList();
+
+                final List<Widget> children = [];
+
+                if (activeSuggested.isNotEmpty) {
+                  children.add(Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.local_grocery_store_outlined, size: 16, color: context.colorTextSecondary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'FEIRAS EM ANDAMENTO',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: context.colorTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ));
+                  for (final list in activeSuggested) {
+                    children.add(_SuggestedListCard(list: list, isFinished: false));
+                  }
+                  children.add(const SizedBox(height: 16));
+                }
+
+                if (finishedSuggested.isNotEmpty) {
+                  children.add(Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 16, color: context.colorTextSecondary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'COMPRAS FINALIZADAS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: context.colorTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ));
+                  for (final list in finishedSuggested) {
+                    children.add(_SuggestedListCard(list: list, isFinished: true));
+                  }
+                  children.add(const SizedBox(height: 16));
+                }
+
+                return ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: lists.length,
-                  itemBuilder: (context, index) {
-                    final list = lists[index];
-                    return _SuggestedListCard(list: list);
-                  },
+                  children: children,
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -180,35 +212,45 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
 
 class _SuggestedListCard extends StatelessWidget {
   final FairList list;
+  final bool isFinished;
 
-  const _SuggestedListCard({required this.list});
+  const _SuggestedListCard({required this.list, this.isFinished = false});
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(list.createdAt);
+    final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(list.updatedAt ?? list.createdAt);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.orange.withOpacity(0.1)),
+        side: BorderSide(
+          color: isFinished
+              ? Colors.green.withValues(alpha: 0.1)
+              : Colors.orange.withValues(alpha: 0.1),
+        ),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: isFinished
+                ? Colors.green.withValues(alpha: 0.1)
+                : Colors.orange.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.shopping_cart_outlined, color: Colors.orange),
+          child: Icon(
+            isFinished ? Icons.check_circle_outline : Icons.shopping_cart_outlined,
+            color: isFinished ? context.colorGreen : Colors.orange,
+          ),
         ),
         title: Text(
           list.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text('Gerada em $dateStr'),
+        subtitle: Text(isFinished ? 'Concluída em $dateStr' : 'Gerada em $dateStr'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.pushNamed(
           RouteNames.listDetails,
