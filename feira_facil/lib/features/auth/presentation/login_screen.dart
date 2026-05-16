@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -34,153 +35,206 @@ class LoginScreen extends ConsumerWidget {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
+      backgroundColor: context.colorBackground,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 16),
 
-                  // Logo colorida no body
-                  Image.asset(
-                    'assets/images/logo.png',
-                    height: 120,
-                    fit: BoxFit.contain,
+                // 1. Styled Shopping Cart Rounded Icon
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.colorGreen,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: context.shadow1,
                   ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    'Compare preços.\nEconomize toda semana.',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: context.colorTextPrimary,
-                    ),
-                    textAlign: TextAlign.center,
+                  child: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.white,
+                    size: 38,
                   ),
-                  const SizedBox(height: 12),
+                ),
+                const SizedBox(height: 32),
 
-                  Text(
-                    'O app que transforma sua feira\nem economia inteligente.',
+                // 2. Main Title (Serif Fraunces)
+                Text(
+                  'Compare preços.\nEconomize toda semana.',
+                  style: GoogleFonts.fraunces(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorTextPrimary,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+
+                // 3. Subtitle (DM Sans)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    'O app que transforma sua feira em economia inteligente para toda a família.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    style: TextStyle(
+                      fontSize: 14,
                       color: context.colorTextSecondary,
                       height: 1.5,
                     ),
                   ),
+                ),
+                const SizedBox(height: 32),
 
-                  const SizedBox(height: 60),
-
-                  // Google Sign-In Button (SaaS Style)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: isLoading
-                          ? null
-                          : () => ref
-                                .read(authControllerProvider.notifier)
-                                .signInWithGoogle(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorGreen,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppColors.radiusLg),
-                        ),
+                // 4. Sign-In Button (SaaS Pill Style)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () => ref
+                              .read(authControllerProvider.notifier)
+                              .signInWithGoogle(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: context.colorGreen,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
                       ),
-                      icon: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'G',
+                                  style: TextStyle(
+                                    color: context.colorGreen,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
                               ),
-                            )
-                          : const Icon(Icons.g_mobiledata_rounded, size: 32),
-                      label: Text(
-                        isLoading ? 'Conectando...' : 'Entrar com Google',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Entrar com Google',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 5. Sub-button copy: "Acesso rápido · seguro · gratuito"
+                Text(
+                  'Acesso rápido · seguro · gratuito',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.colorTextTertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // 6. Subtle Divider
+                Divider(
+                  color: context.colorBorder,
+                  thickness: 1,
+                ),
+                const SizedBox(height: 24),
+
+                // 7. Feature Header
+                Text(
+                  'Por que usar o Feira Fácil?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.isDark ? context.colorGreen : context.colorGreenDark,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 8. Feature Card 1
+                _buildFeatureCard(
+                  context,
+                  icon: Icons.bar_chart_rounded,
+                  iconBg: context.colorGreenLight,
+                  iconColor: context.colorGreen,
+                  title: 'Compara mercados automaticamente',
+                  subtitle: 'Encontra onde cada item é mais barato',
+                ),
+                const SizedBox(height: 12),
+
+                // 9. Feature Card 2
+                _buildFeatureCard(
+                  context,
+                  icon: Icons.people_outline_rounded,
+                  iconBg: context.colorOrangeLight,
+                  iconColor: context.colorOrange,
+                  title: 'Lista compartilhada em tempo real',
+                  subtitle: 'Toda família sincronizada no mercado',
+                ),
+                const SizedBox(height: 48),
+
+                // 10. Legal Consent Links
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  children: [
+                    _buildLegalLink(
+                      context,
+                      'Termos de Uso',
+                      () => context.push(RoutePaths.termsOfUse),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'Fazemos login apenas com sua conta Google\npara maior segurança e privacidade',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context.colorTextTertiary,
-                      height: 1.4,
+                    Text(
+                      '•',
+                      style: TextStyle(color: context.colorTextTertiary),
                     ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Features preview
-                  _buildFeatureItem(
-                    context: context,
-                    icon: '🛒',
-                    title: 'Listas Inteligentes',
-                    description: 'Organize suas compras por categoria',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildFeatureItem(
-                    context: context,
-                    icon: '💰',
-                    title: 'Compare Preços',
-                    description: 'Encontre as melhores ofertas',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildFeatureItem(
-                    context: context,
-                    icon: '👨‍👩‍👧‍👦',
-                    title: 'Compartilhe',
-                    description: 'Sincronize com sua família',
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  // Legal Links
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 12,
-                    children: [
-                      _buildLegalLink(
-                        context,
-                        'Termos de Uso',
-                        () => context.push(RoutePaths.termsOfUse),
-                      ),
-                      Text(
-                        '•',
-                        style: TextStyle(color: context.colorTextTertiary),
-                      ),
-                      _buildLegalLink(
-                        context,
-                        'Política de Privacidade',
-                        () => context.push(RoutePaths.privacyPolicy),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ao entrar, você concorda com nossos termos.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.colorTextTertiary,
+                    _buildLegalLink(
+                      context,
+                      'Política de Privacidade',
+                      () => context.push(RoutePaths.privacyPolicy),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Ao entrar, você concorda com nossos termos.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.colorTextTertiary,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -200,96 +254,58 @@ class LoginScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildFeatureCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.isDark ? context.colorGreenDark : context.colorGreen,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
+        color: context.colorCard,
+        borderRadius: BorderRadius.circular(AppColors.radiusLg),
+        border: Border.all(color: context.colorBorder),
+        boxShadow: context.shadow1,
       ),
-      child: Stack(
+      child: Row(
         children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.06,
-              child: CustomPaint(painter: DotPainter(spacing: 22)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              child: Row(
-                children: [
-                  Image.asset(
-                    'assets/images/logo-horizontal-escura.png',
-                    height: 56,
-                    fit: BoxFit.contain,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: context.colorTextPrimary,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.colorTextSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildFeatureItem({
-    required BuildContext context,
-    required String icon,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 32)),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-                  Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: context.colorTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.colorTextTertiary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class DotPainter extends CustomPainter {
-  final double spacing;
-  DotPainter({this.spacing = 24.0});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white;
-    for (double x = 0; x < size.width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), 1.0, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

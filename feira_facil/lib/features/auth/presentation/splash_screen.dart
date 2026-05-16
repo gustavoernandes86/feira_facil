@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigation delay
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) context.go(RoutePaths.onboarding);
+      if (mounted) context.go(RoutePaths.login);
     });
   }
 

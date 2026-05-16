@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_providers.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
-import '../../features/auth/presentation/onboarding_screen.dart';
 import '../../features/auth/presentation/legal_screen.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/groups/presentation/group_setup_screen.dart';
@@ -25,7 +24,6 @@ import 'router_notifier.dart';
 // Constantes de rota
 class RouteNames {
   static const splash = 'splash';
-  static const onboarding = 'onboarding';
   static const login = 'login';
   static const groupSetup = 'groupSetup';
   static const groupManagement = 'groupManagement'; // kept for legacy nav
@@ -44,7 +42,6 @@ class RouteNames {
 
 class RoutePaths {
   static const splash = '/splash';
-  static const onboarding = '/onboarding';
   static const login = '/login';
   static const groupSetup = '/group-setup';
   static const groupManagement = '/group-management';
@@ -55,6 +52,7 @@ class RoutePaths {
   static const privacyPolicy = '/privacy-policy';
   static const termsOfUse = '/terms-of-use';
 }
+
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final routerNotifier = ref.watch(routerNotifierProvider);
@@ -70,14 +68,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final userProfile = profileAsync.value;
       
       final isSplash = state.matchedLocation == RoutePaths.splash;
-      final isOnboarding = state.matchedLocation == RoutePaths.onboarding;
       final isLoggingIn = state.matchedLocation == RoutePaths.login;
       final isGroupSetup = state.matchedLocation == RoutePaths.groupSetup;
+      final isPrivacyPolicy = state.matchedLocation == RoutePaths.privacyPolicy;
+      final isTermsOfUse = state.matchedLocation == RoutePaths.termsOfUse;
 
       // 1. Se não estiver logado
       if (authState == null) {
-        // Permite ficar nas telas públicas (splash, onboarding, login)
-        if (isSplash || isOnboarding || isLoggingIn) {
+        // Permite ficar nas telas públicas (splash, login, privacidade, termos)
+        if (isSplash || isLoggingIn || isPrivacyPolicy || isTermsOfUse) {
           return null;
         }
         // Obriga a ir para login
@@ -86,7 +85,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 2. A partir daqui, o usuário ESTÁ logado.
       // Se ele estiver nas telas iniciais, precisamos redirecioná-lo para dentro do app.
-      if (isSplash || isOnboarding || isLoggingIn) {
+      if (isSplash || isLoggingIn) {
         // Se o perfil carregou e não tem grupos, manda para setup
         if (userProfile != null && userProfile.groupIds.isEmpty) {
           return RoutePaths.groupSetup;
@@ -109,11 +108,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.splash,
         name: RouteNames.splash,
         builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.onboarding,
-        name: RouteNames.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: RoutePaths.login,
