@@ -14,6 +14,9 @@ import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
 import 'package:feira_facil/core/widgets/shared_widgets.dart';
 import 'package:feira_facil/core/widgets/web_sidebar.dart';
+import 'package:feira_facil/core/widgets/mobile_bottom_navbar.dart';
+import 'package:feira_facil/core/widgets/premium_header.dart';
+import 'package:feira_facil/core/widgets/premium_empty_state.dart';
 
 class SuggestedPurchasesScreen extends ConsumerWidget {
   const SuggestedPurchasesScreen({super.key});
@@ -123,20 +126,14 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
-      appBar: AppBar(
-        title: Text(
-          'Compras Sugeridas',
-          style: GoogleFonts.fraunces(
-            fontWeight: FontWeight.bold,
-            color: context.colorOrange,
-          ),
-        ),
-        backgroundColor: context.colorBackground,
-        elevation: 0,
-        foregroundColor: context.colorOrange,
-      ),
+      extendBody: true,
+      bottomNavigationBar: const MobileBottomNavbar(activeTab: MobileTab.suggested),
       body: Column(
         children: [
+          const PremiumHeader(
+            title: 'Compras Sugeridas',
+            subtitle: 'Encontre o melhor local para economizar',
+          ),
           // Seção de Ação
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -191,22 +188,12 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
             child: suggestedListsAsync.when(
               data: (lists) {
                 if (lists.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.auto_awesome_outlined, size: 64, color: Colors.orange.withValues(alpha: 0.3)),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Nenhuma compra sugerida ainda.',
-                          style: TextStyle(color: context.colorTextSecondary),
-                        ),
-                        Text(
-                          'Comece uma comparação acima!',
-                          style: TextStyle(color: context.colorTextTertiary, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                  return PremiumEmptyState(
+                    title: 'Nenhuma Feira Gerada',
+                    description: 'Faça uma comparação inteligente para que o app encontre o mercado mais barato para você economizar.',
+                    iconEmoji: '✨',
+                    buttonLabel: 'Nova Comparação Inteligente',
+                    onButtonPressed: () => _showComparisonSetup(context, ref),
                   );
                 }
 

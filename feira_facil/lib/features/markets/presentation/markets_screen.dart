@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/user_providers.dart';
 import '../../../core/widgets/premium_header.dart';
 import '../../../core/services/places_service.dart';
@@ -18,6 +19,7 @@ import '../../../core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
 import 'package:feira_facil/core/widgets/web_sidebar.dart';
+import 'package:feira_facil/core/widgets/mobile_bottom_navbar.dart';
 
 class MarketsScreen extends ConsumerStatefulWidget {
   const MarketsScreen({super.key});
@@ -74,22 +76,13 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
+      extendBody: true,
+      bottomNavigationBar: const MobileBottomNavbar(activeTab: MobileTab.markets),
       body: Column(
         children: [
-          PremiumHeader(
+          const PremiumHeader(
             title: 'Mercados',
             subtitle: 'Gerencie os locais de compra do seu grupo.',
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => context.pop(),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.analytics_outlined, color: Colors.white),
-                tooltip: 'Comparar Preços',
-                onPressed: () => _showComparisonSetup(),
-              ),
-            ],
           ),
 
           _buildSearchSection(),
@@ -260,31 +253,55 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
 
   Widget _buildSearchSection() {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(
-          color: context.colorCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.colorBorder),
-          boxShadow: context.shadow1,
-        ),
-        child: TextField(
-          onChanged: (val) => setState(() => _searchQuery = val),
-          decoration: InputDecoration(
-            hintText: 'Pesquisar mercados...',
-            hintStyle: TextStyle(color: context.colorTextTertiary, fontSize: 14),
-            prefixIcon: Icon(
-              Icons.search,
-              color: context.colorTextTertiary,
-              size: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: context.colorCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.colorBorder),
+                boxShadow: context.shadow1,
+              ),
+              child: TextField(
+                onChanged: (val) => setState(() => _searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Pesquisar mercados...',
+                  hintStyle: TextStyle(color: context.colorTextTertiary, fontSize: 14),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: context.colorTextTertiary,
+                    size: 20,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                ),
+              ),
             ),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
           ),
-        ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => _showComparisonSetup(),
+            child: Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: context.isDark ? DraculaColors.surface0 : context.colorGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.isDark ? DraculaColors.comment.withValues(alpha: 0.2) : context.colorGreen.withValues(alpha: 0.2)),
+              ),
+              child: Icon(
+                Icons.analytics_outlined,
+                color: context.isDark ? DraculaColors.green : context.colorGreen,
+                size: 22,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

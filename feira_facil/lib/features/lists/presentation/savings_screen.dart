@@ -11,6 +11,8 @@ import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
 import 'package:feira_facil/core/widgets/shared_widgets.dart';
 import 'package:feira_facil/core/widgets/web_sidebar.dart';
+import 'package:feira_facil/core/widgets/mobile_bottom_navbar.dart';
+import 'package:feira_facil/core/widgets/premium_empty_state.dart';
 
 String _fmtBRL(double? value) {
   if (value == null) return '—';
@@ -85,6 +87,8 @@ class SavingsScreen extends ConsumerWidget {
       data: (summary) => ResponsiveWrapper(
         mobile: Scaffold(
           backgroundColor: context.colorBackground,
+          extendBody: true,
+          bottomNavigationBar: const MobileBottomNavbar(activeTab: MobileTab.savings),
           body: _buildMobileBody(context, summary),
         ),
         web: Scaffold(
@@ -163,7 +167,7 @@ class SavingsScreen extends ConsumerWidget {
                 ),
               ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
   }
@@ -449,19 +453,21 @@ class SavingsScreen extends ConsumerWidget {
           // Back button + title
           Row(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+              if (Navigator.of(context).canPop()) ...[
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child:
+                        const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                   ),
-                  child:
-                      const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Text(
                 'Minha Economia',
                 style: GoogleFonts.fraunces(

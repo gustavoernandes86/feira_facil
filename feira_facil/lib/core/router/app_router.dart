@@ -51,6 +51,8 @@ class RoutePaths {
   static const notifications = '/notifications';
   static const privacyPolicy = '/privacy-policy';
   static const termsOfUse = '/terms-of-use';
+  static const suggestedPurchases = '/lists/suggested';
+  static const savings = '/lists/savings';
 }
 
 

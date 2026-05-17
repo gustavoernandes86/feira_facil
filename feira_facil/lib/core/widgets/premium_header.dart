@@ -16,14 +16,14 @@ class PremiumHeader extends StatelessWidget {
     this.subtitle,
     this.leading,
     this.actions,
-    this.height = 140,
+    this.height = 76,
   });
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
     return Container(
       width: double.infinity,
-      height: height + MediaQuery.of(context).padding.top,
       decoration: BoxDecoration(
         color: context.isDark ? context.colorGreenDark : context.colorGreen,
         borderRadius: const BorderRadius.only(
@@ -43,46 +43,69 @@ class PremiumHeader extends StatelessWidget {
           
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (leading != null)
-                        leading!
-                      else
-                        Image.asset(
-                          'assets/images/logo-horizontal-escura.png',
-                          height: 34,
-                          fit: BoxFit.contain,
+                  if (canPop) ...[
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      if (actions != null) Row(children: actions!) else const SizedBox(width: 40),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    title,
-                    style: GoogleFonts.fraunces(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      height: 1.1,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withOpacity(0.6),
-                        fontWeight: FontWeight.w400,
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 14),
                   ],
-                  const SizedBox(height: 8),
+                  
+                  // Premium Square App Icon
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 32,
+                    width: 32,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.fraunces(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1.1,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (actions != null) ...[
+                    const SizedBox(width: 8),
+                    ...actions!,
+                  ],
                 ],
               ),
             ),

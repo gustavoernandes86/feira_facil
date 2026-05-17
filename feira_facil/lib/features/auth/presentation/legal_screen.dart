@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 
+import 'package:feira_facil/core/widgets/premium_header.dart';
+
 enum LegalType { privacyPolicy, termsOfUse }
 
 class LegalScreen extends StatelessWidget {
@@ -19,40 +21,43 @@ class LegalScreen extends StatelessWidget {
         : 'Termos de Uso';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          title,
-          style: GoogleFonts.fraunces(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: context.colorGreen,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: context.colorTextPrimary,
+      backgroundColor: context.colorBackground,
+      body: Column(
+        children: [
+          PremiumHeader(
+            title: title,
+            subtitle: 'Informações e transparência',
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: context.colorTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Última atualização: 16 de Maio de 2026',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colorTextTertiary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildContent(context),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Última atualização: 16 de Maio de 2026',
-              style: TextStyle(
-                fontSize: 12,
-                color: context.colorTextTertiary,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildContent(context),
-            const SizedBox(height: 40),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

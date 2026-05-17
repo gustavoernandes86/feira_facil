@@ -15,6 +15,7 @@ import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
 import 'package:feira_facil/core/widgets/shared_widgets.dart';
 import 'package:feira_facil/core/widgets/web_sidebar.dart';
+import 'package:feira_facil/core/widgets/premium_header.dart';
 
 class GroupManagementScreen extends ConsumerWidget {
   const GroupManagementScreen({super.key});
@@ -87,7 +88,10 @@ class GroupManagementScreen extends ConsumerWidget {
     return Column(
       children: [
         // Header
-        _buildHeader(context, isDark, accentColor),
+        const PremiumHeader(
+          title: 'Gerenciar Grupos',
+          subtitle: 'Configurações de grupo familiar',
+        ),
 
         Expanded(
           child: ListView(
@@ -277,47 +281,6 @@ class GroupManagementScreen extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  // ─── Header ─────────────────────────────────────────────────────────────────
-
-  Widget _buildHeader(BuildContext context, bool isDark, Color accentColor) {
-    final headerColor = isDark ? DraculaColors.surface0 : context.colorGreen;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 24),
-      decoration: BoxDecoration(
-        color: headerColor,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'Gerenciar Grupos',
-            style: GoogleFonts.fraunces(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

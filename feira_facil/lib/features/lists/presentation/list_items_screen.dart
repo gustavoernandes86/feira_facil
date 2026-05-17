@@ -16,6 +16,7 @@ import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/items/presentation/prices_controller.dart';
 import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup_modal.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/premium_header.dart';
 
 class ListItemsScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -147,327 +148,323 @@ class _ListItemsScreenState extends ConsumerState<ListItemsScreen> {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
-      appBar: AppBar(
-        backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
-        foregroundColor: Colors.white,
-        title: Text(widget.listContext?.name ?? 'Lista Base', style: GoogleFonts.fraunces(
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        )),
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.analytics_outlined, color: Colors.white),
-            tooltip: 'Comparar Preços',
-            onPressed: () async {
-              final items = itemsAsync.value ?? [];
-              if (items.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Adicione itens à lista primeiro!')),
-                );
-                return;
-              }
-              
-              // Mostrar modal de seleção de mercados
-              final result = await showModalBottomSheet<ComparisonSetup>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const ComparisonSetupModal(),
-              );
-              
-              if (result == null || !context.mounted) return;
-              
-              context.pushNamed(
-                RouteNames.listCompare,
-                extra: {
-                  'fairList': result.selectedList,
-                  'items': items,
-                  'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+      body: Column(
+        children: [
+          PremiumHeader(
+            title: widget.listContext?.name ?? 'Lista Base',
+            subtitle: isCompleted
+                ? 'Lista Finalizada'
+                : 'Toque nos produtos para marcar como comprado',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.analytics_outlined, color: Colors.white),
+                tooltip: 'Comparar Preços',
+                onPressed: () async {
+                  final items = itemsAsync.value ?? [];
+                  if (items.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Adicione itens à lista primeiro!')),
+                    );
+                    return;
+                  }
+                  
+                  // Mostrar modal de seleção de mercados
+                  final result = await showModalBottomSheet<ComparisonSetup>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const ComparisonSetupModal(),
+                  );
+                  
+                  if (result == null || !context.mounted) return;
+                  
+                  context.pushNamed(
+                    RouteNames.listCompare,
+                    extra: {
+                      'fairList': result.selectedList,
+                      'items': items,
+                      'marketIds': result.selectedMarkets.map((m) => m.id).toList(),
+                    },
+                  );
                 },
-              );
-            },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.white),
+                tooltip: 'Excluir Lista',
+                onPressed: () => _confirmDeleteList(context, ref, groupId),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.white),
-            tooltip: 'Excluir Lista',
-            onPressed: () => _confirmDeleteList(context, ref, groupId),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Container(
-              height: 44,
+              height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                color: context.colorCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.colorBorder),
+                boxShadow: context.shadow1,
               ),
               child: TextField(
                 onChanged: (val) => setState(() => _searchQuery = val),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: const InputDecoration(
+                style: TextStyle(color: context.colorTextPrimary, fontSize: 14),
+                decoration: InputDecoration(
                   hintText: 'Pesquisar produto...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  icon: Padding(
-                    padding: EdgeInsets.only(left: 12.0),
-                    child: Icon(Icons.search, color: Colors.white54, size: 20),
-                  ),
+                  hintStyle: TextStyle(color: context.colorTextTertiary),
+                  prefixIcon: Icon(Icons.search, color: context.colorTextTertiary, size: 20),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-      body: itemsAsync.when(
-        data: (items) {
-          var filteredItems = items;
-          if (_searchQuery.isNotEmpty) {
-            filteredItems = items.where((i) => i.itemId.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-          }
+          Expanded(
+            child: itemsAsync.when(
+              data: (items) {
+                var filteredItems = items;
+                if (_searchQuery.isNotEmpty) {
+                  filteredItems = items.where((i) => i.itemId.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+                }
 
-          if (filteredItems.isEmpty) return _buildEmptyState();
+                if (filteredItems.isEmpty) return _buildEmptyState();
 
-          final uniqueMarketIds = filteredItems
-              .map((i) => i.selectedMarketId)
-              .where((id) => id != null && id.isNotEmpty)
-              .toSet();
-          final groupByMarket = isSuggested && uniqueMarketIds.length > 1;
+                final uniqueMarketIds = filteredItems
+                    .map((i) => i.selectedMarketId)
+                    .where((id) => id != null && id.isNotEmpty)
+                    .toSet();
+                final groupByMarket = isSuggested && uniqueMarketIds.length > 1;
 
-          // Agrupar itens
-          final groupedItems = <String, List<ListItem>>{};
-          
-          if (groupByMarket) {
-            for (final item in filteredItems) {
-              final marketId = item.selectedMarketId;
-              final marketName = marketId != null && marketId.isNotEmpty
-                  ? (marketsAsync.value?.firstWhere((m) => m.id == marketId, orElse: () => Market(id: '', name: 'Desconhecido', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now())).name ?? 'Desconhecido')
-                  : 'Sem Mercado';
-                  
-              if (!groupedItems.containsKey(marketName)) {
-                groupedItems[marketName] = [];
-              }
-              groupedItems[marketName]!.add(item);
-            }
-          } else {
-            for (final item in filteredItems) {
-              final cat = item.category;
-              if (!groupedItems.containsKey(cat)) {
-                groupedItems[cat] = [];
-              }
-              groupedItems[cat]!.add(item);
-            }
-          }
+                // Agrupar itens
+                final groupedItems = <String, List<ListItem>>{};
+                
+                if (groupByMarket) {
+                  for (final item in filteredItems) {
+                    final marketId = item.selectedMarketId;
+                    final marketName = marketId != null && marketId.isNotEmpty
+                        ? (marketsAsync.value?.firstWhere((m) => m.id == marketId, orElse: () => Market(id: '', name: 'Desconhecido', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now())).name ?? 'Desconhecido')
+                        : 'Sem Mercado';
+                        
+                    if (!groupedItems.containsKey(marketName)) {
+                      groupedItems[marketName] = [];
+                    }
+                    groupedItems[marketName]!.add(item);
+                  }
+                } else {
+                  for (final item in filteredItems) {
+                    final cat = item.category;
+                    if (!groupedItems.containsKey(cat)) {
+                      groupedItems[cat] = [];
+                    }
+                    groupedItems[cat]!.add(item);
+                  }
+                }
 
-          final sortedGroups = groupedItems.keys.toList();
-          sortedGroups.sort();
+                final sortedGroups = groupedItems.keys.toList();
+                sortedGroups.sort();
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-            itemCount: sortedGroups.length,
-            itemBuilder: (context, index) {
-              final groupName = sortedGroups[index];
-              final groupItems = groupedItems[groupName]!;
-              
-              // Ordena os itens alfabeticamente dentro do grupo
-              groupItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
-              
-              IconData headerIcon;
-              Color headerColor;
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                  itemCount: sortedGroups.length,
+                  itemBuilder: (context, index) {
+                    final groupName = sortedGroups[index];
+                    final groupItems = groupedItems[groupName]!;
+                    
+                    // Ordena os itens alfabeticamente dentro do grupo
+                    groupItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
+                    
+                    IconData headerIcon;
+                    Color headerColor;
 
-              if (groupByMarket) {
-                headerIcon = Icons.storefront;
-                headerColor = context.colorOrange;
-              } else {
-                final catInfo = AppCategories.firstWhere(
-                  (c) => c.name == groupName, 
-                  orElse: () => AppCategories.last,
-                );
-                headerIcon = catInfo.icon;
-                headerColor = catInfo.color;
-              }
+                    if (groupByMarket) {
+                      headerIcon = Icons.storefront;
+                      headerColor = context.colorOrange;
+                    } else {
+                      final catInfo = AppCategories.firstWhere(
+                        (c) => c.name == groupName, 
+                        orElse: () => AppCategories.last,
+                      );
+                      headerIcon = catInfo.icon;
+                      headerColor = catInfo.color;
+                    }
 
-              final marketWidget = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: groupByMarket
-                        ? BoxDecoration(
-                            color: context.colorOrange.withValues(alpha: 0.08),
+                    final marketWidget = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          decoration: groupByMarket
+                              ? BoxDecoration(
+                                  color: context.colorOrange.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: context.colorOrange.withValues(alpha: 0.15)),
+                                )
+                              : null,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (_collapsedGroups.contains(groupName)) {
+                                  _collapsedGroups.remove(groupName);
+                                } else {
+                                  _collapsedGroups.add(groupName);
+                                }
+                              });
+                            },
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: context.colorOrange.withValues(alpha: 0.15)),
-                          )
-                        : null,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          if (_collapsedGroups.contains(groupName)) {
-                            _collapsedGroups.remove(groupName);
-                          } else {
-                            _collapsedGroups.add(groupName);
-                          }
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: groupByMarket ? 12.0 : 4.0,
-                          vertical: groupByMarket ? 10.0 : 8.0,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(headerIcon, size: 20, color: headerColor),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                groupName,
-                                style: GoogleFonts.fraunces(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.colorTextPrimary,
-                                ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: groupByMarket ? 12.0 : 4.0,
+                                vertical: groupByMarket ? 10.0 : 8.0,
                               ),
-                            ),
-                            if (isSuggested)
-                              Text(
-                                'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.colorGreen,
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
-                              color: context.colorTextTertiary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (!_collapsedGroups.contains(groupName))
-                    if (groupByMarket)
-                      ...(() {
-                        final catGroups = <String, List<ListItem>>{};
-                        for (final item in groupItems) {
-                          catGroups.putIfAbsent(item.category, () => []).add(item);
-                        }
-                        
-                        final sortedCats = catGroups.keys.toList()..sort();
-                        
-                        return sortedCats.expand((catName) {
-                          final catItems = catGroups[catName]!;
-                          catItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
-                          final catInfo = AppCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.last);
-                          
-                          final catKey = '${groupName}_$catName';
-                          final isCatCollapsed = _collapsedCategories.contains(catKey);
-
-                          return [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  if (isCatCollapsed) {
-                                    _collapsedCategories.remove(catKey);
-                                  } else {
-                                    _collapsedCategories.add(catKey);
-                                  }
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(6),
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0, top: 8, bottom: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(catInfo.icon, size: 16, color: catInfo.color),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        catName,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.colorTextSecondary,
-                                        ),
+                              child: Row(
+                                children: [
+                                  Icon(headerIcon, size: 20, color: headerColor),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      groupName,
+                                      style: GoogleFonts.fraunces(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: context.colorTextPrimary,
                                       ),
                                     ),
+                                  ),
+                                  if (isSuggested)
                                     Text(
-                                      'R\$ ${_calculateTotalCost(catItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                                      'R\$ ${_calculateTotalCost(groupItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: context.colorGreen,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      isCatCollapsed ? Icons.expand_more : Icons.expand_less,
-                                      size: 18,
-                                      color: context.colorTextTertiary,
-                                    ),
-                                  ],
-                                ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    _collapsedGroups.contains(groupName) ? Icons.expand_more : Icons.expand_less,
+                                    color: context.colorTextTertiary,
+                                  ),
+                                ],
                               ),
                             ),
-                            if (!isCatCollapsed)
-                              ...catItems.map((item) {
-                                final market = marketsAsync.value?.firstWhere(
-                                  (m) => m.id == item.selectedMarketId,
-                                  orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
-                                );
-                                return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
-                              }),
-                          ];
-                        });
-                      })()
-                    else
-                      ...groupItems.map((item) {
-                        final market = marketsAsync.value?.firstWhere(
-                          (m) => m.id == item.selectedMarketId,
-                          orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
-                        );
-                        
-                        final catInfo = AppCategories.firstWhere(
-                          (c) => c.name == item.category, 
-                          orElse: () => AppCategories.last,
-                        );
+                          ),
+                        ),
+                        if (!_collapsedGroups.contains(groupName))
+                          if (groupByMarket)
+                            ...(() {
+                              final catGroups = <String, List<ListItem>>{};
+                              for (final item in groupItems) {
+                                catGroups.putIfAbsent(item.category, () => []).add(item);
+                              }
+                              
+                              final sortedCats = catGroups.keys.toList()..sort();
+                              
+                              return sortedCats.expand((catName) {
+                                final catItems = catGroups[catName]!;
+                                catItems.sort((a, b) => a.itemId.toLowerCase().compareTo(b.itemId.toLowerCase()));
+                                final catInfo = AppCategories.firstWhere((c) => c.name == catName, orElse: () => AppCategories.last);
+                                
+                                final catKey = '${groupName}_$catName';
+                                final isCatCollapsed = _collapsedCategories.contains(catKey);
 
-                        return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
-                      }),
-                ],
-              );
+                                return [
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isCatCollapsed) {
+                                          _collapsedCategories.remove(catKey);
+                                        } else {
+                                          _collapsedCategories.add(catKey);
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 16.0, top: 8, bottom: 8, right: 8),
+                                      child: Row(
+                                        children: [
+                                          Icon(catInfo.icon, size: 16, color: catInfo.color),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              catName,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: context.colorTextSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            'R\$ ${_calculateTotalCost(catItems, allPricesAsync.value).toStringAsFixed(2).replaceAll('.', ',')}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: context.colorGreen,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            isCatCollapsed ? Icons.expand_more : Icons.expand_less,
+                                            size: 18,
+                                            color: context.colorTextTertiary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (!isCatCollapsed)
+                                    ...catItems.map((item) {
+                                      final market = marketsAsync.value?.firstWhere(
+                                        (m) => m.id == item.selectedMarketId,
+                                        orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
+                                      );
+                                      return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
+                                    }),
+                                ];
+                              });
+                            })()
+                          else
+                            ...groupItems.map((item) {
+                              final market = marketsAsync.value?.firstWhere(
+                                (m) => m.id == item.selectedMarketId,
+                                        orElse: () => Market(id: '', name: '', address: '', groupId: groupId, createdBy: '', createdAt: DateTime.now()),
+                              );
+                              
+                              final catInfo = AppCategories.firstWhere(
+                                (c) => c.name == item.category, 
+                                orElse: () => AppCategories.last,
+                              );
 
-              if (groupByMarket) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.colorCard.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: context.colorBorder.withValues(alpha: 0.8),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: marketWidget,
+                              return _buildItemCard(context, item, groupId, catInfo, market, groupByMarket, allPricesAsync.value, isSuggested, isCompleted);
+                            }),
+                      ],
+                    );
+
+                    if (groupByMarket) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.colorCard.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: context.colorBorder.withValues(alpha: 0.8),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: marketWidget,
+                      );
+                    }
+                    return marketWidget;
+                  },
                 );
-              }
-              return marketWidget;
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Erro: $err')),
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Erro: $err')),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: isCompleted
           ? null

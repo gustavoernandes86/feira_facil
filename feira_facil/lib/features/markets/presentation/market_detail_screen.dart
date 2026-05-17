@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:feira_facil/core/theme/app_colors.dart';
+import 'package:feira_facil/core/theme/app_theme.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/markets/domain/market.dart';
 import 'package:feira_facil/features/markets/presentation/market_prices_controller.dart';
@@ -16,6 +17,7 @@ import 'package:feira_facil/features/lists/presentation/widgets/comparison_setup
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/premium_header.dart';
 
 class MarketDetailScreen extends ConsumerStatefulWidget {
   final Market market;
@@ -64,25 +66,12 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
-      appBar: AppBar(
-        title: Text(widget.market.name, style: GoogleFonts.fraunces(
-          fontWeight: FontWeight.bold,
-          color: context.colorTextPrimary,
-        )),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        foregroundColor: context.colorTextPrimary,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.analytics_outlined, color: context.colorTextPrimary),
-            tooltip: 'Comparar Preços',
-            onPressed: () => _showComparisonSetup(),
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          PremiumHeader(
+            title: widget.market.name,
+            subtitle: 'Catálogo de preços do mercado',
+          ),
           _buildMarketInfo(),
           if (groupId != null && listsAsync is AsyncData)
             Builder(
@@ -176,14 +165,41 @@ class _MarketDetailScreenState extends ConsumerState<MarketDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'CATÁLOGO DE PREÇOS',
-            style: TextStyle(
-              color: context.colorOrange,
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-              letterSpacing: 1.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'CATÁLOGO DE PREÇOS',
+                style: TextStyle(
+                  color: context.colorOrange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showComparisonSetup(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.analytics_outlined,
+                      color: context.isDark ? DraculaColors.green : context.colorGreen,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Comparar',
+                      style: TextStyle(
+                        color: context.isDark ? DraculaColors.green : context.colorGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

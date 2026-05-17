@@ -10,6 +10,7 @@ import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/premium_header.dart';
 
 /// Parâmetros para o provider de comparação por lista
 class ListComparisonParams {
@@ -74,52 +75,52 @@ class _ListComparisonScreenState extends ConsumerState<ListComparisonScreen> {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
-      appBar: AppBar(
-        backgroundColor: context.colorBackground,
-        elevation: 0,
-        title: Text(
-          'Comparar Preços',
-          style: GoogleFonts.fraunces(
-            color: context.colorOrange,
-            fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          PremiumHeader(
+            title: 'Comparar Preços',
+            subtitle: widget.fairList != null
+                ? 'Análise para a lista "${widget.fairList!.name}"'
+                : 'Análise de melhores custos para todos os itens',
           ),
-        ),
-        iconTheme: IconThemeData(color: context.colorOrange),
-      ),
-      body: strategiesAsync.when(
-        data: (strategies) {
-          if (strategies.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Text(
-                  'Não há dados suficientes para gerar estratégias. Cadastre mais preços nos mercados.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colorTextTertiary, fontSize: 16),
-                ),
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: strategies.length,
-            itemBuilder: (context, index) {
-              // Persist strategies so _applyStrategy can compute worstCaseCost
-              if (_allStrategies.length != strategies.length) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  setState(() => _allStrategies = strategies);
-                });
-              }
-              final strategy = strategies[index];
-              final isOptimal = index == 0;
-              
-              return _buildStrategyCard(strategy, isOptimal);
-            },
-          );
-        },
-        loading: () => Center(child: CircularProgressIndicator(color: context.colorOrange)),
-        error: (err, stack) => Center(child: Text('Erro ao analisar: $err')),
+          Expanded(
+            child: strategiesAsync.when(
+              data: (strategies) {
+                if (strategies.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'Não há dados suficientes para gerar estratégias. Cadastre mais preços nos mercados.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: context.colorTextTertiary, fontSize: 16),
+                      ),
+                    ),
+                  );
+                }
+      
+                return ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: strategies.length,
+                  itemBuilder: (context, index) {
+                    // Persist strategies so _applyStrategy can compute worstCaseCost
+                    if (_allStrategies.length != strategies.length) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        setState(() => _allStrategies = strategies);
+                      });
+                    }
+                    final strategy = strategies[index];
+                    final isOptimal = index == 0;
+                    
+                    return _buildStrategyCard(strategy, isOptimal);
+                  },
+                );
+              },
+              loading: () => Center(child: CircularProgressIndicator(color: context.colorOrange)),
+              error: (err, stack) => Center(child: Text('Erro ao analisar: $err')),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
 import 'package:feira_facil/core/widgets/shared_widgets.dart';
 import 'package:feira_facil/core/widgets/web_sidebar.dart';
+import 'package:feira_facil/core/widgets/mobile_bottom_navbar.dart';
+import 'package:feira_facil/core/widgets/premium_empty_state.dart';
 import 'widgets/list_card.dart';
 import 'package:feira_facil/features/items/domain/price.dart';
 import 'package:feira_facil/features/items/presentation/prices_controller.dart';
@@ -106,6 +109,8 @@ class ListsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: context.colorBackground,
+      extendBody: true,
+      bottomNavigationBar: const MobileBottomNavbar(activeTab: MobileTab.home),
       body: CustomScrollView(
         slivers: [
           // Custom Dashboard Header
@@ -199,7 +204,7 @@ class ListsScreen extends ConsumerWidget {
   Widget _buildDashboardHeader(BuildContext context, dynamic user, dynamic group, WidgetRef ref) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 20, 20, 30),
+      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 5, 20, 30),
       decoration: BoxDecoration(
         color: context.isDark ? context.colorGreenDark : context.colorGreen,
         borderRadius: const BorderRadius.only(
@@ -215,57 +220,75 @@ class ListsScreen extends ConsumerWidget {
             children: [
               Image.asset(
                 'assets/images/logo-horizontal-escura.png',
-                height: 36,
+                height: 100,
                 fit: BoxFit.contain,
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _notificationIcon(context, ref),
-                  const SizedBox(width: 12),
-                  _headerIcon(Icons.settings_outlined, onTap: () => context.push('/settings')),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                backgroundImage: FirebaseAuth.instance.currentUser?.photoURL != null 
-                    ? NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!) 
-                    : null,
-                child: FirebaseAuth.instance.currentUser?.photoURL == null 
-                    ? const Text('👤', style: TextStyle(fontSize: 24)) 
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Olá, ${user?.name?.split(' ').first ?? 'visitante'}', style: const TextStyle(
-                    fontSize: 14, color: Colors.white70
-                  )),
-                  GestureDetector(
-                    onTap: () => context.push('/group-management'),
-                    child: Row(
-                      children: [
-                        Text(group?.name ?? 'Sua Família', style: GoogleFonts.fraunces(
-                          fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white
-                        )),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.arrow_drop_down_rounded, color: Colors.white70),
-                      ],
-                    ),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    backgroundImage: FirebaseAuth.instance.currentUser?.photoURL != null 
+                        ? NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!) 
+                        : null,
+                    child: FirebaseAuth.instance.currentUser?.photoURL == null 
+                        ? const Text('👤', style: TextStyle(fontSize: 20)) 
+                        : null,
                   ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Olá, ${user?.name?.split(' ').first ?? 'visitante'}',
+                        style: const TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/group-management'),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              group?.name ?? 'Sua Família',
+                              style: GoogleFonts.fraunces(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Icon(
+                              Icons.arrow_drop_down_rounded,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  _notificationIcon(context, ref),
                 ],
-              )
+              ),
             ],
           ),
-          const SizedBox(height: 32),
-          Text(
-            'Como vamos economizar hoje?',
+          const SizedBox(height: 10),
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'Como vamos '),
+                TextSpan(
+                  text: 'economizar',
+                  style: TextStyle(
+                    color: context.colorOrange,
+                  ),
+                ),
+                const TextSpan(text: ' hoje?'),
+              ],
+            ),
             style: GoogleFonts.fraunces(
               fontSize: 28,
               fontWeight: FontWeight.w800,
@@ -346,7 +369,7 @@ class ListsScreen extends ConsumerWidget {
         : 'Total acumulado';
 
     return Container(
-      height: 140,
+      height: 110,
       margin: const EdgeInsets.only(top: 24),
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -376,7 +399,12 @@ class ListsScreen extends ConsumerWidget {
 
   Widget _statusCard(BuildContext context, String label, String val, String sub, Color color, IconData icon, {VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (onTap != null) {
+          HapticFeedback.lightImpact();
+          onTap();
+        }
+      },
       child: Container(
         width: 160,
         margin: const EdgeInsets.only(right: 14),
@@ -384,17 +412,23 @@ class ListsScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: context.shadow2,
-          border: Border.all(color: context.colorBorder),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: context.isDark ? 0.04 : 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color.withOpacity(0.6), size: 20),
-            const Spacer(),
-            Text(label, style: TextStyle(fontSize: 11, color: context.colorTextTertiary, fontWeight: FontWeight.bold)),
-            Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colorTextPrimary)),
-            Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
+            Text(label, style: GoogleFonts.outfit(fontSize: 18, color: context.colorTextSecondary, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text(val, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800, color: context.colorTextPrimary, letterSpacing: -0.2)),
+            const SizedBox(height: 2),
+            Text(sub, style: GoogleFonts.outfit(fontSize: 11, color: color, fontWeight: FontWeight.w700)),
           ],
         ),
       ),
@@ -948,47 +982,18 @@ class ListsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('📋', style: TextStyle(fontSize: 60)),
-            const SizedBox(height: 24),
-            Text(
-              'Nenhuma Lista Criada',
-              style: GoogleFonts.fraunces(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Crie uma lista (ex: "Compra do Mês", "Churrasco") para começar.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: context.colorTextSecondary),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final groupId = ref.read(currentGroupIdProvider);
-                final userId = ref.read(currentUserProfileProvider).value?.id;
-                if (groupId != null && userId != null) {
-                  await ref.read(fairListsControllerProvider(groupId).notifier).checkDefaultList(userId);
-                }
-              },
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Gerar Lista Essencial'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.isDark ? context.colorGreenDark : context.colorGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return PremiumEmptyState(
+      title: 'Nenhuma Lista Criada',
+      description: 'Crie uma lista (ex: "Compra do Mês", "Churrasco") para começar a economizar com sua família.',
+      iconEmoji: '📋',
+      buttonLabel: 'Gerar Lista Essencial',
+      onButtonPressed: () async {
+        final groupId = ref.read(currentGroupIdProvider);
+        final userId = ref.read(currentUserProfileProvider).value?.id;
+        if (groupId != null && userId != null) {
+          await ref.read(fairListsControllerProvider(groupId).notifier).checkDefaultList(userId);
+        }
+      },
     );
   }
 }

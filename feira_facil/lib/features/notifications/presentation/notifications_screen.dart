@@ -7,6 +7,7 @@ import '../../../core/theme/theme_ext.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../../core/widgets/web_sidebar.dart';
+import '../../../core/widgets/premium_header.dart';
 import 'notifications_controller.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -18,32 +19,18 @@ class NotificationsScreen extends ConsumerWidget {
 
     return ResponsiveWrapper(
       mobile: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Notificações',
-            style: GoogleFonts.fraunces(
-              fontWeight: FontWeight.bold,
-              color: context.colorTextPrimary,
+        backgroundColor: context.colorBackground,
+        body: Column(
+          children: [
+            const PremiumHeader(
+              title: 'Notificações',
+              subtitle: 'Acompanhe as novidades do seu grupo',
             ),
-          ),
-          backgroundColor: context.colorBackground,
-          elevation: 0,
-          iconTheme: IconThemeData(color: context.colorTextPrimary),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.done_all),
-              tooltip: 'Marcar todas como lidas',
-              onPressed: () {
-                ref.read(notificationControllerProvider).markAllAsRead();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Todas marcadas como lidas')),
-                );
-              },
+            Expanded(
+              child: _buildMobileBody(context, ref, notificationsAsync),
             ),
           ],
         ),
-        backgroundColor: context.colorBackground,
-        body: _buildMobileBody(context, ref, notificationsAsync),
       ),
       web: Scaffold(
         backgroundColor: context.colorBackground,
@@ -83,8 +70,45 @@ class NotificationsScreen extends ConsumerWidget {
           );
         }
 
-        return ListView.builder(
-          itemCount: notifications.length,
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'RECENTES',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: context.colorTextSecondary,
+                    ),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.colorGreen,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    onPressed: () {
+                      ref.read(notificationControllerProvider).markAllAsRead();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Todas marcadas como lidas')),
+                      );
+                    },
+                    icon: const Icon(Icons.done_all, size: 16),
+                    label: const Text(
+                      'Marcar todas como lidas',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: notifications.length,
           itemBuilder: (context, index) {
             final notification = notifications[index];
             final isRead = notification.isRead;
@@ -164,8 +188,11 @@ class NotificationsScreen extends ConsumerWidget {
               ),
             );
           },
-        );
-      },
+        ),
+      ),
+    ],
+  );
+},
       loading: () => Center(child: CircularProgressIndicator(color: context.colorGreen)),
       error: (error, _) => Center(child: Text('Erro ao carregar notificações: $error')),
     );
