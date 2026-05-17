@@ -67,9 +67,8 @@ class PremiumHeader extends StatelessWidget {
                   
                   // Premium Square App Icon
                   Image.asset(
-                    'assets/images/logo.png',
-                    height: 32,
-                    width: 32,
+                    'assets/images/logo-escura.png',
+                    height: 80,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 12),
