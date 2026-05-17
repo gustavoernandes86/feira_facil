@@ -200,8 +200,6 @@ class ListsScreen extends ConsumerWidget {
               ),
               Row(
                 children: [
-                  _headerIcon(Icons.analytics_outlined, onTap: () => _showComparisonSetup(context, ref)),
-                  const SizedBox(width: 12),
                   _notificationIcon(context, ref),
                   const SizedBox(width: 12),
                   _headerIcon(Icons.settings_outlined, onTap: () => context.push('/settings')),

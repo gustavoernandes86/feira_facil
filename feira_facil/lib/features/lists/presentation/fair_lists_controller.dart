@@ -350,6 +350,21 @@ class FairListsController extends FamilyAsyncNotifier<void, String> {
       await repository.deleteList(groupId: groupId, listId: listId);
 
       ref.invalidate(fairListsStreamProvider(groupId));
+      ref.invalidate(suggestedListsStreamProvider(groupId));
+    });
+  }
+
+  /// Limpa o histórico de compras finalizadas
+  Future<void> clearFinishedLists(List<FairList> lists) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(fairListsRepositoryProvider);
+      for (final list in lists) {
+        await repository.deleteList(groupId: groupId, listId: list.id);
+      }
+
+      ref.invalidate(fairListsStreamProvider(groupId));
+      ref.invalidate(suggestedListsStreamProvider(groupId));
     });
   }
 }

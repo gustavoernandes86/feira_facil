@@ -44,6 +44,65 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _showClearHistoryDialog(
+    BuildContext context,
+    WidgetRef ref,
+    List<FairList> lists,
+  ) async {
+    final groupId = ref.read(currentGroupIdProvider);
+    if (groupId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: context.colorBackground,
+        title: Text(
+          'Limpar Histórico',
+          style: GoogleFonts.fraunces(
+            fontWeight: FontWeight.bold,
+            color: context.colorOrange,
+          ),
+        ),
+        content: Text(
+          'Tem certeza que deseja limpar todo o histórico de compras finalizadas? Essa ação não pode ser desfeita.',
+          style: TextStyle(color: context.colorTextPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: context.colorTextTertiary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colorOrange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Limpar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final controller = ref.read(fairListsControllerProvider(groupId).notifier);
+      await controller.clearFinishedLists(lists);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Histórico de compras finalizadas limpo com sucesso!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: context.colorGreen,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupId = ref.watch(currentGroupIdProvider);
@@ -172,18 +231,42 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
 
                 if (finishedSuggested.isNotEmpty) {
                   children.add(Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.check_circle_outline, size: 16, color: context.colorTextSecondary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'COMPRAS FINALIZADAS',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                            color: context.colorTextSecondary,
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle_outline, size: 16, color: context.colorTextSecondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'COMPRAS FINALIZADAS',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                                color: context.colorTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            _showClearHistoryDialog(context, ref, finishedSuggested);
+                          },
+                          icon: Icon(Icons.delete_sweep_outlined, size: 16, color: context.colorOrange),
+                          label: Text(
+                            'Limpar Histórico',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: context.colorOrange,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                         ),
                       ],
