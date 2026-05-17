@@ -9,12 +9,23 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../auth/presentation/auth_controller.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
+import 'package:feira_facil/core/widgets/shared_widgets.dart';
+import 'package:feira_facil/core/widgets/web_sidebar.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return ResponsiveWrapper(
+      mobile: _buildMobileLayout(context, ref),
+      web: _buildWebLayout(context, ref),
+    );
+  }
+
+  // ── Mobile Layout ──────────────────────────────────────────────────────────
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -36,7 +47,6 @@ class SettingsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
               children: [
-
                 // ── Seção: Aparência ────────────────────────────────────
                 _buildSectionHeader('APARÊNCIA', subtleColor),
                 const SizedBox(height: 12),
@@ -92,6 +102,118 @@ class SettingsScreen extends ConsumerWidget {
                 
                 // Delete Account Button
                 _buildDeleteAccountButton(context, ref, isDark),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Web Layout ──────────────────────────────────────────────────────────────
+  Widget _buildWebLayout(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark ? DraculaColors.background : context.colorBackground;
+    final cardColor = isDark ? DraculaColors.currentLine : context.colorCard;
+    final borderColor = isDark ? DraculaColors.comment.withValues(alpha: 0.2) : context.colorBorder;
+    final textColor = isDark ? DraculaColors.foreground : context.colorTextPrimary;
+    final subtleColor = isDark ? DraculaColors.comment : context.colorTextSecondary;
+    final accentColor = isDark ? DraculaColors.orange : context.colorOrange;
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: Row(
+        children: [
+          // Sidebar is included but settings is not direct, so no active nav highlighting
+          const WebSidebar(active: NavSection.settings),
+          Expanded(
+            child: Column(
+              children: [
+                const WebTopBar(
+                  title: 'Configurações',
+                  subtitle: 'Gerencie preferências de interface, grupo familiar e termos de uso do sistema.',
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1100),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Column 1: Appearance and Theme
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionHeader('APARÊNCIA', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildThemeCard(context, ref, themeMode, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            // Column 2: Family group management & legal docs & dangerous settings
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionHeader('GRUPO FAMILIAR', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildActionCard(
+                                    icon: Icons.group_rounded,
+                                    title: 'Gerenciar Grupos',
+                                    desc: 'Crie, entre ou gerencie seus grupos.',
+                                    color: isDark ? DraculaColors.green : context.colorGreen,
+                                    cardColor: cardColor,
+                                    borderColor: borderColor,
+                                    textColor: textColor,
+                                    subtleColor: subtleColor,
+                                    onTap: () => context.push('/group-management'),
+                                  ),
+                                  const SizedBox(height: 28),
+
+                                  _buildSectionHeader('CONTA E PRIVACIDADE', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildActionCard(
+                                    icon: Icons.description_outlined,
+                                    title: 'Termos de Uso',
+                                    desc: 'Leia nossas regras de utilização.',
+                                    color: accentColor,
+                                    cardColor: cardColor,
+                                    borderColor: borderColor,
+                                    textColor: textColor,
+                                    subtleColor: subtleColor,
+                                    onTap: () => context.push(RoutePaths.termsOfUse),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildActionCard(
+                                    icon: Icons.privacy_tip_outlined,
+                                    title: 'Política de Privacidade',
+                                    desc: 'Como cuidamos dos seus dados.',
+                                    color: isDark ? DraculaColors.cyan : context.colorGreen,
+                                    cardColor: cardColor,
+                                    borderColor: borderColor,
+                                    textColor: textColor,
+                                    subtleColor: subtleColor,
+                                    onTap: () => context.push(RoutePaths.privacyPolicy),
+                                  ),
+                                  const SizedBox(height: 28),
+
+                                  _buildDeleteAccountButton(context, ref, isDark),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

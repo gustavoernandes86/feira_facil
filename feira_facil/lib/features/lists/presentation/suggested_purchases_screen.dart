@@ -11,6 +11,9 @@ import 'package:feira_facil/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
+import 'package:feira_facil/core/widgets/shared_widgets.dart';
+import 'package:feira_facil/core/widgets/web_sidebar.dart';
 
 class SuggestedPurchasesScreen extends ConsumerWidget {
   const SuggestedPurchasesScreen({super.key});
@@ -105,6 +108,14 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return ResponsiveWrapper(
+      mobile: _buildMobileLayout(context, ref),
+      web: _buildWebLayout(context, ref),
+    );
+  }
+
+  // ── Mobile Layout ──────────────────────────────────────────────────────────
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref) {
     final groupId = ref.watch(currentGroupIdProvider);
     final suggestedListsAsync = groupId != null 
         ? ref.watch(suggestedListsStreamProvider(groupId)) 
@@ -291,6 +302,285 @@ class SuggestedPurchasesScreen extends ConsumerWidget {
       ),
     );
   }
+
+  // ── Web Layout (Split layout for history and ongoing) ──────────────────────
+  Widget _buildWebLayout(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(currentGroupIdProvider);
+    final suggestedListsAsync = groupId != null 
+        ? ref.watch(suggestedListsStreamProvider(groupId)) 
+        : const AsyncValue<List<FairList>>.loading();
+
+    return Scaffold(
+      backgroundColor: context.colorBackground,
+      body: Row(
+        children: [
+          const WebSidebar(active: NavSection.suggested),
+          Expanded(
+            child: Column(
+              children: [
+                WebTopBar(
+                  title: 'Compras Sugeridas',
+                  subtitle: 'Acompanhe as sugestões de compra do grupo baseadas nas melhores ofertas.',
+                  actions: [
+                    WebActionButton(
+                      icon: Icons.analytics_outlined,
+                      label: 'Nova Comparação Inteligente',
+                      onPressed: () => _showComparisonSetup(context, ref),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1100),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildWebDashboardPromo(context, ref),
+                            const SizedBox(height: 28),
+                            suggestedListsAsync.when(
+                              data: (lists) {
+                                if (lists.isEmpty) {
+                                  return _buildWebEmptyState(context, ref);
+                                }
+
+                                final activeSuggested = lists.where((l) => l.status != 'concluida').toList();
+                                final finishedSuggested = lists.where((l) => l.status == 'concluida').toList();
+
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Column 1: Ongoing suggested purchases
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(24),
+                                        decoration: BoxDecoration(
+                                          color: context.colorCard,
+                                          borderRadius: BorderRadius.circular(AppColors.radiusXl),
+                                          border: Border.all(color: context.colorBorder),
+                                          boxShadow: context.shadow2,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(Icons.local_grocery_store_outlined, size: 20, color: context.colorOrange),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'Feiras em Andamento',
+                                                  style: GoogleFonts.fraunces(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: context.colorTextPrimary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 16),
+                                            if (activeSuggested.isEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.all(32.0),
+                                                child: Center(
+                                                  child: Text(
+                                                    'Nenhuma feira sugerida em andamento.',
+                                                    style: TextStyle(color: context.colorTextTertiary, fontSize: 13),
+                                                  ),
+                                                ),
+                                              )
+                                            else
+                                              Column(
+                                                children: activeSuggested.map((list) {
+                                                  return _SuggestedListCard(list: list, isFinished: false);
+                                                }).toList(),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    // Column 2: Completed / Finished suggested history
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(24),
+                                        decoration: BoxDecoration(
+                                          color: context.colorCard,
+                                          borderRadius: BorderRadius.circular(AppColors.radiusXl),
+                                          border: Border.all(color: context.colorBorder),
+                                          boxShadow: context.shadow2,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.check_circle_outline, size: 20, color: context.colorGreen),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      'Histórico Concluído',
+                                                      style: GoogleFonts.fraunces(
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: context.colorTextPrimary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                if (finishedSuggested.isNotEmpty)
+                                                  TextButton.icon(
+                                                    onPressed: () {
+                                                      _showClearHistoryDialog(context, ref, finishedSuggested);
+                                                    },
+                                                    icon: Icon(Icons.delete_sweep_outlined, size: 16, color: context.colorOrange),
+                                                    label: Text(
+                                                      'Limpar Histórico',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: context.colorOrange,
+                                                      ),
+                                                    ),
+                                                    style: TextButton.styleFrom(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                      minimumSize: Size.zero,
+                                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 16),
+                                            if (finishedSuggested.isEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.all(32.0),
+                                                child: Center(
+                                                  child: Text(
+                                                    'Nenhuma feira finalizada no histórico.',
+                                                    style: TextStyle(color: context.colorTextTertiary, fontSize: 13),
+                                                  ),
+                                                ),
+                                              )
+                                            else
+                                              Column(
+                                                children: finishedSuggested.map((list) {
+                                                  return _SuggestedListCard(list: list, isFinished: true);
+                                                }).toList(),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                              loading: () => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(32.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                              error: (err, _) => Center(
+                                child: Text('Erro: $err', style: TextStyle(color: context.colorRed)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebDashboardPromo(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorOrange.withValues(alpha: 0.15) : const Color(0xFFFFECE0),
+        borderRadius: BorderRadius.circular(AppColors.radiusXl),
+        border: Border.all(color: context.colorOrange.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: context.colorOrange.withValues(alpha: 0.12),
+            child: Icon(Icons.auto_awesome, color: context.colorOrange, size: 28),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Comparação Inteligente e Sugestões Automatizadas',
+                  style: GoogleFonts.fraunces(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cruze os preços coletados dos mercados locais e gere listas inteligentes otimizadas por economia de produtos.',
+                  style: TextStyle(
+                    color: context.colorTextSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          WebActionButton(
+            icon: Icons.analytics_outlined,
+            label: 'Comparar Agora',
+            onPressed: () => _showComparisonSetup(context, ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebEmptyState(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 60),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.auto_awesome_outlined, size: 64, color: context.colorOrange.withValues(alpha: 0.3)),
+          const SizedBox(height: 20),
+          Text(
+            'Nenhuma compra sugerida gerada',
+            style: GoogleFonts.fraunces(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: context.colorTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Inicie uma nova comparação inteligente para cruzar preços e receber sugestões de compra.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: context.colorTextSecondary, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SuggestedListCard extends StatelessWidget {
@@ -303,38 +593,45 @@ class _SuggestedListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(list.updatedAt ?? list.createdAt);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
+      decoration: BoxDecoration(
+        color: context.colorCard,
+        borderRadius: BorderRadius.circular(AppColors.radiusLg),
+        border: Border.all(
           color: isFinished
-              ? Colors.green.withValues(alpha: 0.1)
-              : Colors.orange.withValues(alpha: 0.1),
+              ? context.colorGreen.withValues(alpha: 0.15)
+              : context.colorOrange.withValues(alpha: 0.15),
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isFinished
-                ? Colors.green.withValues(alpha: 0.1)
-                : Colors.orange.withValues(alpha: 0.1),
+                ? context.colorGreen.withValues(alpha: 0.1)
+                : context.colorOrange.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             isFinished ? Icons.check_circle_outline : Icons.shopping_cart_outlined,
-            color: isFinished ? context.colorGreen : Colors.orange,
+            color: isFinished ? context.colorGreen : context.colorOrange,
           ),
         ),
         title: Text(
           list.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: context.colorTextPrimary,
+            fontSize: 14,
+          ),
         ),
-        subtitle: Text(isFinished ? 'Concluída em $dateStr' : 'Gerada em $dateStr'),
-        trailing: const Icon(Icons.chevron_right),
+        subtitle: Text(
+          isFinished ? 'Concluída em $dateStr' : 'Gerada em $dateStr',
+          style: TextStyle(color: context.colorTextTertiary, fontSize: 11),
+        ),
+        trailing: Icon(Icons.chevron_right, color: context.colorTextSecondary, size: 20),
         onTap: () => context.pushNamed(
           RouteNames.listDetails,
           pathParameters: {'id': list.id},

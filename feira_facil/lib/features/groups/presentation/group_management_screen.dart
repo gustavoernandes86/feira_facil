@@ -12,6 +12,9 @@ import '../data/group_repository.dart';
 import '../domain/family_group.dart';
 import 'group_controller.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
+import 'package:feira_facil/core/widgets/shared_widgets.dart';
+import 'package:feira_facil/core/widgets/web_sidebar.dart';
 
 class GroupManagementScreen extends ConsumerWidget {
   const GroupManagementScreen({super.key});
@@ -40,90 +43,240 @@ class GroupManagementScreen extends ConsumerWidget {
     final subtleColor = isDark ? DraculaColors.comment : context.colorTextSecondary;
     final accentColor = isDark ? DraculaColors.orange : context.colorOrange;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: groupAsync.when(
-        data: (group) {
-          final user = userProfileAsync.value;
-          final isAdmin = user != null && group != null && group.createdBy == user.id;
+    return groupAsync.when(
+      data: (group) {
+        final user = userProfileAsync.value;
+        final isAdmin = user != null && group != null && group.createdBy == user.id;
 
-          return Column(
+        return ResponsiveWrapper(
+          mobile: Scaffold(
+            backgroundColor: bgColor,
+            body: _buildMobileBody(context, ref, group, user, isAdmin, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+          ),
+          web: Scaffold(
+            backgroundColor: bgColor,
+            body: _buildWebBody(context, ref, group, user, isAdmin, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        backgroundColor: bgColor,
+        body: Center(child: CircularProgressIndicator(color: context.colorGreen)),
+      ),
+      error: (err, _) => Scaffold(
+        backgroundColor: bgColor,
+        body: Center(child: Text('Erro: $err')),
+      ),
+    );
+  }
+
+  // ── Mobile Body Layout ─────────────────────────────────────────────────────
+  Widget _buildMobileBody(
+    BuildContext context,
+    WidgetRef ref,
+    FamilyGroup? group,
+    AppUser? user,
+    bool isAdmin,
+    bool isDark,
+    Color cardColor,
+    Color borderColor,
+    Color textColor,
+    Color subtleColor,
+    Color accentColor,
+  ) {
+    return Column(
+      children: [
+        // Header
+        _buildHeader(context, isDark, accentColor),
+
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
             children: [
-              // Header
-              _buildHeader(context, isDark, accentColor),
+              if (group != null && user != null) ...[
+                _buildSectionHeader('MEUS GRUPOS', subtleColor),
+                const SizedBox(height: 12),
+                _buildUserGroupsList(context, ref, user, group, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+                const SizedBox(height: 24),
+              ],
 
+              if (group != null) ...[
+                _buildSectionHeader('GRUPO FAMILIAR ATUAL', subtleColor),
+                const SizedBox(height: 12),
+                _buildInviteCard(context, group.inviteCode, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+                const SizedBox(height: 16),
+                _buildSectionHeader('MEMBROS', subtleColor),
+                const SizedBox(height: 12),
+                _buildMembersList(ref, group, user, isAdmin, isDark, cardColor, borderColor, textColor, subtleColor),
+                const SizedBox(height: 24),
+              ],
+
+              _buildSectionHeader('AÇÕES', subtleColor),
+              const SizedBox(height: 12),
+              _buildActionCard(
+                icon: Icons.add_home_work_rounded,
+                title: 'Criar Novo Grupo',
+                desc: 'Crie um novo grupo e convide sua família.',
+                color: accentColor,
+                cardColor: cardColor,
+                borderColor: borderColor,
+                textColor: textColor,
+                subtleColor: subtleColor,
+                onTap: () => _showCreateGroupDialog(context, ref),
+              ),
+              const SizedBox(height: 12),
+              _buildActionCard(
+                icon: Icons.group_add_rounded,
+                title: 'Entrar em um Grupo',
+                desc: 'Tem um código de convite? Entre agora.',
+                color: isDark ? DraculaColors.green : context.colorGreen,
+                cardColor: cardColor,
+                borderColor: borderColor,
+                textColor: textColor,
+                subtleColor: subtleColor,
+                onTap: () => _showJoinGroupDialog(context, ref),
+              ),
+
+              if (isAdmin && group != null) ...[
+                const SizedBox(height: 12),
+                _buildActionCard(
+                  icon: Icons.delete_forever_rounded,
+                  title: 'Excluir Grupo "${group.name}"',
+                  desc: 'Remove todos os membros e apaga o grupo.',
+                  color: isDark ? DraculaColors.red : context.colorRed,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  textColor: textColor,
+                  subtleColor: subtleColor,
+                  onTap: () => _confirmDeleteGroup(context, ref, group),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Web Body Layout ────────────────────────────────────────────────────────
+  Widget _buildWebBody(
+    BuildContext context,
+    WidgetRef ref,
+    FamilyGroup? group,
+    AppUser? user,
+    bool isAdmin,
+    bool isDark,
+    Color cardColor,
+    Color borderColor,
+    Color textColor,
+    Color subtleColor,
+    Color accentColor,
+  ) {
+    return Row(
+      children: [
+        const WebSidebar(active: NavSection.settings),
+        Expanded(
+          child: Column(
+            children: [
+              const WebTopBar(
+                title: 'Gerenciamento de Grupos',
+                subtitle: 'Crie, mude, exclua ou convide membros para seus grupos familiares.',
+              ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                  children: [
-                    if (group != null && user != null) ...[
-                      _buildSectionHeader('MEUS GRUPOS', subtleColor),
-                      const SizedBox(height: 12),
-                      _buildUserGroupsList(context, ref, user, group, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
-                      const SizedBox(height: 24),
-                    ],
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Column 1: Groups list and creation actions
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (group != null && user != null) ...[
+                                  _buildSectionHeader('MEUS GRUPOS', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildUserGroupsList(context, ref, user, group, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+                                  const SizedBox(height: 28),
+                                ],
 
-                    if (group != null) ...[
-                      _buildSectionHeader('GRUPO FAMILIAR ATUAL', subtleColor),
-                      const SizedBox(height: 12),
-                      _buildInviteCard(context, group.inviteCode, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
-                      const SizedBox(height: 16),
-                      _buildSectionHeader('MEMBROS', subtleColor),
-                      const SizedBox(height: 12),
-                      _buildMembersList(ref, group, user, isAdmin, isDark, cardColor, borderColor, textColor, subtleColor),
-                      const SizedBox(height: 24),
-                    ],
+                                _buildSectionHeader('AÇÕES DE GRUPO', subtleColor),
+                                const SizedBox(height: 12),
+                                _buildActionCard(
+                                  icon: Icons.add_home_work_rounded,
+                                  title: 'Criar Novo Grupo',
+                                  desc: 'Crie um novo grupo e convide sua família.',
+                                  color: accentColor,
+                                  cardColor: cardColor,
+                                  borderColor: borderColor,
+                                  textColor: textColor,
+                                  subtleColor: subtleColor,
+                                  onTap: () => _showCreateGroupDialog(context, ref),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildActionCard(
+                                  icon: Icons.group_add_rounded,
+                                  title: 'Entrar em um Grupo',
+                                  desc: 'Tem um código de convite? Entre agora.',
+                                  color: isDark ? DraculaColors.green : context.colorGreen,
+                                  cardColor: cardColor,
+                                  borderColor: borderColor,
+                                  textColor: textColor,
+                                  subtleColor: subtleColor,
+                                  onTap: () => _showJoinGroupDialog(context, ref),
+                                ),
 
-                    _buildSectionHeader('AÇÕES', subtleColor),
-                    const SizedBox(height: 12),
-                    _buildActionCard(
-                      icon: Icons.add_home_work_rounded,
-                      title: 'Criar Novo Grupo',
-                      desc: 'Crie um novo grupo e convide sua família.',
-                      color: accentColor,
-                      cardColor: cardColor,
-                      borderColor: borderColor,
-                      textColor: textColor,
-                      subtleColor: subtleColor,
-                      onTap: () => _showCreateGroupDialog(context, ref),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildActionCard(
-                      icon: Icons.group_add_rounded,
-                      title: 'Entrar em um Grupo',
-                      desc: 'Tem um código de convite? Entre agora.',
-                      color: isDark ? DraculaColors.green : context.colorGreen,
-                      cardColor: cardColor,
-                      borderColor: borderColor,
-                      textColor: textColor,
-                      subtleColor: subtleColor,
-                      onTap: () => _showJoinGroupDialog(context, ref),
-                    ),
+                                if (isAdmin && group != null) ...[
+                                  const SizedBox(height: 12),
+                                  _buildActionCard(
+                                    icon: Icons.delete_forever_rounded,
+                                    title: 'Excluir Grupo "${group.name}"',
+                                    desc: 'Remove todos os membros e apaga o grupo.',
+                                    color: isDark ? DraculaColors.red : context.colorRed,
+                                    cardColor: cardColor,
+                                    borderColor: borderColor,
+                                    textColor: textColor,
+                                    subtleColor: subtleColor,
+                                    onTap: () => _confirmDeleteGroup(context, ref, group),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
 
+                          // Column 2: Invite code & group members list
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (group != null) ...[
+                                  _buildSectionHeader('CÓDIGO DE CONVITE', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildInviteCard(context, group.inviteCode, isDark, cardColor, borderColor, textColor, subtleColor, accentColor),
+                                  const SizedBox(height: 28),
 
-                    if (isAdmin && group != null) ...[
-                      const SizedBox(height: 12),
-                      _buildActionCard(
-                        icon: Icons.delete_forever_rounded,
-                        title: 'Excluir Grupo "${group.name}"',
-                        desc: 'Remove todos os membros e apaga o grupo.',
-                        color: isDark ? DraculaColors.red : context.colorRed,
-                        cardColor: cardColor,
-                        borderColor: borderColor,
-                        textColor: textColor,
-                        subtleColor: subtleColor,
-                        onTap: () => _confirmDeleteGroup(context, ref, group),
+                                  _buildSectionHeader('MEMBROS DO GRUPO ATUAL', subtleColor),
+                                  const SizedBox(height: 12),
+                                  _buildMembersList(ref, group, user, isAdmin, isDark, cardColor, borderColor, textColor, subtleColor),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
               ),
             ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Erro: $err')),
-      ),
+          ),
+        ),
+      ],
     );
   }
 

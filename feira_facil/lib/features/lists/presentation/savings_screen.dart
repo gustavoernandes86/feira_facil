@@ -8,6 +8,9 @@ import 'package:feira_facil/features/lists/data/fair_lists_repository.dart';
 import 'package:feira_facil/features/lists/domain/fair_list.dart';
 import 'package:go_router/go_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
+import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
+import 'package:feira_facil/core/widgets/shared_widgets.dart';
+import 'package:feira_facil/core/widgets/web_sidebar.dart';
 
 String _fmtBRL(double? value) {
   if (value == null) return '—';
@@ -78,19 +81,32 @@ class SavingsScreen extends ConsumerWidget {
         ? ref.watch(savingsSummaryProvider(groupId))
         : const AsyncValue<SavingsSummary>.loading();
 
-    return Scaffold(
-      backgroundColor: context.colorBackground,
-      body: summaryAsync.when(
-        data: (summary) => _buildBody(context, summary),
-        loading: () => Center(
-            child: CircularProgressIndicator(color: context.colorGreen)),
-        error: (e, _) => Center(child: Text('Erro: $e')),
+    return summaryAsync.when(
+      data: (summary) => ResponsiveWrapper(
+        mobile: Scaffold(
+          backgroundColor: context.colorBackground,
+          body: _buildMobileBody(context, summary),
+        ),
+        web: Scaffold(
+          backgroundColor: context.colorBackground,
+          body: _buildWebBody(context, summary),
+        ),
+      ),
+      loading: () => Scaffold(
+        backgroundColor: context.colorBackground,
+        body: Center(
+          child: CircularProgressIndicator(color: context.colorGreen),
+        ),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: context.colorBackground,
+        body: Center(child: Text('Erro: $e')),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, SavingsSummary summary) {
-
+  // ── Mobile Layout Body ──────────────────────────────────────────────────────
+  Widget _buildMobileBody(BuildContext context, SavingsSummary summary) {
     return CustomScrollView(
       slivers: [
         // ── Hero Header ──
@@ -148,6 +164,268 @@ class SavingsScreen extends ConsumerWidget {
               ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
+    );
+  }
+
+  // ── Web Layout Body ────────────────────────────────────────────────────────
+  Widget _buildWebBody(BuildContext context, SavingsSummary summary) {
+    final hasSavings = summary.totalSaved > 0;
+    final formattedSaved = summary.totalSaved.toStringAsFixed(2).replaceAll('.', ',');
+
+    return Row(
+      children: [
+        const WebSidebar(active: NavSection.savings),
+        Expanded(
+          child: Column(
+            children: [
+              const WebTopBar(
+                title: 'Minha Economia',
+                subtitle: 'Monitore as métricas financeiras e acompanhe o quanto sua família economizou.',
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Graphic Banner
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(28),
+                            decoration: BoxDecoration(
+                              color: context.isDark ? context.colorGreenDark : context.colorGreen,
+                              borderRadius: BorderRadius.circular(AppColors.radiusXl),
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Positioned(
+                                  right: -20,
+                                  top: -20,
+                                  child: Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withValues(alpha: 0.06),
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(AppColors.radiusXl),
+                                    child: const Opacity(
+                                      opacity: 0.04,
+                                      child: CustomPaint(painter: DotPainter(spacing: 24)),
+                                    ),
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hasSavings ? 'Economia Total Acumulada' : 'Acompanhe seus dados financeiros',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.75),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      hasSavings ? 'R\$ $formattedSaved' : 'R\$ 0,00',
+                                      style: GoogleFonts.fraunces(
+                                        fontSize: 38,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if (hasSavings) ...[
+                                      const SizedBox(height: 14),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.18),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.trending_up, color: Colors.white, size: 16),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '${summary.avgSavingsPct.toStringAsFixed(1)}% de economia média em relação ao pior caso',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // KPIs Row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: WebMetricCard(
+                                  icon: Icons.shopping_bag_outlined,
+                                  label: 'Compras Concluídas',
+                                  value: '${summary.lists.length}',
+                                  subtitle: '${summary.purchasesWithData} com dados de preços',
+                                  subtitleColor: context.colorOrange,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: WebMetricCard(
+                                  icon: Icons.savings_outlined,
+                                  label: 'Economia Média por Compra',
+                                  value: summary.purchasesWithData > 0
+                                      ? _fmtBRL(summary.avgSavingsPerPurchase)
+                                      : '—',
+                                  subtitle: 'Cálculo com base no pior caso',
+                                  subtitleColor: context.colorGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Transaction History List Table
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: context.colorCard,
+                              borderRadius: BorderRadius.circular(AppColors.radiusXl),
+                              border: Border.all(color: context.colorBorder),
+                              boxShadow: context.shadow2,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Histórico de Lançamentos',
+                                  style: GoogleFonts.fraunces(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: context.colorTextPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Table Header
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          'COMPRA',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.colorTextTertiary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'DATA',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.colorTextTertiary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'VALOR PAGO / PIOR CASO',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.colorTextTertiary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 140,
+                                        child: Text(
+                                          'ECONOMIA',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.colorTextTertiary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          'AÇÃO',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: context.colorTextTertiary,
+                                            letterSpacing: 0.8,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Divider(color: context.colorBorder, height: 1),
+
+                                if (summary.lists.isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.all(40.0),
+                                    child: Center(
+                                      child: Text(
+                                        'Nenhum lançamento no histórico.',
+                                        style: TextStyle(color: context.colorTextTertiary),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Column(
+                                    children: summary.lists.map((list) {
+                                      return _WebSavingsRow(list: list);
+                                    }).toList(),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -573,6 +851,166 @@ class _CostPill extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: muted ? context.colorTextSecondary : color)),
         ],
+      ),
+    );
+  }
+}
+
+// ─── _WebSavingsRow ──────────────────────────────────────────────────────────
+class _WebSavingsRow extends StatelessWidget {
+  final FairList list;
+
+  const _WebSavingsRow({required this.list});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = list.totalCost != null && list.worstCaseCost != null;
+    final savings = hasData ? (list.worstCaseCost! - list.totalCost!) : null;
+    final hasSavings = savings != null && savings > 0;
+    final pct = (hasData && (list.worstCaseCost ?? 0) > 0)
+        ? ((savings ?? 0) / list.worstCaseCost!) * 100
+        : 0.0;
+
+    final d = list.createdAt;
+    final dateStr =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.colorBorder),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            // List Info
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: hasSavings
+                          ? context.colorGreen.withValues(alpha: 0.1)
+                          : context.colorBackground,
+                      borderRadius: BorderRadius.circular(AppColors.radiusSm),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        hasSavings ? Icons.savings_outlined : Icons.shopping_cart_outlined,
+                        color: hasSavings ? context.colorGreen : context.colorTextTertiary,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      list.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: context.colorTextPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Date
+            Expanded(
+              flex: 2,
+              child: Text(
+                dateStr,
+                style: TextStyle(
+                  color: context.colorTextTertiary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            // Valor Pago vs Pior Caso
+            Expanded(
+              flex: 2,
+              child: hasData
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pago: ${_fmtBRL(list.totalCost)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: context.colorGreen,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Pior Caso: ${_fmtBRL(list.worstCaseCost)}',
+                          style: TextStyle(
+                            color: context.colorTextTertiary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Sem dados',
+                      style: TextStyle(color: context.colorTextTertiary, fontSize: 13),
+                    ),
+            ),
+            // Savings Badge
+            SizedBox(
+              width: 140,
+              child: Center(
+                child: hasSavings
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: context.colorGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppColors.radiusMd),
+                        ),
+                        child: Text(
+                          '− ${_fmtBRL(savings)} (${pct.toStringAsFixed(0)}%)',
+                          style: TextStyle(
+                            color: context.colorGreen,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                    : hasData
+                        ? Text(
+                            '—',
+                            style: TextStyle(color: context.colorTextTertiary, fontSize: 12),
+                          )
+                        : Text(
+                            'Sem dados',
+                            style: TextStyle(color: context.colorTextTertiary, fontSize: 11),
+                          ),
+              ),
+            ),
+            // Actions
+            SizedBox(
+              width: 100,
+              child: Center(
+                child: IconButton(
+                  icon: Icon(Icons.arrow_forward_rounded, color: context.colorGreen, size: 18),
+                  tooltip: 'Ver Detalhes',
+                  onPressed: () => context.pushNamed(
+                    RouteNames.listDetails,
+                    pathParameters: {'id': list.id},
+                    extra: list,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

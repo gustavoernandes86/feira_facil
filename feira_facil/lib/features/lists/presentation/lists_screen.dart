@@ -13,7 +13,13 @@ import 'package:feira_facil/core/router/app_router.dart';
 import 'package:feira_facil/core/theme/theme_ext.dart';
 import 'package:feira_facil/features/notifications/presentation/notifications_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:feira_facil/core/widgets/responsive_wrapper.dart';
+import 'package:feira_facil/core/widgets/shared_widgets.dart';
+import 'package:feira_facil/core/widgets/web_sidebar.dart';
 import 'widgets/list_card.dart';
+import 'package:feira_facil/features/items/domain/price.dart';
+import 'package:feira_facil/features/items/presentation/prices_controller.dart';
+import '../../lists/domain/list_item.dart';
 
 class ListsScreen extends ConsumerWidget {
   const ListsScreen({super.key});
@@ -46,6 +52,13 @@ class ListsScreen extends ConsumerWidget {
     );
   }
 
+  ListStatus _getListStatus(FairList list) {
+    if (list.isSuggested) return ListStatus.suggested;
+    if (list.status == 'em_compra') return ListStatus.shopping;
+    if (list.status == 'concluida') return ListStatus.done;
+    return ListStatus.active;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Escutar notificações não lidas para mostrar um toast
@@ -74,6 +87,14 @@ class ListsScreen extends ConsumerWidget {
       }
     });
 
+    return ResponsiveWrapper(
+      mobile: _buildMobileLayout(context, ref),
+      web: _buildWebLayout(context, ref),
+    );
+  }
+
+  // ── Mobile Layout ──────────────────────────────────────────────────────────
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(currentUserProfileProvider).value;
     final group = ref.watch(currentGroupStreamProvider).value;
     final groupId = ref.watch(currentGroupIdProvider);
@@ -189,7 +210,6 @@ class ListsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Logo no topo do dashboard
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -360,7 +380,7 @@ class ListsScreen extends ConsumerWidget {
       child: Container(
         width: 160,
         margin: const EdgeInsets.only(right: 14),
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: context.colorCard,
           borderRadius: BorderRadius.circular(20),
@@ -371,7 +391,7 @@ class ListsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: color.withOpacity(0.6), size: 20),
-            Spacer(),
+            const Spacer(),
             Text(label, style: TextStyle(fontSize: 11, color: context.colorTextTertiary, fontWeight: FontWeight.bold)),
             Text(val, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colorTextPrimary)),
             Text(sub, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
@@ -460,8 +480,8 @@ class ListsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: TextStyle(fontSize: 20)),
-            SizedBox(height: 4),
+            Text(emoji, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 4),
             Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colorTextPrimary)),
             Text(sub, style: TextStyle(fontSize: 11, color: context.colorTextSecondary)),
           ],
@@ -492,6 +512,350 @@ class ListsScreen extends ConsumerWidget {
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
       ),
       child: ListCard(list: list),
+    );
+  }
+
+  // ── Web Layout (SaaS Redesign) ──────────────────────────────────────────────
+  Widget _buildWebLayout(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(currentUserProfileProvider).value;
+    final group = ref.watch(currentGroupStreamProvider).value;
+    final groupId = ref.watch(currentGroupIdProvider);
+
+    final listsAsyncValue = groupId != null 
+        ? ref.watch(fairListsStreamProvider(groupId)) 
+        : const AsyncValue<List<FairList>>.loading();
+
+    final savingsAsync = groupId != null
+        ? ref.watch(savingsSummaryProvider(groupId))
+        : const AsyncValue<SavingsSummary>.loading();
+
+    final activeFeira = groupId != null ? ref.watch(activeFeiraProvider(groupId)) : null;
+
+    final userName = userProfile?.name ?? 'Usuário';
+    final groupName = group?.name ?? 'Minha Família';
+
+    return Scaffold(
+      backgroundColor: context.colorBackground,
+      body: Row(
+        children: [
+          WebSidebar(active: NavSection.home),
+          Expanded(
+            child: Column(
+              children: [
+                WebTopBar(
+                  title: 'Início',
+                  subtitle: 'Olá, $userName · $groupName',
+                  actions: [
+                    WebActionButton(
+                      icon: Icons.auto_awesome,
+                      label: 'Gerar Lista Essencial',
+                      secondary: true,
+                      onPressed: () async {
+                        if (groupId != null && userProfile?.id != null) {
+                          await ref.read(fairListsControllerProvider(groupId).notifier).checkDefaultList(userProfile!.id);
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    WebActionButton(
+                      icon: Icons.add,
+                      label: 'Nova Lista',
+                      onPressed: () => _showCreateListDialog(context, ref),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1100),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildWebHeroCard(context, ref, savingsAsync, groupName),
+                            const SizedBox(height: 24),
+                            _buildWebMetricRow(context, listsAsyncValue, savingsAsync),
+                            const SizedBox(height: 28),
+                            if (activeFeira != null) ...[
+                              SectionHeader(
+                                title: 'Feira em andamento',
+                                icon: Icons.local_grocery_store_rounded,
+                              ),
+                              const SizedBox(height: 12),
+                              ListCard(list: activeFeira.list),
+                              const SizedBox(height: 28),
+                            ],
+                            _buildWebListsTable(context, listsAsyncValue, ref, groupId),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebHeroCard(
+    BuildContext context, 
+    WidgetRef ref, 
+    AsyncValue<SavingsSummary> savingsAsync, 
+    String groupName,
+  ) {
+    final savings = savingsAsync.value;
+    final totalSaved = savings?.totalSaved ?? 0.0;
+    final formattedSaved = totalSaved.toStringAsFixed(2).replaceAll('.', ',');
+    final countPurchases = savings?.lists.length ?? 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: context.isDark ? context.colorGreenDark : context.colorGreen,
+        borderRadius: BorderRadius.circular(AppColors.radiusXl),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Decorative circles
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 40,
+            bottom: -30,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+          // Dot pattern
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppColors.radiusXl),
+              child: const Opacity(
+                opacity: 0.04,
+                child: CustomPaint(painter: DotPainter(spacing: 24)),
+              ),
+            ),
+          ),
+          // Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Sua economia acumulada é de R\$ $formattedSaved!',
+                style: GoogleFonts.fraunces(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Continue comparando preços em tempo real para maximizar o orçamento!',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  StatChip(value: 'R\$ $formattedSaved', label: 'Total economizado'),
+                  const SizedBox(width: 16),
+                  StatChip(value: '$countPurchases', label: 'Compras concluídas'),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebMetricRow(
+    BuildContext context, 
+    AsyncValue<List<FairList>> listsAsync, 
+    AsyncValue<SavingsSummary> savingsAsync,
+  ) {
+    final listsCount = listsAsync.value?.length ?? 0;
+    final totalSaved = savingsAsync.value?.totalSaved ?? 0.0;
+    final formattedSaved = totalSaved.toStringAsFixed(2).replaceAll('.', ',');
+
+    return Row(
+      children: [
+        Expanded(
+          child: WebMetricCard(
+            icon: Icons.format_list_bulleted_rounded,
+            label: 'Listas ativas',
+            value: '$listsCount',
+            subtitle: 'Gerencie e compare feiras',
+            subtitleColor: context.colorGreen,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: WebMetricCard(
+            icon: Icons.trending_up,
+            label: 'Economia total',
+            value: 'R\$ $formattedSaved',
+            subtitle: 'Baseada nas compras salvas',
+            subtitleColor: context.colorOrange,
+            onTap: () => context.pushNamed(RouteNames.savings),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWebListsTable(
+    BuildContext context, 
+    AsyncValue<List<FairList>> listsAsync, 
+    WidgetRef ref, 
+    String? groupId,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: context.colorCard,
+        borderRadius: BorderRadius.circular(AppColors.radiusXl),
+        border: Border.all(color: context.colorBorder),
+        boxShadow: context.shadow2,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Listas Recentes',
+                style: GoogleFonts.fraunces(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: context.colorTextPrimary,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.compare_arrows_rounded),
+                tooltip: 'Comparar Listas e Preços',
+                onPressed: () => _showComparisonSetup(context, ref),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Table Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'LISTA',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.colorTextTertiary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'PROGRESSO',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.colorTextTertiary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 120,
+                  child: Text(
+                    'STATUS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.colorTextTertiary,
+                      letterSpacing: 0.8,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    'AÇÕES',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: context.colorTextTertiary,
+                      letterSpacing: 0.8,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Divider(color: context.colorBorder, height: 1),
+
+          listsAsync.when(
+            data: (lists) {
+              if (lists.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text(
+                      'Nenhuma lista disponível.',
+                      style: TextStyle(color: context.colorTextTertiary),
+                    ),
+                  ),
+                );
+              }
+              return Column(
+                children: lists.map((list) {
+                  return _WebListRow(list: list, groupId: groupId ?? '');
+                }).toList(),
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, _) => Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(child: Text('Erro: $err', style: TextStyle(color: context.colorRed))),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -623,6 +987,227 @@ class ListsScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── _WebListRow ──────────────────────────────────────────────────────────────
+class _WebListRow extends ConsumerWidget {
+  final FairList list;
+  final String groupId;
+
+  const _WebListRow({
+    required this.list,
+    required this.groupId,
+  });
+
+  Price? _getItemPrice(ListItem item, List<Price>? allPrices) {
+    if (allPrices == null) return null;
+    Price? itemPrice;
+    final pricesForItem = allPrices.where((p) => p.itemId == item.itemId).toList();
+    if (item.selectedMarketId != null && item.selectedMarketId!.isNotEmpty) {
+      final marketPrices = pricesForItem.where((p) => p.marketId == item.selectedMarketId).toList();
+      if (marketPrices.isNotEmpty) {
+        marketPrices.sort((a, b) => b.registeredAt.compareTo(a.registeredAt));
+        itemPrice = marketPrices.first;
+      }
+    }
+    
+    if (itemPrice == null && pricesForItem.isNotEmpty) {
+      pricesForItem.sort((a, b) {
+        if (a.tiers.isEmpty) return 1;
+        if (b.tiers.isEmpty) return -1;
+        return a.tiers.first.pricePerUnit.compareTo(b.tiers.first.pricePerUnit);
+      });
+      itemPrice = pricesForItem.first;
+    }
+    return itemPrice;
+  }
+
+  double _calculateTotalCost(List<ListItem> items, List<Price>? allPrices, {bool markedOnly = true}) {
+    double total = 0.0;
+    for (final item in items) {
+      if (!markedOnly || item.marked) {
+        final price = _getItemPrice(item, allPrices);
+        if (price != null) {
+          total += price.calculateBestPrice(item.plannedQuantity);
+        }
+      }
+    }
+    return total;
+  }
+
+  ListStatus _getListStatus(FairList list) {
+    if (list.isSuggested) return ListStatus.suggested;
+    if (list.status == 'em_compra') return ListStatus.shopping;
+    if (list.status == 'concluida') return ListStatus.done;
+    return ListStatus.active;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemsAsync = ref.watch(
+      listItemsStreamProvider((groupId: groupId, listId: list.id)),
+    );
+
+    final allPricesAsync = list.isSuggested
+        ? ref.watch(allPricesProvider(groupId))
+        : const AsyncValue<List<Price>>.data([]);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.colorBorder),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => context.push('/lists/${list.id}', extra: list),
+        borderRadius: BorderRadius.circular(AppColors.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            children: [
+              // Icon & Name
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: context.colorBackground,
+                        borderRadius: BorderRadius.circular(AppColors.radiusSm),
+                      ),
+                      child: Icon(
+                        list.isSuggested
+                            ? Icons.local_grocery_store_rounded
+                            : Icons.shopping_basket_rounded,
+                        size: 18,
+                        color: list.isSuggested
+                            ? context.colorOrange
+                            : list.status == 'em_compra'
+                                ? context.colorOrange
+                                : list.status == 'concluida'
+                                    ? context.colorTextTertiary
+                                    : context.colorGreen,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        list.name,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: context.colorTextPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Progress Row
+              Expanded(
+                flex: 2,
+                child: itemsAsync.when(
+                  data: (items) {
+                    final checked = items.where((i) => i.marked).length;
+                    final total = items.length;
+                    final progress = total > 0 ? checked / total : 0.0;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppColors.radiusPill),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 5,
+                            backgroundColor: context.isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade100,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              list.status == 'em_compra'
+                                  ? context.colorOrange
+                                  : list.status == 'concluida'
+                                      ? context.colorTextTertiary
+                                      : context.colorGreen,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$checked de $total itens pegos',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.colorTextTertiary,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const LinearProgressIndicator(minHeight: 2),
+                  error: (_, __) => Text(
+                    'Erro',
+                    style: TextStyle(color: context.colorRed, fontSize: 11),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Status Badge
+              SizedBox(
+                width: 120,
+                child: Center(
+                  child: StatusBadge(status: _getListStatus(list)),
+                ),
+              ),
+              // Actions (View, Delete)
+              SizedBox(
+                width: 140,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_forward_rounded, color: context.colorGreen, size: 18),
+                      tooltip: 'Ver Detalhes',
+                      onPressed: () => context.push('/lists/${list.id}', extra: list),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete_outline, color: context.colorRed, size: 18),
+                      tooltip: 'Excluir Lista',
+                      onPressed: () async {
+                        final deleteConfirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Excluir Lista'),
+                            content: Text('Deseja excluir a lista "${list.name}"?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (deleteConfirmed == true) {
+                          ref.read(fairListsControllerProvider(groupId).notifier).deleteList(list.id);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
